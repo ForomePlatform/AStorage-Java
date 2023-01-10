@@ -1,5 +1,6 @@
 package com.astorage.db;
 
+import com.astorage.main.Constants;
 import org.rocksdb.*;
 
 import java.io.File;
@@ -9,14 +10,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class RocksDBRepository implements KeyValueRepository<byte[], String> {
+public class RocksDBRepository implements KeyValueRepository<byte[], String>, Constants {
 	private final static String DB_FILENAME = "a-storage";
-	private final static String DB_DIR = "/tmp/rocks-db";
+	private final static String DB_DIR = DATA_DIRECTORY_PATH + "/rocks-db";
 	private HashMap<String, ColumnFamilyHandle> columnFamilyHandleMap;
 	private RocksDB db;
 
 	public void initialize() {
-		RocksDB.loadLibrary(); // ?
 		final Options options = new Options();
 		options.setCreateIfMissing(true);
 		File dbDir = new File(DB_DIR, DB_FILENAME);

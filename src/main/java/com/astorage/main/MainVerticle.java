@@ -17,13 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
-public class MainVerticle extends AbstractVerticle {
-	private static final String ERROR_INVALID_PARAMS = "Error: Invalid parameters";
-	private static final String ERROR_DOWNLOADING_DATA = "Error: Download failed";
-	private static final String COLUMN_FAMILY_NULL = "Error: Array with the given name doesn't exist";
-	private static final String METADATA_PATH = "/home/giorgi.shavtvalishvili/Quantori/AStorage/metadata";
-	private static final String COMPRESSED_DATA_PATH = "/home/giorgi.shavtvalishvili/Quantori/AStorage/data.gz";
-	private static final String DATA_PATH = "/home/giorgi.shavtvalishvili/Quantori/AStorage/data";
+public class MainVerticle extends AbstractVerticle implements Constants {
 	private RocksDBRepository dbRep;
 
 	@Override
@@ -36,12 +30,29 @@ public class MainVerticle extends AbstractVerticle {
 			if (http.succeeded()) {
 				startPromise.complete();
 				System.out.println("HTTP server started on port 8080");
-				dbRep = new RocksDBRepository();
-				dbRep.initialize();
+				if (initializeDirectories()) {
+					dbRep = new RocksDBRepository();
+					dbRep.initialize();
+				} else {
+					startPromise.fail(new IOException(ERROR_INITIALIZING_DIRECTORY));
+				}
 			} else {
 				startPromise.fail(http.cause());
 			}
 		});
+	}
+
+	private boolean initializeDirectories() {
+		try {
+			File dataDir = new File(DATA_DIRECTORY_PATH);
+			if (!dataDir.exists() && !dataDir.mkdirs()) {
+				return false;
+			}
+		} catch(SecurityException e) {
+			return false;
+		}
+
+		return true;
 	}
 
 	private void ingestionHandler(RoutingContext context) {
@@ -58,12 +69,12 @@ public class MainVerticle extends AbstractVerticle {
 		String metadataURL = req.getParam("metadataURL");
 
 		try {
-//				downloadUsingStream(metadataURL, METADATA_PATH);
+			downloadUsingStream(metadataURL, METADATA_FILENAME);
 			Map<String, String> metadata = readMetadata();
-//				downloadUsingStream(dataURL, COMPRESSED_DATA_PATH);
-//				decompressGzip(COMPRESSED_DATA_PATH, DATA_PATH);
+			downloadUsingStream(dataURL, COMPRESSED_DATA_FILENAME);
+			decompressGzip(COMPRESSED_DATA_FILENAME, DATA_FILENAME);
 			storeData(arrayName, metadata);
-		} catch (IOException e) {
+		} catch (IOException | SecurityException e) {
 			e.printStackTrace();
 			errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, ERROR_DOWNLOADING_DATA);
 			return;
@@ -118,7 +129,8 @@ public class MainVerticle extends AbstractVerticle {
 				);
 	}
 
-	private static void downloadUsingStream(String urlStr, String file) throws IOException {
+	private static void downloadUsingStream(String urlStr, String filename) throws IOException {
+		File file = new File(DATA_DIRECTORY_PATH, filename);
 		URL url = new URL(urlStr);
 		BufferedInputStream bufferedInputStream = new BufferedInputStream(url.openStream());
 		FileOutputStream fileOutputStream = new FileOutputStream(file);
@@ -135,7 +147,8 @@ public class MainVerticle extends AbstractVerticle {
 
 	private static Map<String, String> readMetadata() throws IOException {
 		Map<String, String> result = new HashMap<>();
-		BufferedReader reader = new BufferedReader(new FileReader(METADATA_PATH));
+		File metadataFile = new File(DATA_DIRECTORY_PATH, METADATA_FILENAME);
+		BufferedReader reader = new BufferedReader(new FileReader(metadataFile));
 		String line;
 
 		while ((line = reader.readLine()) != null) {
@@ -156,7 +169,8 @@ public class MainVerticle extends AbstractVerticle {
 	}
 
 	private void storeData(String arrayName, Map<String, String> metadata) throws IOException {
-		BufferedReader reader = new BufferedReader(new FileReader(DATA_PATH));
+		File dataFile = new File(DATA_DIRECTORY_PATH, DATA_FILENAME);
+		BufferedReader reader = new BufferedReader(new FileReader(dataFile));
 		String line;
 		String seqName = null;
 		int idx = 1;
@@ -194,9 +208,12 @@ public class MainVerticle extends AbstractVerticle {
 	}
 
 	public static void decompressGzip(String source, String target) throws IOException {
+		File sourceFile = new File(DATA_DIRECTORY_PATH, source);
+		File targetFile = new File(DATA_DIRECTORY_PATH, target);
+
 		try (
-				GZIPInputStream gzipInputStream = new GZIPInputStream(new FileInputStream(source));
-				FileOutputStream fileOutputStream = new FileOutputStream(target)
+				GZIPInputStream gzipInputStream = new GZIPInputStream(new FileInputStream(sourceFile));
+				FileOutputStream fileOutputStream = new FileOutputStream(targetFile)
 		) {
 			byte[] buffer = new byte[1024];
 			int len;
