@@ -2,9 +2,12 @@ package com.astorage.query;
 
 import com.astorage.db.RocksDBRepository;
 import com.astorage.utils.Constants;
-import com.astorage.utils.dbnsfp.DbNSFPHelper;
 import com.astorage.utils.dbnsfp.DbNSFPConstants;
+import com.astorage.utils.dbnsfp.DbNSFPHelper;
+import com.astorage.utils.dbnsfp.Variant;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
 import java.net.HttpURLConnection;
@@ -48,14 +51,33 @@ public class DbNSFPQuery implements Query, Constants, DbNSFPConstants {
 
 		byte[] key = DbNSFPHelper.createKey(chr, pos);
 
-		String value = dbRep.find(key);
-		if (value == null) {
+		String variantsString = dbRep.find(key);
+		if (variantsString == null) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, VARIANT_NOT_FOUND_ERROR);
 			return;
 		}
 
+		JsonObject result = new JsonObject();
+		result.put(CHR_PARAM, chr);
+		result.put(POS_PARAM, pos);
+		result.put(ALT_PARAM, alt);
+
+		JsonArray finalVariantsJson = new JsonArray();
+		JsonArray variantsJson = new JsonArray(variantsString);
+
+		for (int i = 0; i < variantsJson.size(); i++) {
+			JsonObject variantJson = variantsJson.getJsonObject(i);
+			String nucleotide = variantJson.getString(Variant.VARIANT_ALT);
+
+			if (nucleotide.equals(alt)) {
+				finalVariantsJson.add(variantJson);
+			}
+		}
+
+		result.put("variants", finalVariantsJson);
+
 		req.response()
 			.putHeader("content-type", "text/json")
-			.end(value + "\n");
+			.end(result + "\n");
 	}
 }

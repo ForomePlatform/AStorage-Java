@@ -1,9 +1,11 @@
 package com.astorage.utils.dbnsfp;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.astorage.utils.JsonConvertible;
+import io.vertx.core.json.JsonObject;
 
-public class Transcript {
+import java.util.*;
+
+public class Transcript implements JsonConvertible {
 	public static final String[] TRANSCRIPT_COLUMNS = {
 		"Ensembl_transcriptid",
 		"Ensembl_geneid",
@@ -33,22 +35,49 @@ public class Transcript {
 
 	public final Map<String, String> transcriptColumnValues = new HashMap<>();
 
-	@Override
-	public String toString() {
-		StringBuilder result = new StringBuilder("{");
+	public static List<Transcript> parseTranscripts(Map<String, Integer> columns, String[] row) {
+		List<Transcript> transcripts = new ArrayList<>();
 
-		for (int i = 0; i < TRANSCRIPT_COLUMNS.length; i++) {
-			String transcriptColumn = TRANSCRIPT_COLUMNS[i];
-			String columnValue = transcriptColumnValues.get(transcriptColumn);
-			result.append(DbNSFPHelper.columnToString(transcriptColumn, columnValue));
+		for (String columnName : Transcript.TRANSCRIPT_COLUMNS) {
+			if (columns.get(columnName) == null) {
+				System.err.println("Column does not exist: " + columnName);
+			}
 
-			if (i != TRANSCRIPT_COLUMNS.length - 1) {
-				result.append(", ");
+			String columnValues = row[columns.get(columnName)];
+			String[] splitColumnValues = columnValues.split(";");
+
+			for (int i = 0; i < splitColumnValues.length; i++) {
+				String columnValue = null;
+
+				if (!Objects.equals(splitColumnValues[i], ".")) {
+					columnValue = splitColumnValues[i];
+				}
+
+				if (transcripts.size() <= i) {
+					Transcript transcript = new Transcript();
+					transcript.transcriptColumnValues.put(columnName, columnValue);
+					transcripts.add(transcript);
+				} else {
+					transcripts.get(i).transcriptColumnValues.put(columnName, columnValue);
+				}
 			}
 		}
 
-		result.append("}");
+		return transcripts;
+	}
 
-		return result.toString();
+	public JsonObject toJson() {
+		JsonObject transcriptJson = new JsonObject();
+
+		for (String column : TRANSCRIPT_COLUMNS) {
+			transcriptJson.put(column, transcriptColumnValues.get(column));
+		}
+
+		return transcriptJson;
+	}
+
+	@Override
+	public String toString() {
+		return this.toJson().toString();
 	}
 }

@@ -1,8 +1,13 @@
 package com.astorage.utils.dbnsfp;
 
+import com.astorage.utils.Constants;
+import com.astorage.utils.JsonConvertible;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+
 import java.util.*;
 
-public class Variant {
+public class Variant implements JsonConvertible {
 	public static final String[] VARIANT_COLUMNS = {
 		"ref",
 		"alt",
@@ -20,6 +25,8 @@ public class Variant {
 		"GTEx_V8_tissue",
 		"Geuvadis_eQTL_target_gene"
 	};
+
+	public static final String VARIANT_ALT = "alt";
 
 	public final Map<String, String> variantColumnValues = new HashMap<>();
 	public final List<Facet> facets = new ArrayList<>();
@@ -53,20 +60,21 @@ public class Variant {
 		return variantColumnValues.equals(variant.variantColumnValues);
 	}
 
-	@Override
-	public String toString() {
-		StringBuilder result = new StringBuilder("{");
+	public JsonObject toJson() {
+		JsonObject variantJson = new JsonObject();
+		JsonArray facetsJson = Constants.listToJson(facets);
 
-		for (String variantColumn : VARIANT_COLUMNS) {
-			String columnValue = variantColumnValues.get(variantColumn);
-			result.append(DbNSFPHelper.columnToString(variantColumn, columnValue));
-			result.append(", ");
+		for (String column : VARIANT_COLUMNS) {
+			variantJson.put(column, variantColumnValues.get(column));
 		}
 
-		result.append("\"facets\": ");
-		result.append(facets);
-		result.append("}");
+		variantJson.put("facets", facetsJson);
 
-		return result.toString();
+		return variantJson;
+	}
+
+	@Override
+	public String toString() {
+		return this.toJson().toString();
 	}
 }

@@ -4,6 +4,7 @@ import com.astorage.db.RocksDBRepository;
 import com.astorage.utils.Constants;
 import com.astorage.utils.dbnsfp.*;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.json.JsonArray;
 import io.vertx.ext.web.RoutingContext;
 
 import java.io.*;
@@ -87,28 +88,29 @@ public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
 		String[] row = line.split(DATA_DELIMITER);
 
 		byte[] key = DbNSFPHelper.createKey(columns, row);
-		Variant variant = new Variant(columns, row);
-		Facet facet = new Facet(columns, row);
-		Transcripts transcripts = new Transcripts(columns, row);
+		Variant newVariant = new Variant(columns, row);
+		Facet newFacet = new Facet(columns, row);
+		List<Transcript> newTranscripts = Transcript.parseTranscripts(columns, row);
 
-		facet.transcripts.addAll(transcripts.transcripts);
+		newFacet.transcripts.addAll(newTranscripts);
 
 		if (Arrays.equals(key, lastKey)) {
 			Variant lastVariant = lastVariants.get(lastVariants.size() - 1);
 
-			if (variant.equals(lastVariant)) {
-				lastVariant.facets.add(facet);
+			if (newVariant.equals(lastVariant)) {
+				lastVariant.facets.add(newFacet);
 			} else {
-				variant.facets.add(facet);
-				lastVariants.add(variant);
+				newVariant.facets.add(newFacet);
+				lastVariants.add(newVariant);
 			}
 		} else {
-			variant.facets.add(facet);
+			newVariant.facets.add(newFacet);
 			lastVariants.clear();
-			lastVariants.add(variant);
+			lastVariants.add(newVariant);
 		}
 
-		dbRep.save(key, lastVariants.toString());
+		JsonArray variantsJson = Constants.listToJson(lastVariants);
+		dbRep.save(key, variantsJson.toString());
 
 		return key;
 	}

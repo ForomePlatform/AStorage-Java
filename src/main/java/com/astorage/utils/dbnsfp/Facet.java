@@ -1,8 +1,13 @@
 package com.astorage.utils.dbnsfp;
 
+import com.astorage.utils.Constants;
+import com.astorage.utils.JsonConvertible;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+
 import java.util.*;
 
-public class Facet {
+public class Facet implements JsonConvertible {
 	public static final String[] FACET_COLUMNS = {
 		"CADD_raw_rankscore",
 		"MetaLR_score",
@@ -43,20 +48,21 @@ public class Facet {
 		}
 	}
 
-	@Override
-	public String toString() {
-		StringBuilder result = new StringBuilder("{");
+	public JsonObject toJson() {
+		JsonObject facetJson = new JsonObject();
+		JsonArray transcriptsJson = Constants.listToJson(transcripts);
 
-		for (String facetColumn : FACET_COLUMNS) {
-			String columnValue = facetColumnValues.get(facetColumn);
-			result.append(DbNSFPHelper.columnToString(facetColumn, columnValue));
-			result.append(", ");
+		for (String column : FACET_COLUMNS) {
+			facetJson.put(column, facetColumnValues.get(column));
 		}
 
-		result.append("\"transcripts\": ");
-		result.append(transcripts);
-		result.append("}");
+		facetJson.put("transcripts", transcriptsJson);
 
-		return result.toString();
+		return facetJson;
+	}
+
+	@Override
+	public String toString() {
+		return this.toJson().toString();
 	}
 }
