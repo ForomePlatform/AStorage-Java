@@ -1,25 +1,28 @@
 package com.astorage.db;
 
-import com.astorage.main.Constants;
+import com.astorage.utils.Constants;
 import org.rocksdb.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
 public class RocksDBRepository implements KeyValueRepository<byte[], String>, Constants {
-	private final static String DB_FILENAME = "a-storage";
 	private final static String DB_DIR = DATA_DIRECTORY_PATH + "/rocks-db";
-	private HashMap<String, ColumnFamilyHandle> columnFamilyHandleMap;
+	private final HashMap<String, ColumnFamilyHandle> columnFamilyHandleMap;
 	private RocksDB db;
+	private final String dbFilename;
 
-	public void initialize() {
+	public RocksDBRepository(String dbFilename) {
+		this.dbFilename = dbFilename;
+
 		final Options options = new Options();
 		options.setCreateIfMissing(true);
-		File dbDir = new File(DB_DIR, DB_FILENAME);
+		File dbDir = new File(DB_DIR, this.dbFilename);
 		columnFamilyHandleMap = new HashMap<>();
 
 		List<ColumnFamilyDescriptor> columnFamilyDescriptors = getColumnFamilyDescriptors();
@@ -35,13 +38,12 @@ public class RocksDBRepository implements KeyValueRepository<byte[], String>, Co
 				String name = new String(handle.getName());
 				columnFamilyHandleMap.put(name, handle);
 			}
-
 		} catch (IOException | RocksDBException e) {
 			System.out.printf(
 					"Error initializing RocksDB, check configurations and permissions, exception: %s, message: %s, stackTrace: %s%n",
 					e.getCause(),
 					e.getMessage(),
-					e.getStackTrace()
+				Arrays.toString(e.getStackTrace())
 			);
 		}
 
@@ -84,7 +86,7 @@ public class RocksDBRepository implements KeyValueRepository<byte[], String>, Co
 		} catch (RocksDBException e) {
 			System.out.printf(
 					"Error retrieving the entry in RocksDB from key: %s, cause: %s, message: %s%n",
-					key,
+				Arrays.toString(key),
 					e.getCause(),
 					e.getMessage()
 			);
@@ -103,7 +105,7 @@ public class RocksDBRepository implements KeyValueRepository<byte[], String>, Co
 		} catch (RocksDBException e) {
 			System.out.printf(
 					"Error retrieving the entry in RocksDB from key: %s, cause: %s, message: %s%n",
-					key,
+				Arrays.toString(key),
 					e.getCause(),
 					e.getMessage()
 			);
@@ -131,7 +133,7 @@ public class RocksDBRepository implements KeyValueRepository<byte[], String>, Co
 	private List<ColumnFamilyDescriptor> getColumnFamilyDescriptors() {
 		List<ColumnFamilyDescriptor> columnFamilyDescriptors = new ArrayList<>();
 		try {
-			File dbDir = new File(DB_DIR, DB_FILENAME);
+			File dbDir = new File(DB_DIR, this.dbFilename);
 			List<byte[]> columnFamilyByteNames = RocksDB.listColumnFamilies(new Options(), dbDir.getAbsolutePath());
 			for (byte[] name : columnFamilyByteNames) {
 				columnFamilyDescriptors.add(new ColumnFamilyDescriptor(name));
@@ -145,5 +147,9 @@ public class RocksDBRepository implements KeyValueRepository<byte[], String>, Co
 
 	public ColumnFamilyHandle getColumnFamilyHandle(String name) {
 		return columnFamilyHandleMap.get(name);
+	}
+
+	public void close() {
+		db.close();
 	}
 }
