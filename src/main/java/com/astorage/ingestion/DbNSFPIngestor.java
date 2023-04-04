@@ -8,10 +8,7 @@ import io.vertx.ext.web.RoutingContext;
 
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * For dbNSFP v4.3a!
@@ -60,8 +57,8 @@ public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
 			}
 
 			int lineCount = 0;
-			byte[] lastKey = {};
-			ArrayList<Variant> lastVariants = new ArrayList<>();
+			byte[] lastKey = null;
+			List<Variant> lastVariants = new ArrayList<>();
 			while ((line = bufferedReader.readLine()) != null) {
 				lastKey = processLine(line, columns, lastKey, lastVariants);
 				lineCount++;
@@ -86,7 +83,7 @@ public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
 		return mappedColumns;
 	}
 
-	private byte[] processLine(String line, Map<String, Integer> columns, byte[] lastKey, ArrayList<Variant> lastVariants) {
+	private byte[] processLine(String line, Map<String, Integer> columns, byte[] lastKey, List<Variant> lastVariants) {
 		String[] row = line.split(DATA_DELIMITER);
 
 		byte[] key = DbNSFPHelper.createKey(columns, row);
@@ -96,8 +93,9 @@ public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
 
 		facet.transcripts.addAll(transcripts.transcripts);
 
-		Variant lastVariant = lastVariants.get(lastVariants.size() - 1);
 		if (Arrays.equals(key, lastKey)) {
+			Variant lastVariant = lastVariants.get(lastVariants.size() - 1);
+
 			if (variant.equals(lastVariant)) {
 				lastVariant.facets.add(facet);
 			} else {
@@ -106,7 +104,7 @@ public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
 			}
 		} else {
 			variant.facets.add(facet);
-			lastVariants = new ArrayList<>();
+			lastVariants.clear();
 			lastVariants.add(variant);
 		}
 
