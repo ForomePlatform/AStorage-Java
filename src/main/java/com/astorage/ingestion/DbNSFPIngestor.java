@@ -2,10 +2,7 @@ package com.astorage.ingestion;
 
 import com.astorage.db.RocksDBRepository;
 import com.astorage.utils.Constants;
-import com.astorage.utils.dbnsfp.DataStorage;
-import com.astorage.utils.dbnsfp.Facet;
-import com.astorage.utils.dbnsfp.Transcripts;
-import com.astorage.utils.dbnsfp.Variant;
+import com.astorage.utils.dbnsfp.*;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.ext.web.RoutingContext;
 
@@ -17,8 +14,8 @@ import java.util.Map;
 /**
  * For dbNSFP v4.3a!
  */
-public class DbNSFPIngestor implements Constants {
-	public static final String DATA_DELIMITER = "\t";
+@SuppressWarnings("unused")
+public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
 	private final RoutingContext context;
 	private final RocksDBRepository dbRep;
 
@@ -29,16 +26,19 @@ public class DbNSFPIngestor implements Constants {
 
 	public void ingestionHandler() {
 		HttpServerRequest req = context.request();
+
 		if (!(req.params().size() == 1
-			&& req.params().contains("fileName"))) {
-			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, ERROR_INVALID_PARAMS);
+			&& req.params().contains(DATA_PATH_PARAM))) {
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
+			return;
 		}
 
-		String filename = req.getParam("filename");
+		String dataPath = req.getParam(DATA_PATH_PARAM);
 
-		File file = new File(filename);
+		File file = new File(dataPath);
 		if (!file.exists()) {
-			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, "File does not exist: " + filename);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, FILE_NOT_FOUND_ERROR);
+			return;
 		}
 
 		try (
@@ -49,20 +49,26 @@ public class DbNSFPIngestor implements Constants {
 			Map<String, Integer> columns = null;
 
 			if ((line = bufferedReader.readLine()) != null) {
-				if (!line.startsWith(DataStorage.CHR_COLUMN_NAME)) {
+				if (!line.startsWith(DbNSFPHelper.CHR_COLUMN_NAME)) {
 					Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, "Invalid dbNSFP file...");
+					return;
 				}
 
 				columns = mapColumns(line);
 			}
 
+			int lineCount = 0;
 			Variant lastVariant = null;
 			while ((line = bufferedReader.readLine()) != null) {
 				lastVariant = processLine(line, columns, lastVariant);
+				lineCount++;
 			}
+
+			req.response()
+				.putHeader("content-type", "text/json")
+				.end(lineCount + " lines have been ingested!\n");
 		} catch (IOException e) {
-			System.err.println("Internal error!");
-			System.exit(1);
+			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 		}
 	}
 
@@ -93,7 +99,8 @@ public class DbNSFPIngestor implements Constants {
 			variant.facets.add(facet);
 		}
 
-		dbRep.save(DataStorage.createKey(columns, row), variant.toString());
+		dbRep.save(DbNSFPHelper.createKey(columns, row), variant.toString());
+
 		return variant;
 	}
 }

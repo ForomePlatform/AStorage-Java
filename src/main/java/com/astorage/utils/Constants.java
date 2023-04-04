@@ -1,18 +1,23 @@
 package com.astorage.utils;
 
+import com.astorage.utils.dbnsfp.DbNSFPConstants;
+import com.astorage.utils.fasta.FastaConstants;
 import io.vertx.core.http.HttpServerRequest;
 
 public interface Constants {
-	String ERROR_INVALID_PARAMS = "Error: Invalid parameters";
-	String ERROR_DOWNLOADING_DATA = "Error: Download failed";
-	String ERROR_INITIALIZING_DIRECTORY = "Error: Couldn't initialize directories";
-	String COLUMN_FAMILY_NULL = "Error: Array with the given name doesn't exist";
+	// General:
 	String DATA_DIRECTORY_PATH = System.getProperty("user.home") + "/AStorage";
-	String DATA_FILENAME = "data";
 	String[] FORMAT_NAMES = {
-		com.astorage.utils.fasta.Constants.FASTA_FORMAT_NAME,
-		com.astorage.utils.dbnsfp.Constants.DBNSFP_FORMAT_NAME
+		FastaConstants.FASTA_FORMAT_NAME,
+		DbNSFPConstants.DBNSFP_FORMAT_NAME
 	};
+
+	// Error messages:
+	String ROCKS_DB_INIT_ERROR = "RocksDB couldn't initialize...";
+	String INVALID_PARAMS_ERROR = "Invalid parameters...";
+	String DOWNLOADING_DATA_ERROR = "Download failed...";
+	String INITIALIZING_DIRECTORY_ERROR = "Couldn't initialize directories...";
+	String FILE_NOT_FOUND_ERROR = "File does not exist on given path...";
 
 	static void errorResponse(HttpServerRequest req, int errorCode, String errorMsg) {
 		req.response()

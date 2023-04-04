@@ -2,6 +2,7 @@ package com.astorage.ingestion;
 
 import com.astorage.db.RocksDBRepository;
 import com.astorage.utils.Constants;
+import com.astorage.utils.fasta.FastaConstants;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.ext.web.RoutingContext;
 import org.rocksdb.ColumnFamilyHandle;
@@ -14,7 +15,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
-public class FastaIngestor implements Ingestor, Constants, com.astorage.utils.fasta.Constants {
+@SuppressWarnings("unused")
+public class FastaIngestor implements Ingestor, Constants, FastaConstants {
 	private final RoutingContext context;
 	private final RocksDBRepository dbRep;
 
@@ -26,26 +28,26 @@ public class FastaIngestor implements Ingestor, Constants, com.astorage.utils.fa
 	public void ingestionHandler() {
 		HttpServerRequest req = context.request();
 		if (!(req.params().size() == 3
-			&& req.params().contains("arrayName")
-			&& req.params().contains("dataURL")
-			&& req.params().contains("metadataURL"))) {
-			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, ERROR_INVALID_PARAMS);
+			&& req.params().contains(ARRAY_NAME_PARAM)
+			&& req.params().contains(DATA_URL_PARAM)
+			&& req.params().contains(METADATA_URL_PARAM))) {
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
 			return;
 		}
 
-		String arrayName = req.getParam("arrayName");
-		String dataURL = req.getParam("dataURL");
-		String metadataURL = req.getParam("metadataURL");
+		String arrayName = req.getParam(ARRAY_NAME_PARAM);
+		String dataURL = req.getParam(DATA_URL_PARAM);
+		String metadataURL = req.getParam(METADATA_URL_PARAM);
 
 		try {
 			downloadUsingStream(metadataURL, METADATA_FILENAME);
 			Map<String, String> metadata = readMetadata();
 			downloadUsingStream(dataURL, COMPRESSED_DATA_FILENAME);
-			decompressGzip(COMPRESSED_DATA_FILENAME, DATA_FILENAME);
+			decompressGzip();
 			storeData(arrayName, metadata);
 		} catch (IOException | SecurityException e) {
 			e.printStackTrace();
-			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, ERROR_DOWNLOADING_DATA);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, DOWNLOADING_DATA_ERROR);
 			return;
 		}
 
@@ -77,7 +79,7 @@ public class FastaIngestor implements Ingestor, Constants, com.astorage.utils.fa
 				idx = 1;
 			} else if (seqName != null) {
 				for (int i = 0; i < line.length(); i++) {
-					dbRep.save(generateDBKey(seqName, idx), line.charAt(i) + "", columnFamilyHandle);
+					dbRep.save(generateDBKey(seqName, idx), String.valueOf(line.charAt(i)), columnFamilyHandle);
 					idx++;
 				}
 			}
@@ -136,9 +138,9 @@ public class FastaIngestor implements Ingestor, Constants, com.astorage.utils.fa
 		return result;
 	}
 
-	private static void decompressGzip(String source, String target) throws IOException {
-		File sourceFile = new File(DATA_DIRECTORY_PATH, source);
-		File targetFile = new File(DATA_DIRECTORY_PATH, target);
+	private static void decompressGzip() throws IOException {
+		File sourceFile = new File(DATA_DIRECTORY_PATH, COMPRESSED_DATA_FILENAME);
+		File targetFile = new File(DATA_DIRECTORY_PATH, DATA_FILENAME);
 
 		try (
 			GZIPInputStream gzipInputStream = new GZIPInputStream(new FileInputStream(sourceFile));
