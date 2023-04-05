@@ -63,11 +63,15 @@ public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
 			while ((line = bufferedReader.readLine()) != null) {
 				lastKey = processLine(line, columns, lastKey, lastVariants);
 				lineCount++;
+
+				if (lineCount % 10000 == 0) {
+					System.out.println(dbRep.dbName + " progress: " + lineCount + " lines have been ingested...");
+				}
 			}
 
 			req.response()
 				.putHeader("content-type", "text/json")
-				.end(lineCount + " lines have been ingested!\n");
+				.end(lineCount + " lines have been ingested in " + dbRep.dbName + "!\n");
 		} catch (IOException e) {
 			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 		}

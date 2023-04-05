@@ -16,9 +16,11 @@ public class RocksDBRepository implements KeyValueRepository<byte[], String>, Co
 	private final HashMap<String, ColumnFamilyHandle> columnFamilyHandleMap = new HashMap<>();
 	private final String dbFilename;
 	private final RocksDB db;
+	public final String dbName;
 
 	public RocksDBRepository(String dbFilename) throws RocksDBException, IOException {
 		this.dbFilename = dbFilename;
+		this.dbName = "RocksDB<" + dbFilename + ">";
 
 		final Options options = new Options()
 			.setCreateIfMissing(true)
