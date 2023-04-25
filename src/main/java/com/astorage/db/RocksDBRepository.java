@@ -12,14 +12,15 @@ import java.util.HashMap;
 import java.util.List;
 
 public class RocksDBRepository implements KeyValueRepository<byte[], String>, Constants {
-	private final static String DB_DIR = DATA_DIRECTORY_PATH + "/rocks-db";
 	private final HashMap<String, ColumnFamilyHandle> columnFamilyHandleMap = new HashMap<>();
 	private final String dbFilename;
+	private final String dbDirectoryPath;
 	private final RocksDB db;
 	public final String dbName;
 
-	public RocksDBRepository(String dbFilename) throws RocksDBException, IOException {
+	public RocksDBRepository(String dbFilename, String dataDirectoryPath) throws RocksDBException, IOException {
 		this.dbFilename = dbFilename;
+		this.dbDirectoryPath = dataDirectoryPath + "/rocks-db";
 		this.dbName = "RocksDB<" + dbFilename + ">";
 
 		final Options options = new Options()
@@ -30,7 +31,7 @@ public class RocksDBRepository implements KeyValueRepository<byte[], String>, Co
 		List<ColumnFamilyHandle> columnFamilyHandles = new ArrayList<>();
 
 		try {
-			File dbDir = new File(DB_DIR, this.dbFilename);
+			File dbDir = new File(this.dbDirectoryPath, this.dbFilename);
 			if (!dbDir.exists()) {
 				Files.createDirectories(dbDir.getParentFile().toPath());
 				Files.createDirectory(dbDir.getAbsoluteFile().toPath());
@@ -150,7 +151,7 @@ public class RocksDBRepository implements KeyValueRepository<byte[], String>, Co
 		List<ColumnFamilyDescriptor> columnFamilyDescriptors = new ArrayList<>();
 
 		try {
-			File dbDir = new File(DB_DIR, this.dbFilename);
+			File dbDir = new File(this.dbDirectoryPath, this.dbFilename);
 			if (dbDir.exists()) {
 				List<byte[]> columnFamilyByteNames = RocksDB.listColumnFamilies(new Options(), dbDir.getAbsolutePath());
 				for (byte[] name : columnFamilyByteNames) {

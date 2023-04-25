@@ -10,6 +10,8 @@ import java.util.List;
 
 public interface Constants {
 	// General:
+	String USER_HOME = System.getProperty("user.home");
+	String ASTORAGE_DIRECTORY_NAME = "/AStorage";
 	String DATA_DIRECTORY_PATH = System.getProperty("user.home") + "/AStorage";
 	String[] FORMAT_NAMES = {
 		FastaConstants.FASTA_FORMAT_NAME,
