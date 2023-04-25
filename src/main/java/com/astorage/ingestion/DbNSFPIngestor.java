@@ -9,7 +9,9 @@ import io.vertx.ext.web.RoutingContext;
 
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.zip.GZIPInputStream;
 
 /**
  * For dbNSFP v4.3a!
@@ -42,8 +44,10 @@ public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
 		}
 
 		try (
-			FileInputStream fileInputStream = new FileInputStream(file);
-			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fileInputStream))
+			InputStream fileInputStream = new FileInputStream(file);
+			InputStream gzipInputStream = new GZIPInputStream(fileInputStream);
+			Reader decoder = new InputStreamReader(gzipInputStream, StandardCharsets.UTF_8);
+			BufferedReader bufferedReader = new BufferedReader(decoder)
 		) {
 			String line;
 			Map<String, Integer> columns = null;
