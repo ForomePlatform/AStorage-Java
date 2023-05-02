@@ -24,17 +24,16 @@ public class DbNSFPQuery implements Query, Constants, DbNSFPConstants {
 
 	public void queryHandler() {
 		HttpServerRequest req = context.request();
-		if (!(req.params().size() == 3
+		if (!((req.params().size() == 2 || req.params().size() == 3 && req.params().contains(ALT_PARAM))
 			&& req.params().contains(CHR_PARAM)
-			&& req.params().contains(POS_PARAM)
-			&& req.params().contains(ALT_PARAM))) {
+			&& req.params().contains(POS_PARAM))) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
 			return;
 		}
 
 		String chr = req.getParam(CHR_PARAM);
 		String pos = req.getParam(POS_PARAM);
-		String alt = req.getParam(ALT_PARAM).toUpperCase();
+		String alt = req.params().contains(ALT_PARAM) ? req.getParam(ALT_PARAM).toUpperCase() : null;
 
 		try {
 			Integer.parseInt(chr);
@@ -44,7 +43,7 @@ public class DbNSFPQuery implements Query, Constants, DbNSFPConstants {
 			return;
 		}
 
-		if (alt.length() != 1 || !NUCLEOTIDES.contains(alt)) {
+		if (alt != null && (alt.length() != 1 || !NUCLEOTIDES.contains(alt))) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_ALT_ERROR);
 			return;
 		}
@@ -60,21 +59,28 @@ public class DbNSFPQuery implements Query, Constants, DbNSFPConstants {
 		JsonObject result = new JsonObject();
 		result.put(CHR_PARAM, chr);
 		result.put(POS_PARAM, pos);
-		result.put(ALT_PARAM, alt);
-
-		JsonArray finalVariantsJson = new JsonArray();
-		JsonArray variantsJson = new JsonArray(variantsString);
-
-		for (int i = 0; i < variantsJson.size(); i++) {
-			JsonObject variantJson = variantsJson.getJsonObject(i);
-			String nucleotide = variantJson.getString(Variant.VARIANT_ALT);
-
-			if (nucleotide.equals(alt)) {
-				finalVariantsJson.add(variantJson);
-			}
+		if (alt != null) {
+			result.put(ALT_PARAM, alt);
 		}
 
-		result.put("variants", finalVariantsJson);
+		JsonArray variantsJson = new JsonArray(variantsString);
+
+		if (alt != null) {
+			JsonArray selectedVariantJson = new JsonArray();
+
+			for (int i = 0; i < variantsJson.size(); i++) {
+				JsonObject variantJson = variantsJson.getJsonObject(i);
+				String nucleotide = variantJson.getString(Variant.VARIANT_ALT);
+
+				if (nucleotide.equals(alt)) {
+					selectedVariantJson.add(variantJson);
+					result.put("variants", selectedVariantJson);
+					break;
+				}
+			}
+		} else {
+			result.put("variants", variantsJson);
+		}
 
 		req.response()
 			.putHeader("content-type", "text/json")
