@@ -25,7 +25,9 @@ public class RocksDBRepository implements KeyValueRepository<byte[], String>, Co
 
 		final Options options = new Options()
 			.setCreateIfMissing(true)
-			.setCreateMissingColumnFamilies(true);
+			.setCreateMissingColumnFamilies(true)
+			.setCompressionType(CompressionType.LZ4_COMPRESSION)
+			.setCompactionStyle(CompactionStyle.UNIVERSAL);
 
 		List<ColumnFamilyDescriptor> columnFamilyDescriptors = new ArrayList<>();
 		List<ColumnFamilyHandle> columnFamilyHandles = new ArrayList<>();
