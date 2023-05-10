@@ -14,8 +14,8 @@ import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
 public class DbNSFPQuery implements Query, Constants, DbNSFPConstants {
-	private final RoutingContext context;
-	private final RocksDBRepository dbRep;
+	protected final RoutingContext context;
+	protected final RocksDBRepository dbRep;
 
 	public DbNSFPQuery(RoutingContext context, RocksDBRepository dbRep) {
 		this.context = context;
@@ -24,27 +24,50 @@ public class DbNSFPQuery implements Query, Constants, DbNSFPConstants {
 
 	public void queryHandler() {
 		HttpServerRequest req = context.request();
-		if (!((req.params().size() == 2 || req.params().size() == 3 && req.params().contains(ALT_PARAM))
+
+		if ((req.params().size() == 2 || req.params().size() == 3 && req.params().contains(ALT_PARAM))
 			&& req.params().contains(CHR_PARAM)
-			&& req.params().contains(POS_PARAM))) {
-			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
+			&& req.params().contains(POS_PARAM)) {
+			String chr = req.getParam(CHR_PARAM);
+			String pos = req.getParam(POS_PARAM);
+			String alt = req.params().contains(ALT_PARAM) ? req.getParam(ALT_PARAM).toUpperCase() : null;
+
+			singleQueryHandler(chr, pos, alt, false);
+
 			return;
 		}
 
-		String chr = req.getParam(CHR_PARAM);
-		String pos = req.getParam(POS_PARAM);
-		String alt = req.params().contains(ALT_PARAM) ? req.getParam(ALT_PARAM).toUpperCase() : null;
+		Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
+	}
+
+	protected void singleQueryHandler(String chr, String pos, String alt, boolean isBatched) {
+		HttpServerRequest req = context.request();
+		JsonObject errorJson = new JsonObject();
 
 		try {
 			Integer.parseInt(chr);
 			Long.parseLong(pos);
 		} catch (NumberFormatException e) {
-			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_CHR_OR_POS_ERROR);
+			errorJson.put("error", INVALID_CHR_OR_POS_ERROR);
+
+			Constants.errorResponse(
+				req,
+				HttpURLConnection.HTTP_BAD_REQUEST,
+				errorJson.toString()
+			);
+
 			return;
 		}
 
 		if (alt != null && (alt.length() != 1 || !NUCLEOTIDES.contains(alt))) {
-			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_ALT_ERROR);
+			errorJson.put("error", INVALID_ALT_ERROR);
+
+			Constants.errorResponse(
+				req,
+				HttpURLConnection.HTTP_BAD_REQUEST,
+				errorJson.toString()
+			);
+
 			return;
 		}
 
@@ -52,7 +75,14 @@ public class DbNSFPQuery implements Query, Constants, DbNSFPConstants {
 
 		String variantsString = dbRep.find(key);
 		if (variantsString == null) {
-			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, VARIANT_NOT_FOUND_ERROR);
+			errorJson.put("error", VARIANT_NOT_FOUND_ERROR);
+
+			Constants.errorResponse(
+				req,
+				HttpURLConnection.HTTP_BAD_REQUEST,
+				errorJson.toString()
+			);
+
 			return;
 		}
 
@@ -82,8 +112,12 @@ public class DbNSFPQuery implements Query, Constants, DbNSFPConstants {
 			result.put("variants", variantsJson);
 		}
 
-		req.response()
-			.putHeader("content-type", "text/json")
-			.end(result + "\n");
+		if (isBatched) {
+			req.response().write(result + "\n");
+		} else {
+			req.response()
+				.putHeader("content-type", "text/json")
+				.end(result + "\n");
+		}
 	}
 }

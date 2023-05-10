@@ -1,0 +1,52 @@
+package com.astorage.query;
+
+import com.astorage.db.RocksDBRepository;
+import com.astorage.utils.Constants;
+import com.astorage.utils.dbnsfp.DbNSFPConstants;
+import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.json.DecodeException;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.RoutingContext;
+
+import java.net.HttpURLConnection;
+
+@SuppressWarnings("unused")
+public class DbNSFPBatchQuery extends DbNSFPQuery implements Query, Constants, DbNSFPConstants {
+	public DbNSFPBatchQuery(RoutingContext context, RocksDBRepository dbRep) {
+		super(context, dbRep);
+	}
+
+	public void queryHandler() {
+		HttpServerRequest req = context.request();
+
+		batchQueryHandler();
+	}
+
+	private void batchQueryHandler() {
+		HttpServerRequest req = context.request();
+
+		req.bodyHandler(buffer -> {
+			try {
+				JsonArray queries = buffer.toJsonArray();
+
+				req.response().setChunked(true);
+				req.response().putHeader("content-type", "text/json");
+
+				for (Object queryObject : queries) {
+					JsonObject query = (JsonObject) queryObject;
+
+					String chr = query.getString(CHR_PARAM);
+					String pos = query.getString(POS_PARAM);
+					String alt = query.containsKey(ALT_PARAM) ? query.getString(ALT_PARAM).toUpperCase() : null;
+
+					singleQueryHandler(chr, pos, alt, true);
+				}
+
+				req.response().end();
+			} catch (DecodeException e) {
+				Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, JSON_DECODE_ERROR);
+			}
+		});
+	}
+}

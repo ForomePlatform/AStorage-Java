@@ -13,6 +13,7 @@ public interface Constants {
 	String USER_HOME = System.getProperty("user.home");
 	String ASTORAGE_DIRECTORY_NAME = "/AStorage";
 	String DATA_DIRECTORY_PATH = System.getProperty("user.home") + "/AStorage";
+	String DATA_DIRECTORY_PATH_JSON_KEY = "data_directory_path";
 	String[] FORMAT_NAMES = {
 		FastaConstants.FASTA_FORMAT_NAME,
 		DbNSFPConstants.DBNSFP_FORMAT_NAME
@@ -24,6 +25,10 @@ public interface Constants {
 	String DOWNLOADING_DATA_ERROR = "Download failed...";
 	String INITIALIZING_DIRECTORY_ERROR = "Couldn't initialize directories...";
 	String FILE_NOT_FOUND_ERROR = "File does not exist on given path...";
+	String CONFIG_JSON_DOESNT_EXIST_ERROR = "Given config file doesn't exist.";
+	String CONFIG_JSON_NOT_READABLE_ERROR = "Couldn't read the given config file...";
+	String CONFIG_JSON_DECODE_ERROR = "Given config file isn't a valid JSON...";
+	String JSON_DECODE_ERROR = "Given file isn't a valid JSON...";
 
 	// Helper functions:
 	static JsonArray listToJson(List<? extends JsonConvertible> list) {
@@ -38,6 +43,20 @@ public interface Constants {
 	}
 
 	static void errorResponse(HttpServerRequest req, int errorCode, String errorMsg) {
+		if (req.response().ended()) {
+			return;
+		}
+
+		if (req.response().headWritten()) {
+			if (req.response().isChunked()) {
+				req.response().write(errorMsg + "\n");
+			} else {
+				req.response().end(errorMsg + "\n");
+			}
+
+			return;
+		}
+
 		req.response()
 			.setStatusCode(errorCode)
 			.putHeader("content-type", "text/plain")

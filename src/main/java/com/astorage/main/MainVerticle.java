@@ -9,6 +9,7 @@ import com.astorage.utils.fasta.FastaConstants;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
@@ -27,44 +28,62 @@ import java.util.List;
 import java.util.Map;
 
 public class MainVerticle extends AbstractVerticle implements Constants, FastaConstants, DbNSFPConstants {
-	private final Map<String, RocksDBRepository> dbReps = new HashMap<>();
+	private final Map<String, RocksDBRepository> dbRepositories = new HashMap<>();
 
 	@Override
 	public void start(Promise<Void> startPromise) {
+		HttpServer server = vertx.createHttpServer();
 		Router router = Router.router(vertx);
-		String dataDirectoryPath = getDataDirectoryPath(startPromise);
 
-		System.out.println(dataDirectoryPath);
+		String dataDirectoryPath;
+		try {
+			dataDirectoryPath = getDataDirectoryPath();
+			System.out.println("Data directory path: " + dataDirectoryPath);
+		} catch (Exception e) {
+			startPromise.fail(e.getMessage());
+
+			return;
+		}
 
 		try {
 			for (String formatName : FORMAT_NAMES) {
-				dbReps.put(formatName, new RocksDBRepository(formatName.toLowerCase(), dataDirectoryPath));
+				dbRepositories.put(
+					formatName,
+					new RocksDBRepository(formatName.toLowerCase(), dataDirectoryPath)
+				);
 				this.setIngestionHandler(formatName, router);
 				this.setQueryHandler(formatName, router);
+				this.setBatchQueryHandler(formatName, router);
 			}
 		} catch (IOException | RocksDBException e) {
 			startPromise.fail(ROCKS_DB_INIT_ERROR);
+
+			return;
 		}
 
 		setStopHandler(router);
 
-		vertx.createHttpServer().requestHandler(router).listen(8080, http -> {
-			if (http.succeeded()) {
+		server.requestHandler(router).listen(8080, result -> {
+			if (result.succeeded()) {
 				if (!initializeDirectories(dataDirectoryPath)) {
 					startPromise.fail(new IOException(INITIALIZING_DIRECTORY_ERROR));
+
+					return;
 				}
 
-				startPromise.complete();
 				System.out.println("HTTP server started on port 8080!");
+				startPromise.complete();
 			} else {
-				startPromise.fail(http.cause());
+				System.err.println("Server failed to start...");
+				result.cause().printStackTrace();
+				startPromise.fail(result.cause());
 			}
 		});
 	}
 
 	@Override
 	public void stop(Promise<Void> stopPromise) {
-		for (RocksDBRepository rocksDBRepository : dbReps.values()) {
+		for (RocksDBRepository rocksDBRepository : dbRepositories.values()) {
 			rocksDBRepository.close();
 		}
 
@@ -79,7 +98,7 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 				Class<?> cls = Class.forName("com.astorage.ingestion." + formatName + "Ingestor");
 				Constructor<?> constructor = cls.getConstructor(RoutingContext.class, RocksDBRepository.class);
 
-				Ingestor ingestor = (Ingestor) constructor.newInstance(context, dbReps.get(formatName));
+				Ingestor ingestor = (Ingestor) constructor.newInstance(context, dbRepositories.get(formatName));
 				ingestor.ingestionHandler();
 			} catch (Exception e) {
 				Constants.errorResponse(context.request(), HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
@@ -93,7 +112,21 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 				Class<?> cls = Class.forName("com.astorage.query." + formatName + "Query");
 				Constructor<?> constructor = cls.getConstructor(RoutingContext.class, RocksDBRepository.class);
 
-				Query query = (Query) constructor.newInstance(context, dbReps.get(formatName));
+				Query query = (Query) constructor.newInstance(context, dbRepositories.get(formatName));
+				query.queryHandler();
+			} catch (Exception e) {
+				Constants.errorResponse(context.request(), HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
+			}
+		});
+	}
+
+	private void setBatchQueryHandler(String formatName, Router router) {
+		router.post("/batch-query/" + formatName.toLowerCase()).handler((RoutingContext context) -> {
+			try {
+				Class<?> cls = Class.forName("com.astorage.query." + formatName + "BatchQuery");
+				Constructor<?> constructor = cls.getConstructor(RoutingContext.class, RocksDBRepository.class);
+
+				Query query = (Query) constructor.newInstance(context, dbRepositories.get(formatName));
 				query.queryHandler();
 			} catch (Exception e) {
 				Constants.errorResponse(context.request(), HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
@@ -126,7 +159,7 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 		return true;
 	}
 
-	private String getDataDirectoryPath(Promise<Void> startPromise) {
+	private String getDataDirectoryPath() throws Exception {
 		List<String> args = Vertx.currentContext().processArgs();
 		String dataDirectoryPath = USER_HOME + ASTORAGE_DIRECTORY_NAME;
 
@@ -135,29 +168,27 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 
 			File file = new File(configPath);
 			if (!file.exists()) {
-				startPromise.fail("Given config file doesn't exist.");
+				throw new Exception(CONFIG_JSON_DOESNT_EXIST_ERROR);
 			}
 
-			String configAsString = "";
+			String configAsString;
 			try (FileInputStream fileInputStream = new FileInputStream(file)) {
 				byte[] configAsBytes = fileInputStream.readAllBytes();
 				configAsString = new String(configAsBytes, StandardCharsets.UTF_8);
 			} catch (IOException e) {
-				startPromise.fail("Couldn't read the given config file...");
+				throw new Exception(CONFIG_JSON_NOT_READABLE_ERROR);
 			}
 
-			JsonObject configAsJson = null;
+			JsonObject configAsJson;
 			try {
 				configAsJson = new JsonObject(configAsString);
 			} catch (DecodeException e) {
-				startPromise.fail("Given config file isn't a valid JSON.");
+				throw new Exception(CONFIG_JSON_DECODE_ERROR);
 			}
 
-			if (configAsJson != null) {
-				String dataDirectoryPathFromConfig = configAsJson.getString("data_directory_path");
-				if (dataDirectoryPathFromConfig != null) {
-					dataDirectoryPath = dataDirectoryPathFromConfig;
-				}
+			String dataDirectoryPathFromConfig = configAsJson.getString(DATA_DIRECTORY_PATH_JSON_KEY);
+			if (dataDirectoryPathFromConfig != null) {
+				dataDirectoryPath = dataDirectoryPathFromConfig;
 			}
 		}
 

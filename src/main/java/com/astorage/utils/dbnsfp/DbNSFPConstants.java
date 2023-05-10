@@ -9,7 +9,7 @@ public interface DbNSFPConstants {
 	String POS_COLUMN_NAME = "pos(1-based)";
 
 	// Ingestion/query request params:
-	String DATA_PATH_PARAM = "dataPath";
+	String DATA_PATH_PARAM = "data-path";
 	String CHR_PARAM = "chr";
 	String POS_PARAM = "pos";
 	String ALT_PARAM = "alt";

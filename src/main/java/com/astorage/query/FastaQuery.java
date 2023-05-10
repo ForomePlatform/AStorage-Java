@@ -13,8 +13,8 @@ import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
 public class FastaQuery implements Query, Constants, FastaConstants {
-	private final RoutingContext context;
-	private final RocksDBRepository dbRep;
+	protected final RoutingContext context;
+	protected final RocksDBRepository dbRep;
 
 	public FastaQuery(RoutingContext context, RocksDBRepository dbRep) {
 		this.context = context;

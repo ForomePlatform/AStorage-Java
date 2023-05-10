@@ -32,6 +32,7 @@ public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
 		if (!(req.params().size() == 1
 			&& req.params().contains(DATA_PATH_PARAM))) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
+
 			return;
 		}
 
@@ -40,6 +41,7 @@ public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
 		File file = new File(dataPath);
 		if (!file.exists()) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, FILE_NOT_FOUND_ERROR);
+
 			return;
 		}
 
@@ -55,6 +57,7 @@ public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
 			if ((line = bufferedReader.readLine()) != null) {
 				if (!line.startsWith(DbNSFPHelper.CHR_COLUMN_NAME)) {
 					Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, "Invalid dbNSFP file...");
+
 					return;
 				}
 
