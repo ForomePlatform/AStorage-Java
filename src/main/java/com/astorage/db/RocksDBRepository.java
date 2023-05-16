@@ -23,27 +23,32 @@ public class RocksDBRepository implements KeyValueRepository<byte[], String>, Co
 		this.dbDirectoryPath = dataDirectoryPath + "/rocks-db";
 		this.dbName = "RocksDB<" + dbFilename + ">";
 
-		final Options options = new Options()
-			.setCreateIfMissing(true)
-			.setCreateMissingColumnFamilies(true)
-			.setCompressionType(CompressionType.LZ4_COMPRESSION)
-			.setCompactionStyle(CompactionStyle.UNIVERSAL);
-
 		List<ColumnFamilyDescriptor> columnFamilyDescriptors = new ArrayList<>();
 		List<ColumnFamilyHandle> columnFamilyHandles = new ArrayList<>();
 
-		try {
+		try (
+			DBOptions dbOptions = new DBOptions();
+			ColumnFamilyOptions columnFamilyOptions = new ColumnFamilyOptions()
+		) {
+			// DBOptions config
+			dbOptions.setCreateIfMissing(true);
+			dbOptions.setCreateMissingColumnFamilies(true);
+
+			// ColumnFamilyOptions config
+			columnFamilyOptions.setCompressionType(CompressionType.LZ4_COMPRESSION);
+			columnFamilyOptions.setCompactionStyle(CompactionStyle.UNIVERSAL);
+
 			File dbDir = new File(this.dbDirectoryPath, this.dbFilename);
 			if (!dbDir.exists()) {
 				Files.createDirectories(dbDir.getParentFile().toPath());
 				Files.createDirectory(dbDir.getAbsoluteFile().toPath());
 
-				columnFamilyDescriptors.add(new ColumnFamilyDescriptor(RocksDB.DEFAULT_COLUMN_FAMILY));
+				columnFamilyDescriptors.add(new ColumnFamilyDescriptor(RocksDB.DEFAULT_COLUMN_FAMILY, columnFamilyOptions));
+			} else {
+				columnFamilyDescriptors.addAll(getColumnFamilyDescriptors(columnFamilyOptions));
 			}
 
-			columnFamilyDescriptors.addAll(getColumnFamilyDescriptors());
-
-			db = RocksDB.open(new DBOptions(options), dbDir.getAbsolutePath(), columnFamilyDescriptors, columnFamilyHandles);
+			db = RocksDB.open(dbOptions, dbDir.getAbsolutePath(), columnFamilyDescriptors, columnFamilyHandles);
 
 			for (ColumnFamilyHandle handle : columnFamilyHandles) {
 				String name = new String(handle.getName());
@@ -149,7 +154,7 @@ public class RocksDBRepository implements KeyValueRepository<byte[], String>, Co
 		return null;
 	}
 
-	private List<ColumnFamilyDescriptor> getColumnFamilyDescriptors() {
+	private List<ColumnFamilyDescriptor> getColumnFamilyDescriptors(ColumnFamilyOptions columnFamilyOptions) {
 		List<ColumnFamilyDescriptor> columnFamilyDescriptors = new ArrayList<>();
 
 		try {
@@ -157,7 +162,7 @@ public class RocksDBRepository implements KeyValueRepository<byte[], String>, Co
 			if (dbDir.exists()) {
 				List<byte[]> columnFamilyByteNames = RocksDB.listColumnFamilies(new Options(), dbDir.getAbsolutePath());
 				for (byte[] name : columnFamilyByteNames) {
-					columnFamilyDescriptors.add(new ColumnFamilyDescriptor(name));
+					columnFamilyDescriptors.add(new ColumnFamilyDescriptor(name, columnFamilyOptions));
 				}
 			}
 
