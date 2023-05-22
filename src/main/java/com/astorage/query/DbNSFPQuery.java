@@ -45,7 +45,10 @@ public class DbNSFPQuery implements Query, Constants, DbNSFPConstants {
 		JsonObject errorJson = new JsonObject();
 
 		try {
-			Integer.parseInt(chr);
+			if (!LETTER_CHROMOSOMES.contains(chr.toUpperCase())) {
+				Integer.parseInt(chr);
+			}
+
 			Long.parseLong(pos);
 		} catch (NumberFormatException e) {
 			errorJson.put("error", INVALID_CHR_OR_POS_ERROR);
