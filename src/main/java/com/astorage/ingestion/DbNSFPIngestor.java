@@ -67,6 +67,7 @@ public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
 			int lineCount = 0;
 			byte[] lastKey = null;
 			List<Variant> lastVariants = new ArrayList<>();
+
 			while ((line = bufferedReader.readLine()) != null) {
 				lastKey = processLine(line, columns, lastKey, lastVariants);
 				lineCount++;
@@ -74,6 +75,10 @@ public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
 				if (lineCount % 10000 == 0) {
 					System.out.println(dbRep.dbName + " progress: " + lineCount + " lines have been ingested...");
 				}
+			}
+
+			if (!lastVariants.isEmpty()) {
+				saveVariantsInDb(lastKey, lastVariants);
 			}
 
 			req.response()
@@ -115,14 +120,20 @@ public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
 				lastVariants.add(newVariant);
 			}
 		} else {
+			if (!lastVariants.isEmpty()) {
+				saveVariantsInDb(key, lastVariants);
+			}
+
 			newVariant.facets.add(newFacet);
 			lastVariants.clear();
 			lastVariants.add(newVariant);
 		}
 
-		JsonArray variantsJson = Constants.listToJson(lastVariants);
-		dbRep.save(key, variantsJson.toString());
-
 		return key;
+	}
+
+	private void saveVariantsInDb(byte[] key, List<Variant> variants) {
+		JsonArray variantsJson = Constants.listToJson(variants);
+		dbRep.save(key, variants.toString());
 	}
 }
