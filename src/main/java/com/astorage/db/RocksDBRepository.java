@@ -35,8 +35,8 @@ public class RocksDBRepository implements KeyValueRepository<byte[], String>, Co
 			dbOptions.setCreateMissingColumnFamilies(true);
 
 			// ColumnFamilyOptions config
-			columnFamilyOptions.setCompressionType(CompressionType.LZ4_COMPRESSION);
-			columnFamilyOptions.setCompactionStyle(CompactionStyle.UNIVERSAL);
+			columnFamilyOptions.setCompressionType(CompressionType.BZLIB2_COMPRESSION);
+			columnFamilyOptions.setCompactionStyle(CompactionStyle.LEVEL);
 
 			File dbDir = new File(this.dbDirectoryPath, this.dbFilename);
 			if (!dbDir.exists()) {
