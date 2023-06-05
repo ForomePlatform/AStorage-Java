@@ -1,232 +1,197 @@
 package com.astorage.main;
 
 import com.astorage.db.RocksDBRepository;
+import com.astorage.ingestion.Ingestor;
+import com.astorage.query.Query;
+import com.astorage.utils.Constants;
+import com.astorage.utils.dbnsfp.DbNSFPConstants;
+import com.astorage.utils.fasta.FastaConstants;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import org.rocksdb.ColumnFamilyHandle;
+import org.rocksdb.RocksDBException;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.zip.GZIPInputStream;
 
-public class MainVerticle extends AbstractVerticle implements Constants {
-	private RocksDBRepository dbRep;
+public class MainVerticle extends AbstractVerticle implements Constants, FastaConstants, DbNSFPConstants {
+	private final Map<String, RocksDBRepository> dbRepositories = new HashMap<>();
 
 	@Override
 	public void start(Promise<Void> startPromise) {
+		HttpServer server = vertx.createHttpServer();
 		Router router = Router.router(vertx);
-		router.post("/ingestion/").handler(this::ingestionHandler);
-		router.get("/query/").handler(this::queryHandler);
 
-		vertx.createHttpServer().requestHandler(router).listen(8080, http -> {
-			if (http.succeeded()) {
-				startPromise.complete();
-				System.out.println("HTTP server started on port 8080");
-				if (initializeDirectories()) {
-					dbRep = new RocksDBRepository();
-					dbRep.initialize();
-				} else {
-					startPromise.fail(new IOException(ERROR_INITIALIZING_DIRECTORY));
+		String dataDirectoryPath;
+		try {
+			dataDirectoryPath = getDataDirectoryPath();
+			System.out.println("Data directory path: " + dataDirectoryPath);
+		} catch (Exception e) {
+			startPromise.fail(e.getMessage());
+
+			return;
+		}
+
+		try {
+			for (String formatName : FORMAT_NAMES) {
+				dbRepositories.put(
+					formatName,
+					new RocksDBRepository(formatName.toLowerCase(), dataDirectoryPath)
+				);
+				this.setIngestionHandler(formatName, router);
+				this.setQueryHandler(formatName, router);
+				this.setBatchQueryHandler(formatName, router);
+			}
+		} catch (IOException | RocksDBException e) {
+			startPromise.fail(ROCKS_DB_INIT_ERROR);
+
+			return;
+		}
+
+		setStopHandler(router);
+
+		server.requestHandler(router).listen(8080, result -> {
+			if (result.succeeded()) {
+				if (!initializeDirectories(dataDirectoryPath)) {
+					startPromise.fail(new IOException(INITIALIZING_DIRECTORY_ERROR));
+
+					return;
 				}
+
+				System.out.println("HTTP server started on port 8080!");
+				startPromise.complete();
 			} else {
-				startPromise.fail(http.cause());
+				System.err.println("Server failed to start...");
+				result.cause().printStackTrace();
+				startPromise.fail(result.cause());
 			}
 		});
 	}
 
-	private boolean initializeDirectories() {
+	@Override
+	public void stop(Promise<Void> stopPromise) {
+		for (RocksDBRepository rocksDBRepository : dbRepositories.values()) {
+			rocksDBRepository.close();
+		}
+
+		System.out.println("HTTP server stopped.");
+
+		stopPromise.complete();
+	}
+
+	private void setIngestionHandler(String formatName, Router router) {
+		router.post("/ingestion/" + formatName.toLowerCase()).handler((RoutingContext context) -> {
+			try {
+				Class<?> cls = Class.forName("com.astorage.ingestion." + formatName + "Ingestor");
+				Constructor<?> constructor = cls.getConstructor(RoutingContext.class, RocksDBRepository.class);
+
+				Ingestor ingestor = (Ingestor) constructor.newInstance(context, dbRepositories.get(formatName));
+				ingestor.ingestionHandler();
+			} catch (Exception e) {
+				Constants.errorResponse(context.request(), HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
+			}
+		});
+	}
+
+	private void setQueryHandler(String formatName, Router router) {
+		router.get("/query/" + formatName.toLowerCase()).handler((RoutingContext context) -> {
+			try {
+				Class<?> cls = Class.forName("com.astorage.query." + formatName + "Query");
+				Constructor<?> constructor = cls.getConstructor(RoutingContext.class, RocksDBRepository.class);
+
+				Query query = (Query) constructor.newInstance(context, dbRepositories.get(formatName));
+				query.queryHandler();
+			} catch (Exception e) {
+				Constants.errorResponse(context.request(), HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
+			}
+		});
+	}
+
+	private void setBatchQueryHandler(String formatName, Router router) {
+		router.post("/batch-query/" + formatName.toLowerCase()).handler((RoutingContext context) -> {
+			try {
+				Class<?> cls = Class.forName("com.astorage.query." + formatName + "BatchQuery");
+				Constructor<?> constructor = cls.getConstructor(RoutingContext.class, RocksDBRepository.class);
+
+				Query query = (Query) constructor.newInstance(context, dbRepositories.get(formatName));
+				query.queryHandler();
+			} catch (Exception e) {
+				Constants.errorResponse(context.request(), HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
+			}
+		});
+	}
+
+	private void setStopHandler(Router router) {
+		router.get("/stop").handler((RoutingContext context) -> {
+			HttpServerRequest req = context.request();
+
+			req.response()
+				.putHeader("content-type", "text/json")
+				.end("HTTP server stopped.\n");
+
+			vertx.close();
+		});
+	}
+
+	private boolean initializeDirectories(String dataDirectoryPath) {
 		try {
-			File dataDir = new File(DATA_DIRECTORY_PATH);
+			File dataDir = new File(dataDirectoryPath);
 			if (!dataDir.exists() && !dataDir.mkdirs()) {
 				return false;
 			}
-		} catch(SecurityException e) {
+		} catch (SecurityException e) {
 			return false;
 		}
 
 		return true;
 	}
 
-	private void ingestionHandler(RoutingContext context) {
-		HttpServerRequest req = context.request();
-		if (!(req.params().contains("arrayName")
-				&& req.params().contains("dataURL")
-				&& req.params().contains("metadataURL"))) {
-			errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, ERROR_INVALID_PARAMS);
-			return;
-		}
+	private String getDataDirectoryPath() throws Exception {
+		List<String> args = Vertx.currentContext().processArgs();
+		String dataDirectoryPath = USER_HOME + ASTORAGE_DIRECTORY_NAME;
 
-		String arrayName = req.getParam("arrayName");
-		String dataURL = req.getParam("dataURL");
-		String metadataURL = req.getParam("metadataURL");
+		if (args != null && args.size() > 0) {
+			String configPath = args.get(0);
 
-		try {
-			downloadUsingStream(metadataURL, METADATA_FILENAME);
-			Map<String, String> metadata = readMetadata();
-			downloadUsingStream(dataURL, COMPRESSED_DATA_FILENAME);
-			decompressGzip(COMPRESSED_DATA_FILENAME, DATA_FILENAME);
-			storeData(arrayName, metadata);
-		} catch (IOException | SecurityException e) {
-			e.printStackTrace();
-			errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, ERROR_DOWNLOADING_DATA);
-			return;
-		}
+			File file = new File(configPath);
+			if (!file.exists()) {
+				throw new Exception(CONFIG_JSON_DOESNT_EXIST_ERROR);
+			}
 
-		String resp = "arrayName: " + arrayName + "\n" +
-				"dataURL: " + dataURL + "\n" +
-				"metadataURL: " + metadataURL + "\n";
+			String configAsString;
+			try (FileInputStream fileInputStream = new FileInputStream(file)) {
+				byte[] configAsBytes = fileInputStream.readAllBytes();
+				configAsString = new String(configAsBytes, StandardCharsets.UTF_8);
+			} catch (IOException e) {
+				throw new Exception(CONFIG_JSON_NOT_READABLE_ERROR);
+			}
 
-		req.response()
-				.putHeader("content-type", "text/plain")
-				.end(resp);
-	}
+			JsonObject configAsJson;
+			try {
+				configAsJson = new JsonObject(configAsString);
+			} catch (DecodeException e) {
+				throw new Exception(CONFIG_JSON_DECODE_ERROR);
+			}
 
-	private void queryHandler(RoutingContext context) {
-		HttpServerRequest req = context.request();
-		if (!(req.params().contains("arrayName")
-				&& req.params().contains("sectionName")
-				&& req.params().contains("startPosition")
-				&& req.params().contains("endPosition"))) {
-			errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, ERROR_INVALID_PARAMS);
-			return;
-		}
-
-		String arrayName = req.getParam("arrayName");
-		String sectionName = req.getParam("sectionName");
-		int startPosition = Integer.parseInt(req.getParam("startPosition"));
-		int endPosition = Integer.parseInt(req.getParam("endPosition"));
-
-		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(arrayName);
-
-		if (columnFamilyHandle == null) {
-			errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, COLUMN_FAMILY_NULL);
-			return;
-		}
-
-		StringBuilder stringBuilder = new StringBuilder();
-		for (int i = startPosition; i <= endPosition; i++) {
-			stringBuilder.append(dbRep.find(generateDBKey(sectionName, i), columnFamilyHandle));
-		}
-
-		req.response()
-				.putHeader("content-type", "text/json")
-				.end(
-						new JsonObject()
-								.put("array", arrayName)
-								.put("section", sectionName)
-								.put("start", startPosition)
-								.put("end", endPosition)
-								.put("data", stringBuilder.toString())
-								.toString() + "\n"
-				);
-	}
-
-	private static void downloadUsingStream(String urlStr, String filename) throws IOException {
-		File file = new File(DATA_DIRECTORY_PATH, filename);
-		URL url = new URL(urlStr);
-		BufferedInputStream bufferedInputStream = new BufferedInputStream(url.openStream());
-		FileOutputStream fileOutputStream = new FileOutputStream(file);
-		byte[] buffer = new byte[1024];
-		int count;
-
-		while ((count = bufferedInputStream.read(buffer, 0, 1024)) != -1) {
-			fileOutputStream.write(buffer, 0, count);
-		}
-
-		bufferedInputStream.close();
-		fileOutputStream.close();
-	}
-
-	private static Map<String, String> readMetadata() throws IOException {
-		Map<String, String> result = new HashMap<>();
-		File metadataFile = new File(DATA_DIRECTORY_PATH, METADATA_FILENAME);
-		BufferedReader reader = new BufferedReader(new FileReader(metadataFile));
-		String line;
-
-		while ((line = reader.readLine()) != null) {
-			if (!line.startsWith("#")) {
-				String[] columns = line.split("\t");
-
-				String seqName = columns[0];
-				String refSeq = columns[6];
-				String uscs = columns.length >= 10 ? columns[9] : "";
-
-				result.put(refSeq, uscs.length() != 0 ? uscs : seqName);
+			String dataDirectoryPathFromConfig = configAsJson.getString(DATA_DIRECTORY_PATH_JSON_KEY);
+			if (dataDirectoryPathFromConfig != null) {
+				dataDirectoryPath = dataDirectoryPathFromConfig;
 			}
 		}
 
-		reader.close();
-
-		return result;
-	}
-
-	private void storeData(String arrayName, Map<String, String> metadata) throws IOException {
-		File dataFile = new File(DATA_DIRECTORY_PATH, DATA_FILENAME);
-		BufferedReader reader = new BufferedReader(new FileReader(dataFile));
-		String line;
-		String seqName = null;
-		int idx = 1;
-
-		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(arrayName);
-		if (columnFamilyHandle == null) {
-			columnFamilyHandle = dbRep.createColumnFamily(arrayName);
-		}
-
-		while ((line = reader.readLine()) != null) {
-			if (line.startsWith(">")) {
-				String refSeq = line.substring(1).split(" ")[0];
-				seqName = metadata.get(refSeq);
-				idx = 1;
-			} else if (seqName != null) {
-				for (int i = 0; i < line.length(); i++) {
-					dbRep.save(generateDBKey(seqName, idx), line.charAt(i) + "", columnFamilyHandle);
-					idx++;
-				}
-			}
-		}
-
-		reader.close();
-	}
-
-	private static byte[] generateDBKey(String seqName, int idx) {
-		byte[] a = seqName.getBytes();
-		byte[] b = ByteBuffer.allocate(4).putInt(idx).array();
-
-		byte[] result = new byte[a.length + b.length];
-		System.arraycopy(a, 0, result, 0, a.length);
-		System.arraycopy(b, 0, result, a.length, b.length);
-
-		return result;
-	}
-
-	public static void decompressGzip(String source, String target) throws IOException {
-		File sourceFile = new File(DATA_DIRECTORY_PATH, source);
-		File targetFile = new File(DATA_DIRECTORY_PATH, target);
-
-		try (
-				GZIPInputStream gzipInputStream = new GZIPInputStream(new FileInputStream(sourceFile));
-				FileOutputStream fileOutputStream = new FileOutputStream(targetFile)
-		) {
-			byte[] buffer = new byte[1024];
-			int len;
-			while ((len = gzipInputStream.read(buffer)) > 0) {
-				fileOutputStream.write(buffer, 0, len);
-			}
-		}
-	}
-
-	private static void errorResponse(HttpServerRequest req, int errorCode, String errorMsg) {
-		req.response()
-				.setStatusCode(errorCode)
-				.putHeader("content-type", "text/plain")
-				.end(errorMsg + "\n");
+		return dataDirectoryPath;
 	}
 }

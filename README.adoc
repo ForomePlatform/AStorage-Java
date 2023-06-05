@@ -4,22 +4,69 @@ image:https://img.shields.io/badge/vert.x-4.3.7-purple.svg[link="https://vertx.i
 
 This application was generated using http://start.vertx.io
 
+Service currently supports only *Fasta* and *dbNSFP* ingestions/queries.
+
 == Building
 
 To launch your tests:
-```
+[source]
+----
 ./mvnw clean test
-```
+----
 
 To package your application:
-```
+[source]
+----
 ./mvnw clean package
-```
+----
 
 To run your application:
-```
+[source]
+----
 ./mvnw clean compile exec:java
-```
+----
+
+== Usage examples [dbNSFP]
+
+The service is only running on *localhost:8080*. It creates DB directories in the user's home directory.
+
+To ingest data:
+[source]
+----
+curl -X POST "localhost:8080/ingestion/dbnsfp?data-path=<path_to_dbnsfp_data>"
+----
+
+To query variants:
+[source]
+----
+curl "localhost:8080/query/dbnsfp?chr=<chr_num>&pos=<pos>&alt=<alt_nucleotide>"
+----
+
+To batch-query variants:
+[source]
+----
+curl -X POST \
+	-H "Content-Type: application/json" \
+	-d @query_file.json \
+	"localhost:8080/batch-query/dbnsfp" > results.jsonl
+----
+
+*query_file.json* example:
+[source]
+----
+[
+	{"chr": 21, "pos": 5011799, "alt": "A"},
+	{"chr": 21, "pos": 5011800},
+	{"chr": 16, "pos": 62584, "alt": "T"}
+]
+
+----
+
+To stop the service:
+[source]
+----
+curl "localhost:8080/stop"
+----
 
 == Help
 
