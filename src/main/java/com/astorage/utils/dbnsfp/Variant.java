@@ -64,11 +64,18 @@ public class Variant implements JsonConvertible {
 		JsonObject variantJson = new JsonObject();
 		JsonArray facetsJson = Constants.listToJson(facets);
 
-		for (String column : VARIANT_COLUMNS) {
-			variantJson.put(column, variantColumnValues.get(column));
+		StringBuilder dataBuilder = new StringBuilder();
+		for (int i = 0; i < VARIANT_COLUMNS.length; i++) {
+			String columnValue = variantColumnValues.get(VARIANT_COLUMNS[i]);
+			dataBuilder.append(Objects.requireNonNullElse(columnValue, DbNSFPConstants.NULL_SHORTHAND));
+
+			if (i < VARIANT_COLUMNS.length - 1) {
+				dataBuilder.append(DbNSFPConstants.DATA_DELIMITER);
+			}
 		}
 
-		variantJson.put("facets", facetsJson);
+		variantJson.put(DbNSFPConstants.COMPACTED_DATA_KEY, dataBuilder.toString());
+		variantJson.put(DbNSFPConstants.FACETS_KEY, facetsJson);
 
 		return variantJson;
 	}

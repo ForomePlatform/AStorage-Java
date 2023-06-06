@@ -52,11 +52,18 @@ public class Facet implements JsonConvertible {
 		JsonObject facetJson = new JsonObject();
 		JsonArray transcriptsJson = Constants.listToJson(transcripts);
 
-		for (String column : FACET_COLUMNS) {
-			facetJson.put(column, facetColumnValues.get(column));
+		StringBuilder dataBuilder = new StringBuilder();
+		for (int i = 0; i < FACET_COLUMNS.length; i++) {
+			String columnValue = facetColumnValues.get(FACET_COLUMNS[i]);
+            dataBuilder.append(Objects.requireNonNullElse(columnValue, DbNSFPConstants.NULL_SHORTHAND));
+
+			if (i < FACET_COLUMNS.length - 1) {
+				dataBuilder.append(DbNSFPConstants.DATA_DELIMITER);
+			}
 		}
 
-		facetJson.put("transcripts", transcriptsJson);
+		facetJson.put(DbNSFPConstants.COMPACTED_DATA_KEY, dataBuilder.toString());
+		facetJson.put(DbNSFPConstants.TRANSCRIPTS_KEY, transcriptsJson);
 
 		return facetJson;
 	}

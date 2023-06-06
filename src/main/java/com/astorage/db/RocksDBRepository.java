@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-public class RocksDBRepository implements KeyValueRepository<byte[], String>, Constants {
+public class RocksDBRepository implements Constants {
 	private final HashMap<String, ColumnFamilyHandle> columnFamilyHandleMap = new HashMap<>();
 	private final String dbFilename;
 	private final String dbDirectoryPath;
@@ -65,10 +65,9 @@ public class RocksDBRepository implements KeyValueRepository<byte[], String>, Co
 		System.out.printf("RocksDB<%s> initialized and ready to use%n", dbFilename);
 	}
 
-	@Override
-	public synchronized void save(byte[] key, String value) {
+	public synchronized void saveBytes(byte[] key, byte[] value) {
 		try {
-			db.put(key, value.getBytes());
+			db.put(key, value);
 		} catch (RocksDBException e) {
 			System.err.printf(
 				"Error saving entry in RocksDB<%s>, cause: %s, message: %s%n",
@@ -79,10 +78,9 @@ public class RocksDBRepository implements KeyValueRepository<byte[], String>, Co
 		}
 	}
 
-	@Override
-	public synchronized void save(byte[] key, String value, ColumnFamilyHandle column) {
+	public synchronized void saveBytes(byte[] key, byte[] value, ColumnFamilyHandle column) {
 		try {
-			db.put(column, key, value.getBytes());
+			db.put(column, key, value);
 		} catch (RocksDBException e) {
 			System.err.printf(
 				"Error saving entry in RocksDB<%s>, cause: %s, message: %s%n",
@@ -93,33 +91,17 @@ public class RocksDBRepository implements KeyValueRepository<byte[], String>, Co
 		}
 	}
 
-	@Override
-	public String find(byte[] key) {
-		String result = null;
-		try {
-			byte[] bytes = db.get(key);
-			if (bytes == null) return null;
-			result = new String(bytes);
-		} catch (RocksDBException e) {
-			System.err.printf(
-				"Error retrieving the entry in RocksDB<%s> from key: %s, cause: %s, message: %s%n",
-				dbFilename,
-				Arrays.toString(key),
-				e.getCause(),
-				e.getMessage()
-			);
-		}
-
-		return result;
+	public synchronized void saveString(byte[] key, String value) {
+		saveBytes(key, value.getBytes());
 	}
 
-	@Override
-	public String find(byte[] key, ColumnFamilyHandle column) {
-		String result = null;
+	public synchronized void saveString(byte[] key, String value, ColumnFamilyHandle column) {
+		saveBytes(key, value.getBytes(), column);
+	}
+
+	public byte[] getBytes(byte[] key) {
 		try {
-			byte[] bytes = db.get(column, key);
-			if (bytes == null) return null;
-			result = new String(bytes);
+			return db.get(key);
 		} catch (RocksDBException e) {
 			System.err.printf(
 				"Error retrieving the entry in RocksDB<%s> from key: %s, cause: %s, message: %s%n",
@@ -130,7 +112,31 @@ public class RocksDBRepository implements KeyValueRepository<byte[], String>, Co
 			);
 		}
 
-		return result;
+		return null;
+	}
+
+	public byte[] getBytes(byte[] key, ColumnFamilyHandle column) {
+		try {
+			return db.get(column, key);
+		} catch (RocksDBException e) {
+			System.err.printf(
+				"Error retrieving the entry in RocksDB<%s> from key: %s, cause: %s, message: %s%n",
+				dbFilename,
+				Arrays.toString(key),
+				e.getCause(),
+				e.getMessage()
+			);
+		}
+
+		return null;
+	}
+
+	public String getString(byte[] key) {
+		return new String(getBytes(key));
+	}
+
+	public String getString(byte[] key, ColumnFamilyHandle column) {
+		return new String(getBytes(key, column));
 	}
 
 	public synchronized ColumnFamilyHandle createColumnFamily(String name) {
@@ -150,6 +156,14 @@ public class RocksDBRepository implements KeyValueRepository<byte[], String>, Co
 		return null;
 	}
 
+	public ColumnFamilyHandle getColumnFamilyHandle(String name) {
+		return columnFamilyHandleMap.get(name);
+	}
+
+	public void close() {
+		db.close();
+	}
+
 	private List<ColumnFamilyDescriptor> getColumnFamilyDescriptors(ColumnFamilyOptions columnFamilyOptions) {
 		List<ColumnFamilyDescriptor> columnFamilyDescriptors = new ArrayList<>();
 
@@ -166,13 +180,5 @@ public class RocksDBRepository implements KeyValueRepository<byte[], String>, Co
 		} catch (RocksDBException e) {
 			throw new RuntimeException(e);
 		}
-	}
-
-	public ColumnFamilyHandle getColumnFamilyHandle(String name) {
-		return columnFamilyHandleMap.get(name);
-	}
-
-	public void close() {
-		db.close();
 	}
 }

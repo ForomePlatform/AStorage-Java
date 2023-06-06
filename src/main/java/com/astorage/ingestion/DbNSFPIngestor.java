@@ -100,7 +100,7 @@ public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
 		return mappedColumns;
 	}
 
-	private byte[] processLine(String line, Map<String, Integer> columns, byte[] lastKey, List<Variant> lastVariants) {
+	private byte[] processLine(String line, Map<String, Integer> columns, byte[] lastKey, List<Variant> lastVariants) throws IOException {
 		String[] row = line.split(DATA_DELIMITER);
 
 		byte[] key = DbNSFPHelper.createKey(columns, row);
@@ -132,8 +132,10 @@ public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
 		return key;
 	}
 
-	private void saveVariantsInDb(byte[] key, List<Variant> variants) {
+	private void saveVariantsInDb(byte[] key, List<Variant> variants) throws IOException {
 		JsonArray variantsJson = Constants.listToJson(variants);
-		dbRep.save(key, variants.toString());
+		byte[] compressedVariantsJson = Constants.compressJSON(variantsJson.toString());
+
+		dbRep.saveBytes(key, compressedVariantsJson);
 	}
 }
