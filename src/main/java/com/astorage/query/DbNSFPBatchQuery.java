@@ -18,8 +18,6 @@ public class DbNSFPBatchQuery extends DbNSFPQuery implements Query, Constants, D
 	}
 
 	public void queryHandler() {
-		HttpServerRequest req = context.request();
-
 		batchQueryHandler();
 	}
 

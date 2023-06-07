@@ -3,7 +3,13 @@ package com.astorage.query;
 import com.astorage.db.RocksDBRepository;
 import com.astorage.utils.Constants;
 import com.astorage.utils.fasta.FastaConstants;
+import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.json.DecodeException;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
+
+import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
 public class FastaBatchQuery extends FastaQuery implements Query, Constants, FastaConstants {
@@ -12,5 +18,30 @@ public class FastaBatchQuery extends FastaQuery implements Query, Constants, Fas
 	}
 
 	public void queryHandler() {
+		HttpServerRequest req = context.request();
+
+		req.bodyHandler(buffer -> {
+			try {
+				JsonArray queries = buffer.toJsonArray();
+
+				req.response().setChunked(true);
+				req.response().putHeader("content-type", "text/json");
+
+				for (Object queryObject : queries) {
+					JsonObject query = (JsonObject) queryObject;
+
+					String arrayName = query.getString(ARRAY_NAME_PARAM);
+					String sectionName = query.getString(SECTION_NAME_PARAM);
+					int startPosition = Integer.parseInt(query.getString(START_POS_PARAM));
+					int endPosition = Integer.parseInt(query.getString(END_POS_PARAM));
+
+					singleQueryHandler(arrayName, sectionName, startPosition, endPosition, true);
+				}
+
+				req.response().end();
+			} catch (DecodeException e) {
+				Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, JSON_DECODE_ERROR);
+			}
+		});
 	}
 }

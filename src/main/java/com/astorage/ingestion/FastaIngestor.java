@@ -9,11 +9,9 @@ import org.rocksdb.ColumnFamilyHandle;
 
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.zip.GZIPInputStream;
 
 @SuppressWarnings("unused")
 public class FastaIngestor implements Ingestor, Constants, FastaConstants {
@@ -40,10 +38,10 @@ public class FastaIngestor implements Ingestor, Constants, FastaConstants {
 		String metadataURL = req.getParam(METADATA_URL_PARAM);
 
 		try {
-			downloadUsingStream(metadataURL, METADATA_FILENAME);
+			Constants.downloadUsingStream(metadataURL, METADATA_FILENAME);
 			Map<String, String> metadata = readMetadata();
-			downloadUsingStream(dataURL, COMPRESSED_DATA_FILENAME);
-			decompressGzip();
+			Constants.downloadUsingStream(dataURL, COMPRESSED_DATA_FILENAME);
+			Constants.decompressGzip(COMPRESSED_DATA_FILENAME, DATA_FILENAME);
 			storeData(arrayName, metadata);
 		} catch (IOException | SecurityException e) {
 			e.printStackTrace();
@@ -88,22 +86,6 @@ public class FastaIngestor implements Ingestor, Constants, FastaConstants {
 		reader.close();
 	}
 
-	private static void downloadUsingStream(String urlStr, String filename) throws IOException {
-		File file = new File(DATA_DIRECTORY_PATH, filename);
-		URL url = new URL(urlStr);
-		BufferedInputStream bufferedInputStream = new BufferedInputStream(url.openStream());
-		FileOutputStream fileOutputStream = new FileOutputStream(file);
-		byte[] buffer = new byte[1024];
-		int count;
-
-		while ((count = bufferedInputStream.read(buffer, 0, 1024)) != -1) {
-			fileOutputStream.write(buffer, 0, count);
-		}
-
-		bufferedInputStream.close();
-		fileOutputStream.close();
-	}
-
 	private static Map<String, String> readMetadata() throws IOException {
 		Map<String, String> result = new HashMap<>();
 		File metadataFile = new File(DATA_DIRECTORY_PATH, METADATA_FILENAME);
@@ -136,21 +118,5 @@ public class FastaIngestor implements Ingestor, Constants, FastaConstants {
 		System.arraycopy(b, 0, result, a.length, b.length);
 
 		return result;
-	}
-
-	private static void decompressGzip() throws IOException {
-		File sourceFile = new File(DATA_DIRECTORY_PATH, COMPRESSED_DATA_FILENAME);
-		File targetFile = new File(DATA_DIRECTORY_PATH, DATA_FILENAME);
-
-		try (
-			GZIPInputStream gzipInputStream = new GZIPInputStream(new FileInputStream(sourceFile));
-			FileOutputStream fileOutputStream = new FileOutputStream(targetFile)
-		) {
-			byte[] buffer = new byte[1024];
-			int len;
-			while ((len = gzipInputStream.read(buffer)) > 0) {
-				fileOutputStream.write(buffer, 0, len);
-			}
-		}
 	}
 }
