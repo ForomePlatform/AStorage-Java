@@ -121,7 +121,7 @@ public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
 			}
 		} else {
 			if (!lastVariants.isEmpty()) {
-				saveVariantsInDb(key, lastVariants);
+				saveVariantsInDb(lastKey, lastVariants);
 			}
 
 			newVariant.facets.add(newFacet);
