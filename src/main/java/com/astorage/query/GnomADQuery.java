@@ -9,6 +9,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import org.rocksdb.ColumnFamilyHandle;
 
+import java.io.IOException;
 import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
@@ -21,7 +22,7 @@ public class GnomADQuery implements Query, Constants, GnomADConstants {
 		this.dbRep = dbRep;
 	}
 
-	public void queryHandler() {
+	public void queryHandler() throws IOException {
 		HttpServerRequest req = context.request();
 
 		if (req.params().size() == 3
@@ -40,7 +41,7 @@ public class GnomADQuery implements Query, Constants, GnomADConstants {
 		Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
 	}
 
-	protected void singleQueryHandler(String chr, String pos, String sourceType, boolean isBatched) {
+	protected void singleQueryHandler(String chr, String pos, String sourceType, boolean isBatched) throws IOException {
 		HttpServerRequest req = context.request();
 		JsonObject errorJson = new JsonObject();
 
@@ -82,8 +83,8 @@ public class GnomADQuery implements Query, Constants, GnomADConstants {
 			return;
 		}
 
-		String variantString = dbRep.getString(key, columnFamilyHandle);
-		if (variantString == null) {
+		byte[] compressedVariant = dbRep.getBytes(key, columnFamilyHandle);
+		if (compressedVariant == null) {
 			errorJson.put("error", VARIANT_NOT_FOUND_ERROR);
 
 			Constants.errorResponse(
@@ -95,7 +96,8 @@ public class GnomADQuery implements Query, Constants, GnomADConstants {
 			return;
 		}
 
-		JsonObject result = new JsonObject(variantString);
+		String decompressedVariant = Constants.decompressJson(compressedVariant);
+		JsonObject result = new JsonObject(decompressedVariant);
 		result.put(SOURCE_TYPE_PARAM, sourceType);
 
 		if (isBatched) {

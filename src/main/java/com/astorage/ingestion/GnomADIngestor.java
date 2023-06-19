@@ -108,11 +108,12 @@ public class GnomADIngestor implements Ingestor, Constants, GnomADConstants {
 			variant.setInfo(info);
 			variant.setSubgroups(subgroups);
 
-			dbRep.saveString(
-				GnomADHelper.createKey(values[columns.get(CHR_COLUMN_NAME)], values[columns.get(POS_COLUMN_NAME)]),
-				variant.toString(),
-				columnFamilyHandle
-			);
+			String chr = values[columns.get(CHR_COLUMN_NAME)];
+			String pos = values[columns.get(POS_COLUMN_NAME)];
+			byte[] key = GnomADHelper.createKey(chr, pos);
+			byte[] compressedVariant = Constants.compressJson(variant.toString());
+
+			dbRep.saveBytes(key, compressedVariant, columnFamilyHandle);
 		}
 
 		reader.close();
