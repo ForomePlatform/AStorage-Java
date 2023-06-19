@@ -123,7 +123,7 @@ public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
 
 	private void saveVariantsInDb(byte[] key, List<Variant> variants) throws IOException {
 		JsonArray variantsJson = Constants.listToJson(variants);
-		byte[] compressedVariantsJson = Constants.compressJSON(variantsJson.toString());
+		byte[] compressedVariantsJson = Constants.compressJson(variantsJson.toString());
 
 		dbRep.saveBytes(key, compressedVariantsJson);
 	}

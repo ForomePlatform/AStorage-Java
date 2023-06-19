@@ -43,6 +43,7 @@ public interface Constants {
 	String JSON_DECODE_ERROR = "Given file isn't a valid JSON...";
 	String COMPRESSION_ERROR = "Error while compressing JSON string...";
 	String DECOMPRESSION_ERROR = "Error while decompressing JSON string...";
+	String GZIP_DECOMPRESSION_ERROR = "Error while decompressing gzip file...";
 
 	// Helper functions:
 	static JsonArray listToJson(List<? extends JsonConvertible> list) {
@@ -56,7 +57,7 @@ public interface Constants {
 		return listJson;
 	}
 
-	static byte[] compressJSON(String json) throws IOException {
+	static byte[] compressJson(String json) throws IOException {
 		try (
 			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 			GZIPOutputStream gzipOutputStream = new GZIPOutputStream(outputStream)
@@ -70,7 +71,7 @@ public interface Constants {
 		}
 	}
 
-	static String decompressJSON(byte[] compressedData) throws IOException {
+	static String decompressJson(byte[] compressedData) throws IOException {
 		try (
 			ByteArrayInputStream inputStream = new ByteArrayInputStream(compressedData);
 			GZIPInputStream gzipInputStream = new GZIPInputStream(inputStream);
@@ -135,10 +136,13 @@ public interface Constants {
 			FileOutputStream fileOutputStream = new FileOutputStream(targetFile)
 		) {
 			byte[] buffer = new byte[1024];
-			int len;
-			while ((len = gzipInputStream.read(buffer)) > 0) {
-				fileOutputStream.write(buffer, 0, len);
+
+			int bytesRead;
+			while ((bytesRead = gzipInputStream.read(buffer)) != -1) {
+				fileOutputStream.write(buffer, 0, bytesRead);
 			}
+		} catch (IOException e) {
+			throw new IOException(GZIP_DECOMPRESSION_ERROR, e);
 		}
 	}
 

@@ -97,7 +97,7 @@ public class DbNSFPQuery implements Query, Constants, DbNSFPConstants {
 			result.put(ALT_PARAM, alt);
 		}
 
-		String variantsString = Constants.decompressJSON(compressedVariants);
+		String variantsString = Constants.decompressJson(compressedVariants);
 		JsonArray variantsJson = DbNSFPHelper.processRawVariantsJson(new JsonArray(variantsString));
 
 		if (alt != null) {

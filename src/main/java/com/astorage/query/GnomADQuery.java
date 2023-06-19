@@ -82,7 +82,7 @@ public class GnomADQuery implements Query, Constants, GnomADConstants {
 			return;
 		}
 
-		String variantString = dbRep.find(key, columnFamilyHandle);
+		String variantString = dbRep.getString(key, columnFamilyHandle);
 		if (variantString == null) {
 			errorJson.put("error", VARIANT_NOT_FOUND_ERROR);
 
