@@ -46,7 +46,7 @@ public class FastaQuery implements Query, Constants, FastaConstants {
 
 		StringBuilder stringBuilder = new StringBuilder();
 		for (int i = startPosition; i <= endPosition; i++) {
-			stringBuilder.append(dbRep.find(FastaIngestor.generateDBKey(sectionName, i), columnFamilyHandle));
+			stringBuilder.append(dbRep.getString(FastaIngestor.generateDBKey(sectionName, i), columnFamilyHandle));
 		}
 
 		req.response()
