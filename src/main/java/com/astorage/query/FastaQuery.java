@@ -37,6 +37,11 @@ public class FastaQuery implements Query, Constants, FastaConstants {
 		int startPosition = Integer.parseInt(req.getParam(START_POS_PARAM));
 		int endPosition = Integer.parseInt(req.getParam(END_POS_PARAM));
 
+		singleQueryHandler(arrayName, sectionName, startPosition, endPosition, false);
+	}
+
+	public void singleQueryHandler(String arrayName, String sectionName, int startPosition, int endPosition, boolean isBatched) {
+		HttpServerRequest req = context.request();
 		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(arrayName);
 
 		if (columnFamilyHandle == null) {
@@ -49,16 +54,19 @@ public class FastaQuery implements Query, Constants, FastaConstants {
 			stringBuilder.append(dbRep.getString(FastaIngestor.generateDBKey(sectionName, i), columnFamilyHandle));
 		}
 
-		req.response()
-			.putHeader("content-type", "text/json")
-			.end(
-				new JsonObject()
-					.put("array", arrayName)
-					.put("section", sectionName)
-					.put("start", startPosition)
-					.put("end", endPosition)
-					.put("data", stringBuilder.toString())
-					.toString() + "\n"
-			);
+		String result = new JsonObject().put("array", arrayName)
+			.put("section", sectionName)
+			.put("start", startPosition)
+			.put("end", endPosition)
+			.put("data", stringBuilder.toString())
+			.toString();
+
+		if (isBatched) {
+			req.response().write(result + "\n");
+		} else {
+			req.response()
+				.putHeader("content-type", "text/json")
+				.end(result + "\n");
+		}
 	}
 }

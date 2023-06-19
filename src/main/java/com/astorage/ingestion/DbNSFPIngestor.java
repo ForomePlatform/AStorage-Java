@@ -61,7 +61,7 @@ public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
 					return;
 				}
 
-				columns = mapColumns(line);
+				columns = Constants.mapColumns(line, DATA_DELIMITER);
 			}
 
 			int lineCount = 0;
@@ -87,17 +87,6 @@ public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
 		} catch (IOException e) {
 			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 		}
-	}
-
-	private static Map<String, Integer> mapColumns(String line) {
-		String[] columns = line.split(DATA_DELIMITER);
-		Map<String, Integer> mappedColumns = new HashMap<>();
-
-		for (int i = 0; i < columns.length; i++) {
-			mappedColumns.put(columns[i], i);
-		}
-
-		return mappedColumns;
 	}
 
 	private byte[] processLine(String line, Map<String, Integer> columns, byte[] lastKey, List<Variant> lastVariants) throws IOException {
