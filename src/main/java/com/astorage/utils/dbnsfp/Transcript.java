@@ -69,9 +69,17 @@ public class Transcript implements JsonConvertible {
 	public JsonObject toJson() {
 		JsonObject transcriptJson = new JsonObject();
 
-		for (String column : TRANSCRIPT_COLUMNS) {
-			transcriptJson.put(column, transcriptColumnValues.get(column));
+		StringBuilder dataBuilder = new StringBuilder();
+		for (int i = 0; i < TRANSCRIPT_COLUMNS.length; i++) {
+			String columnValue = transcriptColumnValues.get(TRANSCRIPT_COLUMNS[i]);
+			dataBuilder.append(Objects.requireNonNullElse(columnValue, DbNSFPConstants.NULL_SHORTHAND));
+
+			if (i < TRANSCRIPT_COLUMNS.length - 1) {
+				dataBuilder.append(DbNSFPConstants.DATA_DELIMITER);
+			}
 		}
+
+		transcriptJson.put(DbNSFPConstants.COMPACTED_DATA_KEY, dataBuilder.toString());
 
 		return transcriptJson;
 	}

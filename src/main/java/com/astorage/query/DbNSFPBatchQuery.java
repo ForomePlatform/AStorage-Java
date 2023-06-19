@@ -9,6 +9,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
+import java.io.IOException;
 import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
@@ -46,7 +47,9 @@ public class DbNSFPBatchQuery extends DbNSFPQuery implements Query, Constants, D
 				req.response().end();
 			} catch (DecodeException e) {
 				Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, JSON_DECODE_ERROR);
+			} catch (IOException e) {
+				Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
 			}
-		});
+        });
 	}
 }

@@ -1,5 +1,7 @@
 package com.astorage.query;
 
+import java.io.IOException;
+
 public interface Query {
-	void queryHandler();
+	void queryHandler() throws IOException;
 }

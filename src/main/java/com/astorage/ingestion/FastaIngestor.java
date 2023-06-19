@@ -79,7 +79,7 @@ public class FastaIngestor implements Ingestor, Constants, FastaConstants {
 				idx = 1;
 			} else if (seqName != null) {
 				for (int i = 0; i < line.length(); i++) {
-					dbRep.save(generateDBKey(seqName, idx), String.valueOf(line.charAt(i)), columnFamilyHandle);
+					dbRep.saveString(generateDBKey(seqName, idx), String.valueOf(line.charAt(i)), columnFamilyHandle);
 					idx++;
 				}
 			}

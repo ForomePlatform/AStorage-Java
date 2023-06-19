@@ -10,6 +10,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
+import java.io.IOException;
 import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
@@ -22,7 +23,7 @@ public class DbNSFPQuery implements Query, Constants, DbNSFPConstants {
 		this.dbRep = dbRep;
 	}
 
-	public void queryHandler() {
+	public void queryHandler() throws IOException {
 		HttpServerRequest req = context.request();
 
 		if ((req.params().size() == 2 || req.params().size() == 3 && req.params().contains(ALT_PARAM))
@@ -40,7 +41,7 @@ public class DbNSFPQuery implements Query, Constants, DbNSFPConstants {
 		Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
 	}
 
-	protected void singleQueryHandler(String chr, String pos, String alt, boolean isBatched) {
+	protected void singleQueryHandler(String chr, String pos, String alt, boolean isBatched) throws IOException {
 		HttpServerRequest req = context.request();
 		JsonObject errorJson = new JsonObject();
 
@@ -75,9 +76,9 @@ public class DbNSFPQuery implements Query, Constants, DbNSFPConstants {
 		}
 
 		byte[] key = DbNSFPHelper.createKey(chr, pos);
+		byte[] compressedVariants = dbRep.getBytes(key);
 
-		String variantsString = dbRep.find(key);
-		if (variantsString == null) {
+		if (compressedVariants == null) {
 			errorJson.put("error", VARIANT_NOT_FOUND_ERROR);
 
 			Constants.errorResponse(
@@ -96,7 +97,8 @@ public class DbNSFPQuery implements Query, Constants, DbNSFPConstants {
 			result.put(ALT_PARAM, alt);
 		}
 
-		JsonArray variantsJson = new JsonArray(variantsString);
+		String variantsString = Constants.decompressJSON(compressedVariants);
+		JsonArray variantsJson = DbNSFPHelper.processRawVariantsJson(new JsonArray(variantsString));
 
 		if (alt != null) {
 			JsonArray selectedVariantJson = new JsonArray();
@@ -107,12 +109,12 @@ public class DbNSFPQuery implements Query, Constants, DbNSFPConstants {
 
 				if (nucleotide.equals(alt)) {
 					selectedVariantJson.add(variantJson);
-					result.put("variants", selectedVariantJson);
+					result.put(VARIANTS_KEY, selectedVariantJson);
 					break;
 				}
 			}
 		} else {
-			result.put("variants", variantsJson);
+			result.put(VARIANTS_KEY, variantsJson);
 		}
 
 		if (isBatched) {
