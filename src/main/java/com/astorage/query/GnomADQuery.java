@@ -98,7 +98,7 @@ public class GnomADQuery implements Query, Constants, GnomADConstants {
 
 		String decompressedVariant = Constants.decompressJson(compressedVariant);
 		JsonObject result = new JsonObject(decompressedVariant);
-		result.put(SOURCE_TYPE_PARAM, sourceType);
+		result.put(SOURCE_TYPE_FIELD_NAME, sourceType);
 
 		if (isBatched) {
 			req.response().write(result + "\n");

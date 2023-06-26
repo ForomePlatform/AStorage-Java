@@ -100,14 +100,6 @@ public class GnomADIngestor implements Ingestor, Constants, GnomADConstants {
 			String[] values = line.split(COLUMNS_DELIMITER);
 			Variant variant = new Variant(columns, values);
 
-			String infoData = values[columns.get(INFO_COLUMN_NAME)];
-			Info info = new Info(infoData);
-
-			Map<String, Subgroup> subgroups = info.generateSubgroups();
-
-			variant.setInfo(info);
-			variant.setSubgroups(subgroups);
-
 			String chr = values[columns.get(CHR_COLUMN_NAME)];
 			String pos = values[columns.get(POS_COLUMN_NAME)];
 			byte[] key = GnomADHelper.createKey(chr, pos);

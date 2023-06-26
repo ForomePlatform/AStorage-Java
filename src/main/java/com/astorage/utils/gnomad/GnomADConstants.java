@@ -14,6 +14,7 @@ public interface GnomADConstants {
 	// Ingestion/query request params:
 	String DATA_URL_PARAM = "dataURL";
 	String SOURCE_TYPE_PARAM = "sourceType";
+	String SOURCE_TYPE_FIELD_NAME = "SOURCE";
 	String CHR_PARAM = "chr";
 	String POS_PARAM = "pos";
 	String CHR_COLUMN_NAME = "CHROM";
