@@ -3,21 +3,21 @@ package com.astorage.utils;
 import com.astorage.utils.dbnsfp.DbNSFPConstants;
 import com.astorage.utils.fasta.FastaConstants;
 import com.astorage.utils.gnomad.GnomADConstants;
+import com.astorage.utils.spliceai.SpliceAIConstants;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.io.*;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
-import java.util.Map;
 
 public interface Constants {
 	// General:
@@ -28,7 +28,8 @@ public interface Constants {
 	String[] FORMAT_NAMES = {
 		FastaConstants.FASTA_FORMAT_NAME,
 		DbNSFPConstants.DBNSFP_FORMAT_NAME,
-		GnomADConstants.GNOMAD_FORMAT_NAME
+		GnomADConstants.GNOMAD_FORMAT_NAME,
+		SpliceAIConstants.SPLICEAI_FORMAT_NAME
 	};
 
 	// Error messages:
@@ -111,9 +112,10 @@ public interface Constants {
 			.end(errorMsg + "\n");
 	}
 
-	static void downloadUsingStream(String urlStr, String filename) throws IOException {
+	static void downloadUsingStream(String urlStr, String filename) throws IOException, URISyntaxException {
 		File file = new File(DATA_DIRECTORY_PATH, filename);
-		URL url = new URL(urlStr);
+		URI uri = new URI(urlStr);
+		URL url = uri.toURL();
 		BufferedInputStream bufferedInputStream = new BufferedInputStream(url.openStream());
 		FileOutputStream fileOutputStream = new FileOutputStream(file);
 		byte[] buffer = new byte[1024];

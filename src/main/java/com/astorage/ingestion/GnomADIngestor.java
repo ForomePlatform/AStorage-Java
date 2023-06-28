@@ -10,6 +10,7 @@ import org.rocksdb.ColumnFamilyHandle;
 
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
@@ -66,7 +67,7 @@ public class GnomADIngestor implements Ingestor, Constants, GnomADConstants {
 			BufferedReader bufferedReader = new BufferedReader(decoder);
 
 			storeData(bufferedReader, columnFamilyHandle);
-		} catch (IOException | SecurityException e) {
+		} catch (IOException | SecurityException | URISyntaxException e) {
 			e.printStackTrace();
 			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, DOWNLOADING_DATA_ERROR);
 			return;

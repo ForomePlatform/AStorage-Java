@@ -9,6 +9,7 @@ import org.rocksdb.ColumnFamilyHandle;
 
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,7 +44,7 @@ public class FastaIngestor implements Ingestor, Constants, FastaConstants {
 			Constants.downloadUsingStream(dataURL, COMPRESSED_DATA_FILENAME);
 			Constants.decompressGzip(COMPRESSED_DATA_FILENAME, DATA_FILENAME);
 			storeData(arrayName, metadata);
-		} catch (IOException | SecurityException e) {
+		} catch (IOException | SecurityException | URISyntaxException e) {
 			e.printStackTrace();
 			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, DOWNLOADING_DATA_ERROR);
 			return;
