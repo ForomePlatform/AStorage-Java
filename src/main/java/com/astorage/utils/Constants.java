@@ -3,6 +3,7 @@ package com.astorage.utils;
 import com.astorage.utils.dbnsfp.DbNSFPConstants;
 import com.astorage.utils.fasta.FastaConstants;
 import com.astorage.utils.gnomad.GnomADConstants;
+import com.astorage.utils.pharmgkb.PharmGKBConstants;
 import com.astorage.utils.spliceai.SpliceAIConstants;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
@@ -29,7 +30,8 @@ public interface Constants {
 		FastaConstants.FASTA_FORMAT_NAME,
 		DbNSFPConstants.DBNSFP_FORMAT_NAME,
 		GnomADConstants.GNOMAD_FORMAT_NAME,
-		SpliceAIConstants.SPLICEAI_FORMAT_NAME
+		SpliceAIConstants.SPLICEAI_FORMAT_NAME,
+		PharmGKBConstants.PHARMGKB_FORMAT_NAME
 	};
 
 	// Error messages:
