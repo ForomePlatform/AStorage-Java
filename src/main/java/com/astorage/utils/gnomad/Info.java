@@ -16,7 +16,12 @@ public class Info implements GnomADConstants {
 		"nhomalt_male",
 	};
 
+	public static Map<String, String> INFO_FIELD_ALTERNATIVE_NAMES = new HashMap<>() {{
+		put("nhomalt_male", "hem");
+	}};
+
 	public final Map<String, String> infoFieldValues = new HashMap<>();
+	public final Map<String, Subgroup> subgroups = new HashMap<>();
 
 	public Info(String info) {
 		String[] delimitedInfo = info.split(INFO_FIELDS_DELIMITER);
@@ -31,10 +36,11 @@ public class Info implements GnomADConstants {
 
 			infoFieldValues.put(key, value);
 		}
+
+		this.generateSubgroups();
 	}
 
-	public Map<String, Subgroup> generateSubgroups() {
-		Map<String, Subgroup> subgroups = new HashMap<>();
+	private void generateSubgroups() {
 		for (String subgroupName : Subgroup.GROUPS) {
 			for (String subgroupFieldName : Subgroup.SUBGROUP_FIELDS) {
 				String subgroupFieldValue = infoFieldValues.get(subgroupName + "_" + subgroupFieldName);
@@ -42,29 +48,27 @@ public class Info implements GnomADConstants {
 					continue;
 				}
 
-				Subgroup subgroup = subgroups.get(subgroupName);
+				Subgroup subgroup = this.subgroups.get(subgroupName);
 				if (subgroup == null) {
-					subgroup = subgroups.put(subgroupName, new Subgroup(subgroupName));
+					subgroup = this.subgroups.put(subgroupName, new Subgroup(subgroupName));
 				}
 
+				assert subgroup != null;
 				subgroup.subgroupFieldValues.put(subgroupFieldName, subgroupFieldValue);
 			}
 		}
-
-		return subgroups;
 	}
 
-	public JsonObject toJson() {
-		JsonObject infoJson = new JsonObject();
-
-		for (String field : INFO_FIELDS) {
-			infoJson.put(field, infoFieldValues.get(field));
+	void addInfoToJsonObject(JsonObject jsonObject) {
+		for (String fieldName : INFO_FIELDS) {
+			jsonObject.put(
+				INFO_FIELD_ALTERNATIVE_NAMES.getOrDefault(fieldName, fieldName),
+				infoFieldValues.get(fieldName)
+			);
 		}
 
-		return infoJson;
-	}
-
-	public String toString() {
-		return this.toJson().toString();
+		for (String subgroupName : this.subgroups.keySet()) {
+			jsonObject.put(subgroupName, this.subgroups.get(subgroupName).toJson());
+		}
 	}
 }
