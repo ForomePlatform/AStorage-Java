@@ -4,9 +4,16 @@ import java.util.Arrays;
 import java.util.List;
 
 public interface PharmGKBConstants {
+	// General
 	String PHARMGKB_FORMAT_NAME = "PharmGKB";
-	String DATA_URL_PARAM = "dataURL";
+
+	// Ingestion/query request params:
+	String DATA_PATH_PARAM = "dataPath";
 	String DATA_TYPE_PARAM = "dataType";
+	String ID_PARAM = "id";
+
+	// Other:
+	String DATA_TYPE_FIELD_NAME = "dataType";
 	List<String> DATA_TYPES = Arrays.asList(
 		"CA",
 		"CAmeta",
@@ -19,7 +26,10 @@ public interface PharmGKBConstants {
 		"VPA",
 		"VPA2SPA"
 	);
-	String INVALID_DATA_TYPE_ERROR = "Invalid data type, should be either \"g\" or \"e\"...";
-	String COMPRESSED_DATA_FILENAME = "data.gz";
 	String COLUMNS_DELIMITER = "\t";
+
+	// Error messages:
+	String INVALID_DATA_TYPE_ERROR = "Invalid data type, should be either \"g\" or \"e\"...";
+	String COLUMN_FAMILY_NULL_ERROR = "Array with the given name doesn't exist...";
+	String VARIANT_NOT_FOUND_ERROR = "Variant doesn't exist for given 'id'";
 }

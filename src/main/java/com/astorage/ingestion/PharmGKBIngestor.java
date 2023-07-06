@@ -11,9 +11,7 @@ import org.rocksdb.ColumnFamilyHandle;
 
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.util.zip.GZIPInputStream;
 
 @SuppressWarnings("unused")
 public class PharmGKBIngestor implements Ingestor, PharmGKBConstants, Constants {
@@ -28,7 +26,7 @@ public class PharmGKBIngestor implements Ingestor, PharmGKBConstants, Constants 
 	public void ingestionHandler() {
 		HttpServerRequest req = context.request();
 		if (!(req.params().size() == 2
-			&& req.params().contains(DATA_URL_PARAM)
+			&& req.params().contains(DATA_PATH_PARAM)
 			&& req.params().contains(DATA_TYPE_PARAM))
 		) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
@@ -36,7 +34,7 @@ public class PharmGKBIngestor implements Ingestor, PharmGKBConstants, Constants 
 			return;
 		}
 
-		String dataURL = req.getParam(DATA_URL_PARAM);
+		String dataPath = req.getParam(DATA_PATH_PARAM);
 		String dataType = req.getParam(DATA_TYPE_PARAM);
 
 		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(dataType);
@@ -57,19 +55,21 @@ public class PharmGKBIngestor implements Ingestor, PharmGKBConstants, Constants 
 			}
 		}
 
+		File file = new File(dataPath);
+		if (!file.exists()) {
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, FILE_NOT_FOUND_ERROR);
+
+			return;
+		}
+
 		try {
-			Constants.downloadUsingStream(dataURL, COMPRESSED_DATA_FILENAME);
-			File file = new File(DATA_DIRECTORY_PATH, COMPRESSED_DATA_FILENAME);
 			InputStream fileInputStream = new FileInputStream(file);
-			InputStream gzipInputStream = new GZIPInputStream(fileInputStream);
-			Reader decoder = new InputStreamReader(gzipInputStream, StandardCharsets.UTF_8);
-			BufferedReader bufferedReader = new BufferedReader(decoder);
+			Reader InputStreamReader = new InputStreamReader(fileInputStream, StandardCharsets.UTF_8);
+			BufferedReader bufferedReader = new BufferedReader(InputStreamReader);
 
 			storeData(dataType, bufferedReader, columnFamilyHandle);
-		} catch (IOException | SecurityException | URISyntaxException e) {
-			e.printStackTrace();
-			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, DOWNLOADING_DATA_ERROR);
-			return;
+		} catch (IOException e) {
+			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 		}
 
 		String resp = "All Data has been ingested.\n";
@@ -87,10 +87,11 @@ public class PharmGKBIngestor implements Ingestor, PharmGKBConstants, Constants 
 		while ((line = reader.readLine()) != null) {
 			String[] values = line.strip().split(COLUMNS_DELIMITER);
 			Variant variant = new Variant(dataType, values);
+			byte[] compressedVariant = Constants.compressJson(variant.toString());
 
-			dbRep.saveString(
+			dbRep.saveBytes(
 				values[Variant.KEY_FIELD_INDEX].getBytes(),
-				variant.toString(),
+				compressedVariant,
 				columnFamilyHandle
 			);
 		}
