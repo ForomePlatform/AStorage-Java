@@ -21,6 +21,7 @@ public interface DbNSFPConstants {
 	String ALT_PARAM = "alt";
 
 	// Error messages:
+	String INVALID_DBNSFP_FILE = "Invalid dbNSFP file...";
 	String INVALID_CHR_OR_POS_ERROR = "Invalid 'chr' or 'pos'...";
 	String INVALID_ALT_ERROR = "Invalid 'alt'...";
 	String VARIANT_NOT_FOUND_ERROR = "Variant doesn't exist for given 'chr' and 'pos'...";

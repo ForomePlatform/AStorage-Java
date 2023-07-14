@@ -56,7 +56,7 @@ public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
 
 			if ((line = bufferedReader.readLine()) != null) {
 				if (!line.startsWith(DbNSFPHelper.CHR_COLUMN_NAME)) {
-					Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, "Invalid dbNSFP file...");
+					Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_DBNSFP_FILE);
 
 					return;
 				}

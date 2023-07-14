@@ -63,7 +63,7 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 
 		setStopHandler(router);
 
-		server.requestHandler(router).listen(8080, result -> {
+		server.requestHandler(router).listen(HTTP_SERVER_PORT, result -> {
 			if (result.succeeded()) {
 				if (!initializeDirectories(dataDirectoryPath)) {
 					startPromise.fail(new IOException(INITIALIZING_DIRECTORY_ERROR));
@@ -71,10 +71,10 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 					return;
 				}
 
-				System.out.println("HTTP server started on port 8080!");
+				System.out.println(HTTP_SERVER_START);
 				startPromise.complete();
 			} else {
-				System.err.println("Server failed to start...");
+				System.err.println(HTTP_SERVER_FAIL);
 				result.cause().printStackTrace();
 				startPromise.fail(result.cause());
 			}
@@ -87,7 +87,7 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 			rocksDBRepository.close();
 		}
 
-		System.out.println("HTTP server stopped.");
+		System.out.println(HTTP_SERVER_STOP);
 
 		stopPromise.complete();
 	}
@@ -140,7 +140,7 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 
 			req.response()
 				.putHeader("content-type", "text/json")
-				.end("HTTP server stopped.\n");
+				.end(HTTP_SERVER_STOP + "\n");
 
 			vertx.close();
 		});
@@ -163,7 +163,7 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 		List<String> args = Vertx.currentContext().processArgs();
 		String dataDirectoryPath = USER_HOME + ASTORAGE_DIRECTORY_NAME;
 
-		if (args != null && args.size() > 0) {
+		if (args != null && !args.isEmpty()) {
 			String configPath = args.get(0);
 
 			File file = new File(configPath);

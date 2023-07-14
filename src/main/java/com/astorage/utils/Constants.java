@@ -22,6 +22,7 @@ import java.util.zip.GZIPOutputStream;
 
 public interface Constants {
 	// General:
+	int HTTP_SERVER_PORT = 8080;
 	String USER_HOME = System.getProperty("user.home");
 	String ASTORAGE_DIRECTORY_NAME = "/AStorage";
 	String DATA_DIRECTORY_PATH = System.getProperty("user.home") + "/AStorage";
@@ -33,10 +34,13 @@ public interface Constants {
 		SpliceAIConstants.SPLICEAI_FORMAT_NAME,
 		PharmGKBConstants.PHARMGKB_FORMAT_NAME
 	};
+	String HTTP_SERVER_START = "HTTP server started on port: " + HTTP_SERVER_PORT + "!";
+	String HTTP_SERVER_STOP = "HTTP server stopped.";
 
 	// Error messages:
 	String ROCKS_DB_INIT_ERROR = "RocksDB couldn't initialize...";
 	String INVALID_PARAMS_ERROR = "Invalid parameters...";
+	String HTTP_SERVER_FAIL = "Server failed to start...";
 	String DOWNLOADING_DATA_ERROR = "Download failed...";
 	String INITIALIZING_DIRECTORY_ERROR = "Couldn't initialize directories...";
 	String FILE_NOT_FOUND_ERROR = "File does not exist on given path...";
@@ -47,6 +51,7 @@ public interface Constants {
 	String COMPRESSION_ERROR = "Error while compressing JSON string...";
 	String DECOMPRESSION_ERROR = "Error while decompressing JSON string...";
 	String GZIP_DECOMPRESSION_ERROR = "Error while decompressing gzip file...";
+	String COLUMN_DOESNT_EXIST = "Column does not exist: ";
 
 	// Helper functions:
 	static JsonArray listToJson(List<? extends JsonConvertible> list) {

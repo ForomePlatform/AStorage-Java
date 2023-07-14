@@ -34,7 +34,7 @@ public class Variant implements JsonConvertible {
 	public Variant(Map<String, Integer> columns, String[] row) {
 		for (String columnName : VARIANT_COLUMNS) {
 			if (columns.get(columnName) == null) {
-				System.err.println("Column does not exist: " + columnName);
+				System.err.println(Constants.COLUMN_DOESNT_EXIST + columnName);
 			}
 
 			String columnValue = row[columns.get(columnName)];

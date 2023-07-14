@@ -35,7 +35,7 @@ public class Facet implements JsonConvertible {
 	public Facet(Map<String, Integer> columns, String[] row) {
 		for (String columnName : FACET_COLUMNS) {
 			if (columns.get(columnName) == null) {
-				System.err.println("Column does not exist: " + columnName);
+				System.err.println(Constants.COLUMN_DOESNT_EXIST + columnName);
 			}
 
 			String columnValue = row[columns.get(columnName)];

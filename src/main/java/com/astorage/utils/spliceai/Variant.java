@@ -1,5 +1,6 @@
 package com.astorage.utils.spliceai;
 
+import com.astorage.utils.Constants;
 import io.vertx.core.json.JsonObject;
 
 import java.util.HashMap;
@@ -17,7 +18,7 @@ public class Variant implements SpliceAIConstants {
 	public Variant(Map<String, Integer> columns, String[] values, Map<String, Integer> infoFieldNamesToIndices) {
 		for (String columnName : VARIANT_COLUMNS) {
 			if (columns.get(columnName) == null) {
-				System.err.println("Column does not exist: " + columnName);
+				System.err.println(Constants.COLUMN_DOESNT_EXIST + columnName);
 			}
 
 			variantColumnValues.put(columnName, values[columns.get(columnName)]);
