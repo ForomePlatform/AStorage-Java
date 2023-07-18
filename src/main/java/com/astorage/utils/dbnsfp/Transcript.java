@@ -1,5 +1,6 @@
 package com.astorage.utils.dbnsfp;
 
+import com.astorage.utils.Constants;
 import com.astorage.utils.JsonConvertible;
 import io.vertx.core.json.JsonObject;
 
@@ -40,7 +41,7 @@ public class Transcript implements JsonConvertible {
 
 		for (String columnName : Transcript.TRANSCRIPT_COLUMNS) {
 			if (columns.get(columnName) == null) {
-				System.err.println("Column does not exist: " + columnName);
+				System.err.println(Constants.COLUMN_DOESNT_EXIST + columnName);
 			}
 
 			String columnValues = row[columns.get(columnName)];
