@@ -11,6 +11,7 @@
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="ingestion" target="11" />
+      <module name="main" target="16" />
     </bytecodeTargetLevel>
   </component>
 </project>

@@ -2,56 +2,133 @@
 
 image:https://img.shields.io/badge/vert.x-4.3.7-purple.svg[link="https://vertx.io"]
 
-This application was generated using http://start.vertx.io
-
-Service currently supports only *Fasta* and *dbNSFP* ingestions/queries.
-
 == Building
 
-To launch your tests:
+To launch the tests:
 [source]
 ----
 ./mvnw clean test
 ----
 
-To package your application:
+To package the application:
 [source]
 ----
 ./mvnw clean package
 ----
 
-To run your application:
+To start the application:
 [source]
 ----
 ./mvnw clean compile exec:java
 ----
 
-== Usage examples [dbNSFP]
+== Usage examples
 
-The service is only running on *localhost:8080*. It creates DB directories in the user's home directory.
+The service is only running on *localhost:8080* for now. It creates DB directories in the user's home directory if not specified otherwise.
 
+DB directory can be adjusted using a *config.json* file:
+[source]
+----
+{
+	"dataDirectoryPath": "/home/user/ExampleStorage"
+}
+----
+To start the application:
+[source]
+----
+java -jar astorage-java.jar [config_json_path]
+----
+
+.*Fasta*
+[%collapsible]
+====
 To ingest data:
 [source]
 ----
-curl -X POST "localhost:8080/ingestion/dbnsfp?data-path=<path_to_dbnsfp_data>"
+curl -X POST "localhost:8080/query/fasta?arrayName=<arr_name>&dataURL=<data_url>&metadataURL=<metadata_url>"
 ----
 
-To query variants:
+To query data:
+[source]
+----
+curl "localhost:8080/query/fasta?arrayName=<arr_name>&sectionName=<sec_name>&startPosition=<start_pos>&stopPosition=<stop_pos>"
+----
+====
+
+.*dbNSFP v4.3a*
+[%collapsible]
+====
+To ingest data:
+[source]
+----
+curl -X POST "localhost:8080/ingestion/dbnsfp?dataPath=<data_path>"
+----
+
+To query data:
 [source]
 ----
 curl "localhost:8080/query/dbnsfp?chr=<chr_num>&pos=<pos>&alt=<alt_nucleotide>"
 ----
+====
 
-To batch-query variants:
+.*gnomAD v2.1.1*
+[%collapsible]
+====
+To ingest data:
+[source]
+----
+curl -X POST "localhost:8080/ingestion/gnomad?dataUrl=<data_url>&sourceType=<src_type>"
+----
+
+To query data:
+[source]
+----
+curl "localhost:8080/query/gnomad?chr=<chr_num>&pos=<pos>&sourceType=<src_type>"
+----
+====
+
+.*SpliceAI v1.3*
+[%collapsible]
+====
+To ingest data:
+[source]
+----
+curl -X POST "localhost:8080/ingestion/spliceai?dataPath=<data_path>"
+----
+
+To query data:
+[source]
+----
+curl "localhost:8080/query/spliceai?chr=<chr_num>&pos=<pos>"
+----
+====
+
+.*PharmGKB*
+[%collapsible]
+====
+To ingest data:
+[source]
+----
+curl -X POST "localhost:8080/ingestion/pharmgkb?dataType=<data_type>&dataPath=<data_path>"
+----
+
+To query data:
+[source]
+----
+curl "localhost:8080/query/pharmgkb?dataType=<data_type>&id=<id>"
+----
+====
+
+To batch-query data:
 [source]
 ----
 curl -X POST \
 	-H "Content-Type: application/json" \
 	-d @query_file.json \
-	"localhost:8080/batch-query/dbnsfp" > results.jsonl
+	"localhost:8080/batch-query/<format_name>" > results.jsonl
 ----
 
-*query_file.json* example:
+*query_file.json* example for *dbNSFP* (Batch query parameters match single query parameters for every format):
 [source]
 ----
 [
@@ -59,7 +136,6 @@ curl -X POST \
 	{"chr": 21, "pos": 5011800},
 	{"chr": 16, "pos": 62584, "alt": "T"}
 ]
-
 ----
 
 To stop the service:
@@ -67,12 +143,3 @@ To stop the service:
 ----
 curl "localhost:8080/stop"
 ----
-
-== Help
-
-* https://vertx.io/docs/[Vert.x Documentation]
-* https://stackoverflow.com/questions/tagged/vert.x?sort=newest&pageSize=15[Vert.x Stack Overflow]
-* https://groups.google.com/forum/?fromgroups#!forum/vertx[Vert.x User Group]
-* https://gitter.im/eclipse-vertx/vertx-users[Vert.x Gitter]
-
-

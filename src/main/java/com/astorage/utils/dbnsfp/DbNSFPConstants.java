@@ -15,7 +15,7 @@ public interface DbNSFPConstants {
 	String NULL_SHORTHAND = ".";
 
 	// Ingestion/query request params:
-	String DATA_PATH_PARAM = "data-path";
+	String DATA_PATH_PARAM = "dataPath";
 	String CHR_PARAM = "chr";
 	String POS_PARAM = "pos";
 	String ALT_PARAM = "alt";
