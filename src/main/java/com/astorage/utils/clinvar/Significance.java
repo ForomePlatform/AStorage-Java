@@ -14,9 +14,14 @@ public class Significance implements Constants, ClinVarConstants {
 	};
 	private final Map<String, String> significanceColumnValues = new HashMap<>();
 
+	public static byte[] generateKey(String rCVAccession) {
+		return rCVAccession.getBytes();
+	}
+
 	public byte[] getKey() {
-		String submitterId = significanceColumnValues.get(SUBMITTER_ID_COLUMN_NAME);
-		return submitterId.getBytes();
+		String rCVAccession = significanceColumnValues.get(RCV_ACCESSION_COLUMN_NAME);
+
+		return generateKey(rCVAccession);
 	}
 
 	public void setSubmitterId(String submitterId) {

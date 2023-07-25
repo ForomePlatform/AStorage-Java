@@ -3,6 +3,9 @@ package com.astorage.query;
 import com.astorage.db.RocksDBRepository;
 import com.astorage.utils.Constants;
 import com.astorage.utils.clinvar.ClinVarConstants;
+import com.astorage.utils.clinvar.Significance;
+import com.astorage.utils.clinvar.Submitter;
+import com.astorage.utils.clinvar.Variant;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
@@ -25,25 +28,34 @@ public class ClinVarQuery implements Query, Constants, ClinVarConstants {
 		HttpServerRequest req = context.request();
 
 		if (
-			req.params().size() == 2
-				&& req.params().contains(DATA_TYPE_PARAM)
-				&& req.params().contains(ID_PARAM)
+			req.params().size() == 3
+				&& req.params().contains(CHR_PARAM)
+				&& req.params().contains(START_POS_PARAM)
+				&& req.params().contains(END_POS_PARAM)
 		) {
-			String dataType = req.getParam(DATA_TYPE_PARAM);
-			String id = req.getParam(ID_PARAM);
+			String chr = req.getParam(CHR_PARAM);
+			String startPos = req.getParam(START_POS_PARAM);
+			String endPos = req.getParam(END_POS_PARAM);
 
-			singleQueryHandler(dataType, id, false);
+			singleQueryHandler(chr, startPos, endPos, false);
 		}
 
 		Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
 	}
 
-	protected void singleQueryHandler(String dataType, String id, boolean isBatched) throws IOException {
+	protected void singleQueryHandler(String chr, String startPos, String endPos, boolean isBatched) throws IOException {
 		HttpServerRequest req = context.request();
 		JsonObject errorJson = new JsonObject();
 
-		if (!(DATA_TYPES.contains(dataType))) {
-			errorJson.put("error", INVALID_DATA_TYPE_ERROR);
+		try {
+			if (!LETTER_CHROMOSOMES.contains(chr.toUpperCase())) {
+				Integer.parseInt(chr);
+			}
+
+			Long.parseLong(startPos);
+			Long.parseLong(endPos);
+		} catch (NumberFormatException e) {
+			errorJson.put("error", INVALID_CHR_OR_POS_ERROR);
 
 			Constants.errorResponse(
 				req,
@@ -54,13 +66,19 @@ public class ClinVarQuery implements Query, Constants, ClinVarConstants {
 			return;
 		}
 
-		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(dataType);
-		if (columnFamilyHandle == null) {
+		ColumnFamilyHandle variantColumnFamilyHandle = dbRep.getColumnFamilyHandle(VARIANT_SUMMARY_COLUMN_FAMILY_NAME);
+		ColumnFamilyHandle significanceColumnFamilyHandle = dbRep.getColumnFamilyHandle(SIGNIFICANCE_COLUMN_FAMILY_NAME);
+		ColumnFamilyHandle submitterColumnFamilyHandle = dbRep.getColumnFamilyHandle(SUBMITTER_COLUMN_FAMILY_NAME);
+		if (
+			variantColumnFamilyHandle == null
+			|| significanceColumnFamilyHandle == null
+			|| submitterColumnFamilyHandle == null
+		) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, COLUMN_FAMILY_NULL_ERROR);
 			return;
 		}
 
-		byte[] compressedVariant = dbRep.getBytes(id.getBytes(), columnFamilyHandle);
+		byte[] compressedVariant = dbRep.getBytes(Variant.generateKey(chr, startPos, endPos), variantColumnFamilyHandle);
 		if (compressedVariant == null) {
 			errorJson.put("error", RESULT_NOT_FOUND_ERROR);
 
@@ -75,7 +93,23 @@ public class ClinVarQuery implements Query, Constants, ClinVarConstants {
 
 		String decompressedVariant = Constants.decompressJson(compressedVariant);
 		JsonObject result = new JsonObject(decompressedVariant);
-		result.put(DATA_TYPE_PARAM, dataType);
+
+		String rCVAccession = result.getString(RCV_ACCESSION_COLUMN_NAME);
+		byte[] compressedSignificance = dbRep.getBytes(Significance.generateKey(rCVAccession), significanceColumnFamilyHandle);
+		if (compressedSignificance != null) {
+			String decompressedSignificance = Constants.decompressJson(compressedSignificance);
+			JsonObject significanceJson = new JsonObject(decompressedSignificance);
+			result.put(SIGNIFICANCE_COLUMN_FAMILY_NAME, significanceJson);
+
+			String submitterId = significanceJson.getString(SUBMITTER_ID_COLUMN_NAME);
+			byte[] compressedSubmitter = dbRep.getBytes(Submitter.generateKey(submitterId), submitterColumnFamilyHandle);
+
+			if (compressedSubmitter != null) {
+				String decompressedSubmitter = Constants.decompressJson(compressedSubmitter);
+				JsonObject submitterJson = new JsonObject(decompressedSubmitter);
+				result.put(SUBMITTER_COLUMN_FAMILY_NAME, submitterJson);
+			}
+		}
 
 		if (isBatched) {
 			req.response().write(result + "\n");

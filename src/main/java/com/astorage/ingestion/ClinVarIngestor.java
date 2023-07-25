@@ -14,6 +14,8 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
@@ -99,13 +101,13 @@ public class ClinVarIngestor implements Ingestor, Constants, ClinVarConstants {
 			}
 
 			columns = Constants.mapColumns(line.substring(1), COLUMNS_DELIMITER);
+			List<Variant> lastVariants = new ArrayList<>();
 
 			while ((line = bufferedReader.readLine()) != null) {
 				String[] values = line.split(COLUMNS_DELIMITER);
 				Variant variant = new Variant(columns, values);
 
-				String alleleId = values[columns.get(ALLELE_ID_COLUMN_NAME)];
-				byte[] key = alleleId.getBytes();
+				byte[] key = variant.getKey();
 				byte[] compressedVariant = Constants.compressJson(variant.toString());
 
 				dbRep.saveBytes(key, compressedVariant, variatnsColumnFamilyHandle);

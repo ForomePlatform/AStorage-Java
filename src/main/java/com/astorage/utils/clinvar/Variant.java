@@ -52,9 +52,16 @@ public class Variant implements Constants, ClinVarConstants {
 		}
 	}
 
+	public static byte[] generateKey(String chr, String startPos, String endPos) {
+		return (chr + "_" + startPos + "_" + endPos).getBytes();
+	}
+
 	public byte[] getKey() {
-		String alleleID = variantColumnValues.get(ALLELE_ID_COLUMN_NAME);
-		return alleleID.getBytes();
+		String chr = variantColumnValues.get(CHROMOSOME_COLUMN_NAME);
+		String startPos = variantColumnValues.get(START_POSITION_COLUMN_NAME);
+		String endPos = variantColumnValues.get(END_POSITION_COLUMN_NAME);
+
+		return generateKey(chr, startPos, endPos);
 	}
 
 	public JsonObject toJson() {

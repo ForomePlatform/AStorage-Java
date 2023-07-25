@@ -13,9 +13,14 @@ public class Submitter implements Constants, ClinVarConstants {
 	};
 	private final Map<String, String> submitterColumnValues = new HashMap<>();
 
+	public static byte[] generateKey(String submitterId) {
+		return submitterId.getBytes();
+	}
+
 	public byte[] getKey() {
 		String submitterId = submitterColumnValues.get(SUBMITTER_ID_COLUMN_NAME);
-		return submitterId.getBytes();
+
+		return generateKey(submitterId);
 	}
 
 	public void setSubmitterId(String id) {
