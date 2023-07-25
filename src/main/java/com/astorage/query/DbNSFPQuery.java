@@ -26,9 +26,11 @@ public class DbNSFPQuery implements Query, Constants, DbNSFPConstants {
 	public void queryHandler() throws IOException {
 		HttpServerRequest req = context.request();
 
-		if ((req.params().size() == 2 || req.params().size() == 3 && req.params().contains(ALT_PARAM))
-			&& req.params().contains(CHR_PARAM)
-			&& req.params().contains(POS_PARAM)) {
+		if (
+			(req.params().size() == 2 || req.params().size() == 3 && req.params().contains(ALT_PARAM))
+				&& req.params().contains(CHR_PARAM)
+				&& req.params().contains(POS_PARAM)
+		) {
 			String chr = req.getParam(CHR_PARAM);
 			String pos = req.getParam(POS_PARAM);
 			String alt = req.params().contains(ALT_PARAM) ? req.getParam(ALT_PARAM).toUpperCase() : null;

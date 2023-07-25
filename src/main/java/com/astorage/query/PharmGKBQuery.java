@@ -24,9 +24,11 @@ public class PharmGKBQuery implements Query, Constants, PharmGKBConstants {
 	public void queryHandler() throws IOException {
 		HttpServerRequest req = context.request();
 
-		if (req.params().size() == 2
-			&& req.params().contains(DATA_TYPE_PARAM)
-			&& req.params().contains(ID_PARAM)) {
+		if (
+			req.params().size() == 2
+				&& req.params().contains(DATA_TYPE_PARAM)
+				&& req.params().contains(ID_PARAM)
+		) {
 			String dataType = req.getParam(DATA_TYPE_PARAM);
 			String id = req.getParam(ID_PARAM);
 

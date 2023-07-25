@@ -28,6 +28,9 @@ public interface PharmGKBConstants {
 	);
 	String COLUMNS_DELIMITER = "\t";
 
+	// Success messages:
+	String INGESTION_FINISH_MSG = "All Data has been ingested.";
+
 	// Error messages:
 	String INVALID_DATA_TYPE_ERROR = "Invalid data type, should be either \"g\" or \"e\"...";
 	String COLUMN_FAMILY_NULL_ERROR = "Array with the given name doesn't exist...";

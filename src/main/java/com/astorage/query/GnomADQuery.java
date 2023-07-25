@@ -25,10 +25,12 @@ public class GnomADQuery implements Query, Constants, GnomADConstants {
 	public void queryHandler() throws IOException {
 		HttpServerRequest req = context.request();
 
-		if (req.params().size() == 3
-			&& req.params().contains(CHR_PARAM)
-			&& req.params().contains(POS_PARAM)
-			&& req.params().contains(SOURCE_TYPE_PARAM)) {
+		if (
+			req.params().size() == 3
+				&& req.params().contains(CHR_PARAM)
+				&& req.params().contains(POS_PARAM)
+				&& req.params().contains(SOURCE_TYPE_PARAM)
+		) {
 			String chr = req.getParam(CHR_PARAM);
 			String pos = req.getParam(POS_PARAM);
 			String sourceType = req.getParam(SOURCE_TYPE_PARAM);

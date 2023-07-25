@@ -31,9 +31,12 @@ public class ClinVarIngestor implements Ingestor, Constants, ClinVarConstants {
 
 	public void ingestionHandler() {
 		HttpServerRequest req = context.request();
-		if (!(req.params().size() == 2
+
+		if (
+			!(req.params().size() == 2
 			&& req.params().contains(DATA_PATH_PARAM)
-			&& req.params().contains(DATA_SUMMARY_PATH_PARAM))) {
+			&& req.params().contains(DATA_SUMMARY_PATH_PARAM))
+		) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
 			return;
 		}
@@ -44,11 +47,11 @@ public class ClinVarIngestor implements Ingestor, Constants, ClinVarConstants {
 		storeXMLData(dataPath);
 		storeVariantSummeryData(dataSummaryPath);
 
-		String resp = "All Data has been ingested.\n";
+		String response = INGESTION_FINISH_MSG + "\n";
 
 		req.response()
 			.putHeader("content-type", "text/plain")
-			.end(resp);
+			.end(response);
 	}
 
 	private void storeXMLData(String dataPath) {
@@ -112,8 +115,6 @@ public class ClinVarIngestor implements Ingestor, Constants, ClinVarConstants {
 
 				dbRep.saveBytes(key, compressedVariant, variatnsColumnFamilyHandle);
 			}
-
-			bufferedReader.close();
 		} catch (IOException e) {
 			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 		}
@@ -121,7 +122,11 @@ public class ClinVarIngestor implements Ingestor, Constants, ClinVarConstants {
 
 	private ColumnFamilyHandle getOrCreateColumnFamily(String columnFamilyName) {
 		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(columnFamilyName);
-		if (columnFamilyHandle == null) columnFamilyHandle = dbRep.createColumnFamily(columnFamilyName);
+
+		if (columnFamilyHandle == null) {
+			columnFamilyHandle = dbRep.createColumnFamily(columnFamilyName);
+		}
+
 		return columnFamilyHandle;
 	}
 }

@@ -38,6 +38,8 @@ public class ClinVarQuery implements Query, Constants, ClinVarConstants {
 			String endPos = req.getParam(END_POS_PARAM);
 
 			singleQueryHandler(chr, startPos, endPos, false);
+			
+			return;
 		}
 
 		Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
@@ -94,8 +96,8 @@ public class ClinVarQuery implements Query, Constants, ClinVarConstants {
 		String decompressedVariant = Constants.decompressJson(compressedVariant);
 		JsonObject result = new JsonObject(decompressedVariant);
 
-		String rCVAccession = result.getString(RCV_ACCESSION_COLUMN_NAME);
-		byte[] compressedSignificance = dbRep.getBytes(Significance.generateKey(rCVAccession), significanceColumnFamilyHandle);
+		String rcvAccession = result.getString(RCV_ACCESSION_COLUMN_NAME);
+		byte[] compressedSignificance = dbRep.getBytes(Significance.generateKey(rcvAccession), significanceColumnFamilyHandle);
 		if (compressedSignificance != null) {
 			String decompressedSignificance = Constants.decompressJson(compressedSignificance);
 			JsonObject significanceJson = new JsonObject(decompressedSignificance);

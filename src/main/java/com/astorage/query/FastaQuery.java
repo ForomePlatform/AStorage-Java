@@ -23,21 +23,25 @@ public class FastaQuery implements Query, Constants, FastaConstants {
 
 	public void queryHandler() {
 		HttpServerRequest req = context.request();
-		if (!(req.params().size() == 4
-			&& req.params().contains(ARRAY_NAME_PARAM)
-			&& req.params().contains(SECTION_NAME_PARAM)
-			&& req.params().contains(START_POS_PARAM)
-			&& req.params().contains(END_POS_PARAM))) {
-			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
+
+		if (
+			req.params().size() == 4
+				&& req.params().contains(ARRAY_NAME_PARAM)
+				&& req.params().contains(SECTION_NAME_PARAM)
+				&& req.params().contains(START_POS_PARAM)
+				&& req.params().contains(END_POS_PARAM)
+		) {
+			String arrayName = req.getParam(ARRAY_NAME_PARAM);
+			String sectionName = req.getParam(SECTION_NAME_PARAM);
+			int startPosition = Integer.parseInt(req.getParam(START_POS_PARAM));
+			int endPosition = Integer.parseInt(req.getParam(END_POS_PARAM));
+
+			singleQueryHandler(arrayName, sectionName, startPosition, endPosition, false);
+
 			return;
 		}
 
-		String arrayName = req.getParam(ARRAY_NAME_PARAM);
-		String sectionName = req.getParam(SECTION_NAME_PARAM);
-		int startPosition = Integer.parseInt(req.getParam(START_POS_PARAM));
-		int endPosition = Integer.parseInt(req.getParam(END_POS_PARAM));
-
-		singleQueryHandler(arrayName, sectionName, startPosition, endPosition, false);
+		Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
 	}
 
 	public void singleQueryHandler(String arrayName, String sectionName, int startPosition, int endPosition, boolean isBatched) {

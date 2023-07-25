@@ -24,6 +24,9 @@ public interface GnomADConstants {
 	// Other:
 	String COMPRESSED_DATA_FILENAME = "data.gz";
 
+	// Success messages:
+	String INGESTION_FINISH_MSG = "All Data has been ingested.";
+
 	// Error messages:
 	String INVALID_FILE_CONTENT = "Invalid gnomAD file...";
 	String INVALID_CHR_OR_POS_ERROR = "Invalid 'chr' or 'pos'...";
