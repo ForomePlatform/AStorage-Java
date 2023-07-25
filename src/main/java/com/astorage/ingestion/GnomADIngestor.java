@@ -73,11 +73,11 @@ public class GnomADIngestor implements Ingestor, Constants, GnomADConstants {
 			return;
 		}
 
-		String resp = "All Data has been ingested.\n";
+		String response = INGESTION_FINISH_MSG + "\n";
 
 		req.response()
 			.putHeader("content-type", "text/plain")
-			.end(resp);
+			.end(response);
 	}
 
 	private void storeData(BufferedReader reader, ColumnFamilyHandle columnFamilyHandle) throws IOException {

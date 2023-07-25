@@ -1,5 +1,6 @@
 package com.astorage.utils;
 
+import com.astorage.utils.clinvar.ClinVarConstants;
 import com.astorage.utils.dbnsfp.DbNSFPConstants;
 import com.astorage.utils.fasta.FastaConstants;
 import com.astorage.utils.gnomad.GnomADConstants;
@@ -32,7 +33,8 @@ public interface Constants {
 		DbNSFPConstants.DBNSFP_FORMAT_NAME,
 		GnomADConstants.GNOMAD_FORMAT_NAME,
 		SpliceAIConstants.SPLICEAI_FORMAT_NAME,
-		PharmGKBConstants.PHARMGKB_FORMAT_NAME
+		PharmGKBConstants.PHARMGKB_FORMAT_NAME,
+		ClinVarConstants.CLINVAR_FORMAT_NAME
 	};
 	String HTTP_SERVER_START = "HTTP server started on port: " + HTTP_SERVER_PORT + "!";
 	String HTTP_SERVER_STOP = "HTTP server stopped.";
