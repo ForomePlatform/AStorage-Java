@@ -2,6 +2,14 @@
 
 image:https://img.shields.io/badge/vert.x-4.3.7-purple.svg[link="https://vertx.io"]
 
+.Already supported formats (See usage examples below):
+* Fasta
+* dbNSFP v4.3a
+* gnomAD v2.1.1
+* SpliceAI v1.3
+* PharmGKB
+* ClinVar
+
 == Building
 
 To launch the tests:
