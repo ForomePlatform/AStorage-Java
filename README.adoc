@@ -119,6 +119,22 @@ curl "localhost:8080/query/pharmgkb?dataType=<data_type>&id=<id>"
 ----
 ====
 
+.*ClinVar*
+[%collapsible]
+====
+To ingest data:
+[source]
+----
+curl -X POST "localhost:8080/ingestion/clinvar?dataPath=<data_path>&dataSummaryPath=<data_summary_path>"
+----
+
+To query data:
+[source]
+----
+curl "localhost:8080/query/clinvar?chr=<chr_num>&startPos=<start_pos>&endPos=<end_pos>"
+----
+====
+
 To batch-query data:
 [source]
 ----
