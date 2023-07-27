@@ -33,11 +33,12 @@ public class ClinVarIngestor implements Ingestor, Constants, ClinVarConstants {
 		HttpServerRequest req = context.request();
 
 		if (
-			!(req.params().size() == 2
-			&& req.params().contains(DATA_PATH_PARAM)
-			&& req.params().contains(DATA_SUMMARY_PATH_PARAM))
+			req.params().size() != 2
+				|| !req.params().contains(DATA_PATH_PARAM)
+				|| !req.params().contains(DATA_SUMMARY_PATH_PARAM)
 		) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
+
 			return;
 		}
 

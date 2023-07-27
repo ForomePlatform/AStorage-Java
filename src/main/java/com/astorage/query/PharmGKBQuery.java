@@ -25,19 +25,19 @@ public class PharmGKBQuery implements Query, Constants, PharmGKBConstants {
 		HttpServerRequest req = context.request();
 
 		if (
-			req.params().size() == 2
-				&& req.params().contains(DATA_TYPE_PARAM)
-				&& req.params().contains(ID_PARAM)
+			req.params().size() != 2
+				|| !req.params().contains(DATA_TYPE_PARAM)
+				|| !req.params().contains(ID_PARAM)
 		) {
-			String dataType = req.getParam(DATA_TYPE_PARAM);
-			String id = req.getParam(ID_PARAM);
-
-			singleQueryHandler(dataType, id,false);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
 
 			return;
 		}
 
-		Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
+		String dataType = req.getParam(DATA_TYPE_PARAM);
+		String id = req.getParam(ID_PARAM);
+
+		singleQueryHandler(dataType, id,false);
 	}
 
 	protected void singleQueryHandler(String dataType, String id, boolean isBatched) throws IOException {

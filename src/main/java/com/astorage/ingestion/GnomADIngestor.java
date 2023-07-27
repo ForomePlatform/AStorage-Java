@@ -30,10 +30,14 @@ public class GnomADIngestor implements Ingestor, Constants, GnomADConstants {
 
 	public void ingestionHandler() {
 		HttpServerRequest req = context.request();
-		if (!(req.params().size() == 2
-			&& req.params().contains(DATA_URL_PARAM)
-			&& req.params().contains(SOURCE_TYPE_PARAM))) {
+
+		if (
+			req.params().size() != 2
+				|| !req.params().contains(DATA_URL_PARAM)
+				|| !req.params().contains(SOURCE_TYPE_PARAM)
+		) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
+
 			return;
 		}
 
@@ -68,8 +72,8 @@ public class GnomADIngestor implements Ingestor, Constants, GnomADConstants {
 
 			storeData(bufferedReader, columnFamilyHandle);
 		} catch (IOException | SecurityException | URISyntaxException e) {
-			e.printStackTrace();
 			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, DOWNLOADING_DATA_ERROR);
+
 			return;
 		}
 

@@ -28,21 +28,21 @@ public class ClinVarQuery implements Query, Constants, ClinVarConstants {
 		HttpServerRequest req = context.request();
 
 		if (
-			req.params().size() == 3
-				&& req.params().contains(CHR_PARAM)
-				&& req.params().contains(START_POS_PARAM)
-				&& req.params().contains(END_POS_PARAM)
+			req.params().size() != 3
+				|| !req.params().contains(CHR_PARAM)
+				|| !req.params().contains(START_POS_PARAM)
+				|| !req.params().contains(END_POS_PARAM)
 		) {
-			String chr = req.getParam(CHR_PARAM);
-			String startPos = req.getParam(START_POS_PARAM);
-			String endPos = req.getParam(END_POS_PARAM);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
 
-			singleQueryHandler(chr, startPos, endPos, false);
-			
 			return;
 		}
 
-		Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
+		String chr = req.getParam(CHR_PARAM);
+		String startPos = req.getParam(START_POS_PARAM);
+		String endPos = req.getParam(END_POS_PARAM);
+
+		singleQueryHandler(chr, startPos, endPos, false);
 	}
 
 	protected void singleQueryHandler(String chr, String startPos, String endPos, boolean isBatched) throws IOException {

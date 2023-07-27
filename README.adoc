@@ -44,7 +44,7 @@ DB directory can be adjusted using a *config.json* file:
 To start the application:
 [source]
 ----
-java -jar astorage-java.jar [config_json_path]
+java -jar astorage-java-1.0.0.jar [config_json_path]
 ----
 
 .*Fasta*
