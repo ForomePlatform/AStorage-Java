@@ -1,6 +1,6 @@
 = AStorage-Java
 
-image:https://img.shields.io/badge/vert.x-4.3.7-purple.svg[link="https://vertx.io"]
+image:https://img.shields.io/badge/vert.x-4.4.4-white.svg[link="https://vertx.io"]
 
 .Already supported formats (See usage examples below):
 * Fasta
