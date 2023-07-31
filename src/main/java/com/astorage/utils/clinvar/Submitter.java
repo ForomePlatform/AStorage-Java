@@ -1,12 +1,13 @@
 package com.astorage.utils.clinvar;
 
 import com.astorage.utils.Constants;
+import com.astorage.utils.JsonConvertible;
 import io.vertx.core.json.JsonObject;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class Submitter implements Constants, ClinVarConstants {
+public class Submitter implements JsonConvertible, Constants, ClinVarConstants {
 	public static final String[] SUBMITTER_COLUMNS = {
 		"SubmitterID",
 		"SubmitterName"

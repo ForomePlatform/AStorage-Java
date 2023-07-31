@@ -9,6 +9,7 @@ image:https://img.shields.io/badge/vert.x-4.4.4-white.svg[link="https://vertx.io
 * SpliceAI v1.3
 * PharmGKB
 * ClinVar
+* GTEx v8
 
 == Building
 
@@ -140,6 +141,34 @@ To query data:
 [source]
 ----
 curl "localhost:8080/query/clinvar?chr=<chr_num>&startPos=<start_pos>&endPos=<end_pos>"
+----
+====
+
+.*GTEx v8*
+[%collapsible]
+====
+To ingest data:
+[source]
+----
+curl -X POST "localhost:8080/ingestion/gtex?dataPath=<data_path>"
+----
+
+To query Gene data:
+[source]
+----
+curl "localhost:8080/query/gtex?dataType=gene&geneId=<gene_id>&subId=<sub_id>"
+----
+
+To query Tissue data:
+[source]
+----
+curl "localhost:8080/query/gtex?dataType=tissue&tissueNo=<tissue_number>"
+----
+
+To query GeneToTissue data:
+[source]
+----
+curl "localhost:8080/query/gtex?dataType=geneToTissue&geneId=<gene_id>&subId=<sub_id>&tissueNo=<tissue_number>"
 ----
 ====
 

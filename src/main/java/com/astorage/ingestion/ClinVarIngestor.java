@@ -56,8 +56,8 @@ public class ClinVarIngestor implements Ingestor, Constants, ClinVarConstants {
 	}
 
 	private void storeXMLData(String dataPath) {
-		ColumnFamilyHandle significanceColumnFamilyHandle = getOrCreateColumnFamily(SIGNIFICANCE_COLUMN_FAMILY_NAME);
-		ColumnFamilyHandle submittersColumnFamilyHandle = getOrCreateColumnFamily(SUBMITTER_COLUMN_FAMILY_NAME);
+		ColumnFamilyHandle significanceColumnFamilyHandle = dbRep.getOrCreateColumnFamily(SIGNIFICANCE_COLUMN_FAMILY_NAME);
+		ColumnFamilyHandle submittersColumnFamilyHandle = dbRep.getOrCreateColumnFamily(SUBMITTER_COLUMN_FAMILY_NAME);
 
 		try {
 			InputStream fileInputStream = new FileInputStream(dataPath);
@@ -82,12 +82,12 @@ public class ClinVarIngestor implements Ingestor, Constants, ClinVarConstants {
 				dbRep.saveBytes(key, compressedSubmitter, submittersColumnFamilyHandle);
 			}
 		} catch (ParserConfigurationException | SAXException | IOException e) {
-			throw new RuntimeException(e);
+			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 		}
 	}
 
 	private void storeVariantSummeryData(String dataSummaryPath) {
-		ColumnFamilyHandle variatnsColumnFamilyHandle = getOrCreateColumnFamily(VARIANT_SUMMARY_COLUMN_FAMILY_NAME);
+		ColumnFamilyHandle variatnsColumnFamilyHandle = dbRep.getOrCreateColumnFamily(VARIANT_SUMMARY_COLUMN_FAMILY_NAME);
 
 		try (
 			InputStream fileInputStream = new FileInputStream(dataSummaryPath);
@@ -119,15 +119,5 @@ public class ClinVarIngestor implements Ingestor, Constants, ClinVarConstants {
 		} catch (IOException e) {
 			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 		}
-	}
-
-	private ColumnFamilyHandle getOrCreateColumnFamily(String columnFamilyName) {
-		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(columnFamilyName);
-
-		if (columnFamilyHandle == null) {
-			columnFamilyHandle = dbRep.createColumnFamily(columnFamilyName);
-		}
-
-		return columnFamilyHandle;
 	}
 }
