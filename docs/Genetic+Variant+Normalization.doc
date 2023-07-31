@@ -1,0 +1,382 @@
+Date: Mon, 31 Jul 2023 23:08:36 +0000 (UTC)
+Message-ID: <487549180.602730.1690844916120@gbuconf-prod-dc-node2.snphxjcprodst.gbucdsint02phx.oraclevcn.com>
+Subject: Exported From Confluence
+MIME-Version: 1.0
+Content-Type: multipart/related; 
+	boundary="----=_Part_602729_2145231476.1690844916120"
+
+------=_Part_602729_2145231476.1690844916120
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+Content-Location: file:///C:/exported.html
+
+<html xmlns:o=3D'urn:schemas-microsoft-com:office:office'
+      xmlns:w=3D'urn:schemas-microsoft-com:office:word'
+      xmlns:v=3D'urn:schemas-microsoft-com:vml'
+      xmlns=3D'urn:w3-org-ns:HTML'>
+<head>
+    <meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dutf-8=
+">
+    <title>Genetic Variant Normalization</title>
+    <!--[if gte mso 9]>
+    <xml>
+        <o:OfficeDocumentSettings>
+            <o:TargetScreenSize>1024x640</o:TargetScreenSize>
+            <o:PixelsPerInch>72</o:PixelsPerInch>
+            <o:AllowPNG/>
+        </o:OfficeDocumentSettings>
+        <w:WordDocument>
+            <w:View>Print</w:View>
+            <w:Zoom>90</w:Zoom>
+            <w:DoNotOptimizeForBrowser/>
+        </w:WordDocument>
+    </xml>
+    <![endif]-->
+    <style>
+                <!--
+        @page Section1 {
+            size: 8.5in 11.0in;
+            margin: 1.0in;
+            mso-header-margin: .5in;
+            mso-footer-margin: .5in;
+            mso-paper-source: 0;
+        }
+
+        table {
+            border: solid 1px;
+            border-collapse: collapse;
+        }
+
+        table td, table th {
+            border: solid 1px;
+            padding: 5px;
+        }
+
+        td {
+            page-break-inside: avoid;
+        }
+
+        tr {
+            page-break-after: avoid;
+        }
+
+        div.Section1 {
+            page: Section1;
+        }
+
+        /* Confluence print stylesheet. Common to all themes for print medi=
+a */
+/* Full of !important until we improve batching for print CSS */
+
+@media print {
+    #main {
+        padding-bottom: 1em !important; /* The default padding of 6em is to=
+o much for printouts */
+    }
+
+    body {
+        font-family: Arial, Helvetica, FreeSans, sans-serif;
+        font-size: 10pt;
+        line-height: 1.2;
+    }
+
+    body, #full-height-container, #main, #page, #content, .has-personal-sid=
+ebar #content {
+        background: #fff !important;
+        color: #000 !important;
+        border: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+    }
+
+    a, a:link, a:visited, a:focus, a:hover, a:active {
+        color: #000;
+    }
+
+    #content h1,
+    #content h2,
+    #content h3,
+    #content h4,
+    #content h5,
+    #content h6 {
+        font-family: Arial, Helvetica, FreeSans, sans-serif;
+        page-break-after: avoid;
+    }
+
+    pre {
+        font-family: Monaco, "Courier New", monospace;
+    }
+
+    #header,
+    .aui-header-inner,
+    #navigation,
+    #sidebar,
+    .sidebar,
+    #personal-info-sidebar,
+    .ia-fixed-sidebar,
+    .page-actions,
+    .navmenu,
+    .ajs-menu-bar,
+    .noprint,
+    .inline-control-link,
+    .inline-control-link a,
+    a.show-labels-editor,
+    .global-comment-actions,
+    .comment-actions,
+    .quick-comment-container,
+    #addcomment {
+        display: none !important;
+    }
+
+    /* CONF-28544 cannot print multiple pages in IE */
+    #splitter-content {
+        position: relative !important;
+    }
+
+    .comment .date::before {
+        content: none !important; /* remove middot for print view */
+    }
+
+    h1.pagetitle img {
+        height: auto;
+        width: auto;
+    }
+
+    .print-only {
+        display: block;
+    }
+
+    #footer {
+        position: relative !important; /* CONF-17506 Place the footer at en=
+d of the content */
+        margin: 0;
+        padding: 0;
+        background: none;
+        clear: both;
+    }
+
+    #poweredby {
+        border-top: none;
+        background: none;
+    }
+
+    #poweredby li.print-only {
+        display: list-item;
+        font-style: italic;
+    }
+
+    #poweredby li.noprint {
+        display: none;
+    }
+
+    /* no width controls in print */
+    .wiki-content .table-wrap,
+    .wiki-content p,
+    .panel .codeContent,
+    .panel .codeContent pre,
+    .image-wrap {
+        overflow: visible !important;
+    }
+
+    /* TODO - should this work? */
+    #children-section,
+    #comments-section .comment,
+    #comments-section .comment .comment-body,
+    #comments-section .comment .comment-content,
+    #comments-section .comment p {
+        page-break-inside: avoid;
+    }
+
+    #page-children a {
+        text-decoration: none;
+    }
+
+    /**
+     hide twixies
+
+     the specificity here is a hack because print styles
+     are getting loaded before the base styles. */
+    #comments-section.pageSection .section-header,
+    #comments-section.pageSection .section-title,
+    #children-section.pageSection .section-header,
+    #children-section.pageSection .section-title,
+    .children-show-hide {
+        padding-left: 0;
+        margin-left: 0;
+    }
+
+    .children-show-hide.icon {
+        display: none;
+    }
+
+    /* personal sidebar */
+    .has-personal-sidebar #content {
+        margin-right: 0px;
+    }
+
+    .has-personal-sidebar #content .pageSection {
+        margin-right: 0px;
+    }
+
+    .no-print, .no-print * {
+        display: none !important;
+    }
+}
+-->
+    </style>
+</head>
+<body>
+    <h1>Genetic Variant Normalization</h1>
+    <div class=3D"Section1">
+        <p><style type=3D"text/css">/*<![CDATA[*/
+div.rbtoc1690844916078 {padding: 0px;}
+div.rbtoc1690844916078 ul {margin-left: 0px;}
+div.rbtoc1690844916078 li {margin-left: 0px;padding-left: 0px;}
+
+/*]]>*/</style></p>
+<div class=3D"toc-macro rbtoc1690844916078">=20
+<ul class=3D"toc-indentation">=20
+<li><a href=3D"#GeneticVariantNormalization-Whatwearenormalizing">What we a=
+re normalizing</a></li>=20
+<li><a href=3D"#GeneticVariantNormalization-GA4GHNormalizationSpec">GA4GH N=
+ormalization Spec</a></li>=20
+<li><a href=3D"#GeneticVariantNormalization-ambiguityExampleofambiguousreco=
+rds">Example of ambiguous records</a></li>=20
+<li><a href=3D"#GeneticVariantNormalization-SplittingSNV">Splitting SNV</a>=
+</li>=20
+<li><a href=3D"#GeneticVariantNormalization-Multi-allelicvariants">Multi-al=
+lelic variants</a></li>=20
+</ul>=20
+</div>
+<p></p>
+<h1 id=3D"GeneticVariantNormalization-Whatwearenormalizing">What we are nor=
+malizing</h1>
+<p>As input, we are getting records, describing genetic events (aka variant=
+s). There are several types of records in the input data:</p>
+<ul>
+<li>Point events, or SNV (Single Nucleotide Variations)</li>
+<li>Small sequence alterations: insertions, deletions (indels), etc.</li>
+<li>Large sequence alterations: copy number variations (CNV), structural va=
+riants (SV), etc.</li>
+<li>Chromosomal events (duplicate or missing chromosomes or large parts of =
+thereof)&nbsp;</li>
+</ul>
+<p>The sequence has to be normalized because events (variants) can be repre=
+sented in ambiguous way. Ambiguity makes it impossible to match the events =
+to the data associated with these events in knowledges sources. In general,=
+ only small sequence alteration events (the second bullet point above) can =
+be ambiguous and thus, require normalization through disambiguation.</p>
+<h1 id=3D"GeneticVariantNormalization-GA4GHNormalizationSpec">GA4GH Normali=
+zation Spec</h1>
+<p>See <a href=3D"https://vrs.ga4gh.org/en/stable/impl-guide/normalization.=
+html" class=3D"external-link" rel=3D"nofollow">https://vrs.ga4gh.org/en/sta=
+ble/impl-guide/normalization.html</a></p>
+<h1 id=3D"GeneticVariantNormalization-ambiguityExampleofambiguousrecords"><=
+span class=3D"confluence-anchor-link" id=3D"GeneticVariantNormalization-amb=
+iguity"></span>Example of ambiguous records</h1>
+<p>For example take this deletion:</p>
+<p><strong>AT<span class=3D"fabric-text-color-mark" style=3D"color: rgb(255=
+,0,0);"><span style=3D"text-decoration: line-through;">C</span></span>CTA <=
+/strong>(i.e. a deletion of nucleotide C). This variant can be expressed in=
+ the following ways:</p>
+<ol class=3D"ak-ol">
+<li><p>2: TC&gt;T</p></li>
+<li><p>3: CC&gt;C</p></li>
+<li><p>2: TCC&gt;TC</p></li>
+</ol>
+<p>A more complex sequence alteration, like <strong>AT<span class=3D"fabric=
+-text-color-mark" style=3D"color: rgb(255,0,0);"><span style=3D"text-decora=
+tion: line-through;">T</span></span>CT<span class=3D"fabric-text-color-mark=
+" style=3D"color: rgb(255,0,0);"><span style=3D"text-decoration: line-throu=
+gh;">TG</span></span>TGTA </strong>has many more ways to be expressed. For =
+normalization it would be best to split this variant into several in a way,=
+ that every smaller variant cannot be split further. However, even splittin=
+g is ambiguous and we have to follow a deterministic algorithm in the way w=
+e split.</p>
+<h1 id=3D"GeneticVariantNormalization-SplittingSNV">Splitting SNV</h1>
+<p>In some cases, VCF file produced by some pipelines are merged into one. =
+For example, we can find in VCF teh following sequence alteration variant:<=
+/p>
+<p><code><span style=3D"color: rgb(23,43,77);">12345678: AA&gt;TT</span></c=
+ode></p>
+<p><span style=3D"color: rgb(23,43,77);">For the purpose of annotation, we =
+should split it into two SNV variants:</span></p>
+<p><code><span style=3D"color: rgb(23,43,77);">12345678: A&gt;T&nbsp;</span=
+></code></p>
+<p><code><span style=3D"color: rgb(23,43,77);">12345679: A&gt;T</span></cod=
+e></p>
+<h1 id=3D"GeneticVariantNormalization-Multi-allelicvariants"><span style=3D=
+"color: rgb(23,43,77);">Multi-allelic variants</span></h1>
+<p><span style=3D"color: rgb(23,43,77);">In VCFs, especially VCFs for joint=
+ calls (single VCF for multiple samples - the most common type for genetic =
+analysis) some variants are multi-allelic. For example:</span></p>
+<p><code><span style=3D"color: rgb(23,43,77);">A&gt;C,T</span></code></p>
+<p><span style=3D"color: rgb(23,43,77);">It can mean, that for one family m=
+ember a reference nucleotide <strong>A</strong> is replaced with nucleotide=
+ <strong>C,</strong> while for another it is replaced with <strong>T</stron=
+g>. In rare cases it can mean that in a single sample, one copy of the DNA =
+has <strong>C</strong> instead of <strong>A</strong>, and the second copy h=
+as <strong>T</strong>.</span></p>
+<p><span style=3D"color: rgb(23,43,77);">A more complex case is when a mult=
+i-allelic variant is not an SNV but a small sequence alteration event. For =
+example:<br><code>chr2:207467421-207467424 TACAC&gt;T,TAC,TATACACACACAC</co=
+de></span></p>
+<p>corresponding to the following family genotypes (the data is public):</p=
+>
+<div class=3D"table-wrap">
+<table class=3D"wrapped confluenceTable">
+<tbody>
+<tr>
+<td class=3D"confluenceTd"><span class=3D"cursor-auto">Ref</span></td>
+<td class=3D"confluenceTd"><span class=3D"cursor-auto aspect-table-view_gen=
+e-transcripts__U5fyO">TACAC</span></td>
+</tr>
+<tr>
+<td class=3D"confluenceTd"><span class=3D"cursor-auto">Alt</span></td>
+<td class=3D"confluenceTd"><span class=3D"cursor-auto aspect-table-view_gen=
+e-transcripts__U5fyO">T</span></td>
+</tr>
+<tr>
+<td class=3D"confluenceTd"><span class=3D"cursor-auto">Proband Genotype</sp=
+an></td>
+<td class=3D"confluenceTd"><span class=3D"cursor-auto aspect-table-view_gen=
+e-transcripts__U5fyO">T/T</span></td>
+</tr>
+<tr>
+<td class=3D"confluenceTd"><span class=3D"cursor-auto">Maternal Genotype</s=
+pan></td>
+<td class=3D"confluenceTd"><span class=3D"cursor-auto aspect-table-view_gen=
+e-transcripts__U5fyO">T/TAC</span></td>
+</tr>
+<tr>
+<td class=3D"confluenceTd"><span class=3D"cursor-auto">Paternal Genotype</s=
+pan></td>
+<td class=3D"confluenceTd"><span class=3D"cursor-auto aspect-table-view_gen=
+e-transcripts__U5fyO">T/TATACACACACAC</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><span style=3D"color: rgb(23,43,77);"><code><span style=3D"color: rgb(25=
+5,255,255);">TATACACACACAC</span><span style=3D"color: rgb(255,255,255);">T=
+ATACACACACAC</span><span style=3D"color: rgb(255,255,255);">TATACACACACAC</=
+span></code></span></p>
+<p><span style=3D"color: rgb(23,43,77);">As each of the sub-variants in a m=
+ulti-allelic variant can have different clinical consequences, they have to=
+ be annotated separately. The best practice is, for the purpose of annotati=
+on, to split all multi-allelic variants into a set of variants with the sin=
+gle alternative.</span></p>
+<p><br></p>
+<p><br></p>
+<p><br></p>
+<p><br></p>
+<p><br></p>
+<p><br></p>
+    </div>
+</body>
+</html>
+------=_Part_602729_2145231476.1690844916120--
