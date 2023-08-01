@@ -23,10 +23,17 @@ import java.util.zip.GZIPInputStream;
 public class ClinVarIngestor implements Ingestor, Constants, ClinVarConstants {
 	private final RoutingContext context;
 	private final RocksDBRepository dbRep;
+	private final ColumnFamilyHandle significanceColumnFamilyHandle;
+	private final ColumnFamilyHandle submittersColumnFamilyHandle;
+	private final ColumnFamilyHandle variatnsColumnFamilyHandle;
 
 	public ClinVarIngestor(RoutingContext context, RocksDBRepository dbRep) {
 		this.context = context;
 		this.dbRep = dbRep;
+
+		significanceColumnFamilyHandle = dbRep.getOrCreateColumnFamily(SIGNIFICANCE_COLUMN_FAMILY_NAME);
+		submittersColumnFamilyHandle = dbRep.getOrCreateColumnFamily(SUBMITTER_COLUMN_FAMILY_NAME);
+		variatnsColumnFamilyHandle = dbRep.getOrCreateColumnFamily(VARIANT_SUMMARY_COLUMN_FAMILY_NAME);
 	}
 
 	public void ingestionHandler() {
@@ -56,9 +63,6 @@ public class ClinVarIngestor implements Ingestor, Constants, ClinVarConstants {
 	}
 
 	private void storeXMLData(String dataPath) {
-		ColumnFamilyHandle significanceColumnFamilyHandle = dbRep.getOrCreateColumnFamily(SIGNIFICANCE_COLUMN_FAMILY_NAME);
-		ColumnFamilyHandle submittersColumnFamilyHandle = dbRep.getOrCreateColumnFamily(SUBMITTER_COLUMN_FAMILY_NAME);
-
 		try {
 			InputStream fileInputStream = new FileInputStream(dataPath);
 			InputStream gzipInputStream = new GZIPInputStream(fileInputStream);
@@ -87,8 +91,6 @@ public class ClinVarIngestor implements Ingestor, Constants, ClinVarConstants {
 	}
 
 	private void storeVariantSummeryData(String dataSummaryPath) {
-		ColumnFamilyHandle variatnsColumnFamilyHandle = dbRep.getOrCreateColumnFamily(VARIANT_SUMMARY_COLUMN_FAMILY_NAME);
-
 		try (
 			InputStream fileInputStream = new FileInputStream(dataSummaryPath);
 			InputStream gzipInputStream = new GZIPInputStream(fileInputStream);

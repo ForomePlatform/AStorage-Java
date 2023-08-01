@@ -23,10 +23,17 @@ import java.util.zip.GZIPInputStream;
 public class GTExIngestor implements Ingestor, Constants, GTExConstants {
 	private final RoutingContext context;
 	private final RocksDBRepository dbRep;
+	private final ColumnFamilyHandle geneColumnFamilyHandle;
+	private final ColumnFamilyHandle tissueColumnFamilyHandle;
+	private final ColumnFamilyHandle geneToTissueColumnFamilyHandle;
 
 	public GTExIngestor(RoutingContext context, RocksDBRepository dbRep) {
 		this.context = context;
 		this.dbRep = dbRep;
+
+		geneColumnFamilyHandle = dbRep.getOrCreateColumnFamily(GENE_COLUMN_FAMILY_NAME);
+		tissueColumnFamilyHandle = dbRep.getOrCreateColumnFamily(TISSUE_COLUMN_FAMILY_NAME);
+		geneToTissueColumnFamilyHandle = dbRep.getOrCreateColumnFamily(GENE_TO_TISSUE_COLUMN_FAMILY_NAME);
 	}
 
 	public void ingestionHandler() {
@@ -38,10 +45,6 @@ public class GTExIngestor implements Ingestor, Constants, GTExConstants {
 			return;
 		}
 
-		ColumnFamilyHandle geneColumnFamilyHandle = dbRep.getOrCreateColumnFamily(GENE_COLUMN_FAMILY_NAME);
-		ColumnFamilyHandle tissueColumnFamilyHandle = dbRep.getOrCreateColumnFamily(TISSUE_COLUMN_FAMILY_NAME);
-		ColumnFamilyHandle geneToTissueColumnFamilyHandle = dbRep.getOrCreateColumnFamily(GENE_TO_TISSUE_COLUMN_FAMILY_NAME);
-
 		String dataPath = req.getParam(DATA_PATH_PARAM);
 
 		try (
@@ -52,8 +55,6 @@ public class GTExIngestor implements Ingestor, Constants, GTExConstants {
 		) {
 			String line;
 			int lineNumber = 0;
-			List<Gene> geneRecords = new ArrayList<>();
-			List<GeneToTissue> geneToTissueRecords = new ArrayList<>();
 
 			while ((line = bufferedReader.readLine()) != null) {
 				lineNumber++;
@@ -62,16 +63,13 @@ public class GTExIngestor implements Ingestor, Constants, GTExConstants {
 				if (lineNumber == 3) {
 					String[] fields = line.split(COLUMNS_DELIMITER);
 
-					ingestTissues(fields, tissueColumnFamilyHandle);
+					ingestTissues(fields);
 				} else if (lineNumber > 3) {
 					String[] values = line.split(COLUMNS_DELIMITER);
 
-					processValues(values, geneRecords, geneToTissueRecords);
+					processValues(values);
 				}
 			}
-
-			ingestGenes(geneRecords, geneColumnFamilyHandle);
-			ingestGeneToTissues(geneToTissueRecords, geneToTissueColumnFamilyHandle);
 		} catch (IOException e) {
 			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 
@@ -85,7 +83,7 @@ public class GTExIngestor implements Ingestor, Constants, GTExConstants {
 			.end(response);
 	}
 
-	private void processValues(String[] values, List<Gene> geneRecords, List<GeneToTissue> geneToTissueRecords) {
+	private void processValues(String[] values) throws IOException {
 		List<Pair<String, Double>> negExpressions = new ArrayList<>();
 
 		// First two values excluded
@@ -109,7 +107,7 @@ public class GTExIngestor implements Ingestor, Constants, GTExConstants {
 		String subId = identifiers.length > 1 ? identifiers[1] : "";
 		String symbol = values[1];
 
-		geneRecords.add(new Gene(
+		ingestGene(new Gene(
 			new String[]{
 				geneId,
 				subId,
@@ -126,7 +124,7 @@ public class GTExIngestor implements Ingestor, Constants, GTExConstants {
 			String tissueNo = negExpression.getKey();
 			double expression = -1 * negExpression.getValue();
 
-			geneToTissueRecords.add(new GeneToTissue(
+			ingestGeneToTissue(new GeneToTissue(
 				new String[]{
 					geneId,
 					subId,
@@ -138,16 +136,14 @@ public class GTExIngestor implements Ingestor, Constants, GTExConstants {
 		}
 	}
 
-	private void ingestGenes(List<Gene> geneRecords, ColumnFamilyHandle geneColumnFamilyHandle) throws IOException {
-		for (Gene gene : geneRecords) {
-			byte[] key = gene.getKey();
-			byte[] compressedGene = Constants.compressJson(gene.toString());
+	private void ingestGene(Gene gene) throws IOException {
+		byte[] key = gene.getKey();
+		byte[] compressedGene = Constants.compressJson(gene.toString());
 
-			dbRep.saveBytes(key, compressedGene, geneColumnFamilyHandle);
-		}
+		dbRep.saveBytes(key, compressedGene, geneColumnFamilyHandle);
 	}
 
-	private void ingestTissues(String[] fields, ColumnFamilyHandle tissueColumnFamilyHandle) throws IOException {
+	private void ingestTissues(String[] fields) throws IOException {
 		// First two fields aren't representing tissues
 		for (int i = 2; i < fields.length; i++) {
 			String tissueNumber = Integer.toString(i + 1);
@@ -162,16 +158,11 @@ public class GTExIngestor implements Ingestor, Constants, GTExConstants {
 		}
 	}
 
-	private void ingestGeneToTissues(
-		List<GeneToTissue> geneToTissueRecords,
-		ColumnFamilyHandle geneToTissueColumnFamilyHandle
-	) throws IOException {
-		for (GeneToTissue geneToTissue : geneToTissueRecords) {
-			byte[] key = geneToTissue.getKey();
-			byte[] compressedGeneToTissue = Constants.compressJson(geneToTissue.toString());
+	private void ingestGeneToTissue(GeneToTissue geneToTissue) throws IOException {
+		byte[] key = geneToTissue.getKey();
+		byte[] compressedGeneToTissue = Constants.compressJson(geneToTissue.toString());
 
-			dbRep.saveBytes(key, compressedGeneToTissue, geneToTissueColumnFamilyHandle);
-		}
+		dbRep.saveBytes(key, compressedGeneToTissue, geneToTissueColumnFamilyHandle);
 	}
 
 	private static String[] parseName(String id) {
