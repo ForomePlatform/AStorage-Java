@@ -11,6 +11,11 @@ image:https://img.shields.io/badge/vert.x-4.4.4-white.svg[link="https://vertx.io
 * ClinVar
 * GTEx v8
 
+.Formats that will be supported soon:
+* GTF
+* GERP
+* dbSNP
+
 == Building
 
 To launch the tests:
