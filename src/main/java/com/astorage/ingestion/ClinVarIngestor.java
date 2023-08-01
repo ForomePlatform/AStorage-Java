@@ -23,21 +23,29 @@ import java.util.zip.GZIPInputStream;
 public class ClinVarIngestor implements Ingestor, Constants, ClinVarConstants {
 	private final RoutingContext context;
 	private final RocksDBRepository dbRep;
+	private final ColumnFamilyHandle significanceColumnFamilyHandle;
+	private final ColumnFamilyHandle submittersColumnFamilyHandle;
+	private final ColumnFamilyHandle variatnsColumnFamilyHandle;
 
 	public ClinVarIngestor(RoutingContext context, RocksDBRepository dbRep) {
 		this.context = context;
 		this.dbRep = dbRep;
+
+		significanceColumnFamilyHandle = dbRep.getOrCreateColumnFamily(SIGNIFICANCE_COLUMN_FAMILY_NAME);
+		submittersColumnFamilyHandle = dbRep.getOrCreateColumnFamily(SUBMITTER_COLUMN_FAMILY_NAME);
+		variatnsColumnFamilyHandle = dbRep.getOrCreateColumnFamily(VARIANT_SUMMARY_COLUMN_FAMILY_NAME);
 	}
 
 	public void ingestionHandler() {
 		HttpServerRequest req = context.request();
 
 		if (
-			!(req.params().size() == 2
-			&& req.params().contains(DATA_PATH_PARAM)
-			&& req.params().contains(DATA_SUMMARY_PATH_PARAM))
+			req.params().size() != 2
+				|| !req.params().contains(DATA_PATH_PARAM)
+				|| !req.params().contains(DATA_SUMMARY_PATH_PARAM)
 		) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
+
 			return;
 		}
 
@@ -55,9 +63,6 @@ public class ClinVarIngestor implements Ingestor, Constants, ClinVarConstants {
 	}
 
 	private void storeXMLData(String dataPath) {
-		ColumnFamilyHandle significanceColumnFamilyHandle = getOrCreateColumnFamily(SIGNIFICANCE_COLUMN_FAMILY_NAME);
-		ColumnFamilyHandle submittersColumnFamilyHandle = getOrCreateColumnFamily(SUBMITTER_COLUMN_FAMILY_NAME);
-
 		try {
 			InputStream fileInputStream = new FileInputStream(dataPath);
 			InputStream gzipInputStream = new GZIPInputStream(fileInputStream);
@@ -81,13 +86,11 @@ public class ClinVarIngestor implements Ingestor, Constants, ClinVarConstants {
 				dbRep.saveBytes(key, compressedSubmitter, submittersColumnFamilyHandle);
 			}
 		} catch (ParserConfigurationException | SAXException | IOException e) {
-			throw new RuntimeException(e);
+			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 		}
 	}
 
 	private void storeVariantSummeryData(String dataSummaryPath) {
-		ColumnFamilyHandle variatnsColumnFamilyHandle = getOrCreateColumnFamily(VARIANT_SUMMARY_COLUMN_FAMILY_NAME);
-
 		try (
 			InputStream fileInputStream = new FileInputStream(dataSummaryPath);
 			InputStream gzipInputStream = new GZIPInputStream(fileInputStream);
@@ -118,15 +121,5 @@ public class ClinVarIngestor implements Ingestor, Constants, ClinVarConstants {
 		} catch (IOException e) {
 			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 		}
-	}
-
-	private ColumnFamilyHandle getOrCreateColumnFamily(String columnFamilyName) {
-		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(columnFamilyName);
-
-		if (columnFamilyHandle == null) {
-			columnFamilyHandle = dbRep.createColumnFamily(columnFamilyName);
-		}
-
-		return columnFamilyHandle;
 	}
 }

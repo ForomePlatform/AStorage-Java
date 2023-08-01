@@ -160,6 +160,16 @@ public class RocksDBRepository implements Constants {
 		return columnFamilyHandleMap.get(name);
 	}
 
+	public ColumnFamilyHandle getOrCreateColumnFamily(String columnFamilyName) {
+		ColumnFamilyHandle columnFamilyHandle = getColumnFamilyHandle(columnFamilyName);
+
+		if (columnFamilyHandle == null) {
+			columnFamilyHandle = createColumnFamily(columnFamilyName);
+		}
+
+		return columnFamilyHandle;
+	}
+
 	public void close() {
 		db.close();
 	}

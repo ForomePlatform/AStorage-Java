@@ -2,7 +2,7 @@ package com.astorage.query;
 
 import com.astorage.db.RocksDBRepository;
 import com.astorage.utils.Constants;
-import com.astorage.utils.clinvar.ClinVarConstants;
+import com.astorage.utils.gtex.GTExConstants;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonArray;
@@ -13,8 +13,8 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
-public class ClinVarBatchQuery extends ClinVarQuery implements Query, Constants, ClinVarConstants {
-	public ClinVarBatchQuery(RoutingContext context, RocksDBRepository dbRep) {
+public class GTExBatchQuery extends GTExQuery implements Query, Constants, GTExConstants {
+	public GTExBatchQuery(RoutingContext context, RocksDBRepository dbRep) {
 		super(context, dbRep);
 	}
 
@@ -31,11 +31,30 @@ public class ClinVarBatchQuery extends ClinVarQuery implements Query, Constants,
 				for (Object queryObject : queries) {
 					JsonObject query = (JsonObject) queryObject;
 
-					String chr = query.getString(CHR_PARAM);
-					String startPos = query.getString(START_POS_PARAM);
-					String endPos = query.getString(END_POS_PARAM);
+					String dataType = query.getString(DATA_TYPE_PARAM);
 
-					singleQueryHandler(chr, startPos, endPos, true);
+					if (dataType != null) {
+						if (dataType.equals(GENE_COLUMN_FAMILY_NAME)) {
+							String geneId = query.getString(GENE_ID_PARAM);
+							String subId = query.getString(SUB_ID_PARAM);
+
+							singleQueryHandlerForGene(geneId, subId, true);
+						}
+
+						if (dataType.equals(TISSUE_COLUMN_FAMILY_NAME)) {
+							String tissueNo = query.getString(TISSUE_NUMBER_PARAM);
+
+							singleQueryHandlerForTissue(tissueNo, true);
+						}
+
+						if (dataType.equals(GENE_TO_TISSUE_COLUMN_FAMILY_NAME)) {
+							String geneId = query.getString(GENE_ID_PARAM);
+							String subId = query.getString(SUB_ID_PARAM);
+							String tissueNo = query.getString(TISSUE_NUMBER_PARAM);
+
+							singleQueryHandlerForGeneToTissue(geneId, subId, tissueNo, true);
+						}
+					}
 				}
 
 				req.response().end();

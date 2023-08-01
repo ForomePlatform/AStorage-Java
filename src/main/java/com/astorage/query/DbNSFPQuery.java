@@ -27,20 +27,20 @@ public class DbNSFPQuery implements Query, Constants, DbNSFPConstants {
 		HttpServerRequest req = context.request();
 
 		if (
-			(req.params().size() == 2 || req.params().size() == 3 && req.params().contains(ALT_PARAM))
-				&& req.params().contains(CHR_PARAM)
-				&& req.params().contains(POS_PARAM)
+			req.params().size() != 2 && (req.params().size() != 3 || !req.params().contains(ALT_PARAM))
+				|| !req.params().contains(CHR_PARAM)
+				|| !req.params().contains(POS_PARAM)
 		) {
-			String chr = req.getParam(CHR_PARAM);
-			String pos = req.getParam(POS_PARAM);
-			String alt = req.params().contains(ALT_PARAM) ? req.getParam(ALT_PARAM).toUpperCase() : null;
-
-			singleQueryHandler(chr, pos, alt, false);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
 
 			return;
 		}
 
-		Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
+		String chr = req.getParam(CHR_PARAM);
+		String pos = req.getParam(POS_PARAM);
+		String alt = req.params().contains(ALT_PARAM) ? req.getParam(ALT_PARAM).toUpperCase() : null;
+
+		singleQueryHandler(chr, pos, alt, false);
 	}
 
 	protected void singleQueryHandler(String chr, String pos, String alt, boolean isBatched) throws IOException {

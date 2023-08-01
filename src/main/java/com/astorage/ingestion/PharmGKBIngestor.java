@@ -25,9 +25,11 @@ public class PharmGKBIngestor implements Ingestor, PharmGKBConstants, Constants 
 
 	public void ingestionHandler() {
 		HttpServerRequest req = context.request();
-		if (!(req.params().size() == 2
-			&& req.params().contains(DATA_PATH_PARAM)
-			&& req.params().contains(DATA_TYPE_PARAM))
+
+		if (
+			req.params().size() != 2
+				|| !req.params().contains(DATA_PATH_PARAM)
+				|| !req.params().contains(DATA_TYPE_PARAM)
 		) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
 

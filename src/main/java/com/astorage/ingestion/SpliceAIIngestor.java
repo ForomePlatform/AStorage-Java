@@ -31,8 +31,8 @@ public class SpliceAIIngestor implements Ingestor, Constants, SpliceAIConstants 
 
 	public void ingestionHandler() {
 		HttpServerRequest req = context.request();
-		if (!(req.params().size() == 1
-			&& req.params().contains(DATA_PATH_PARAM))) {
+
+		if (req.params().size() != 1 || !req.params().contains(DATA_PATH_PARAM)) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
 
 			return;

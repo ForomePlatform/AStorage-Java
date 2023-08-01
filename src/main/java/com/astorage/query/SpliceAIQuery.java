@@ -26,19 +26,19 @@ public class SpliceAIQuery implements Query, Constants, SpliceAIConstants {
 		HttpServerRequest req = context.request();
 
 		if (
-			req.params().size() == 2
-				&& req.params().contains(CHR_PARAM)
-				&& req.params().contains(POS_PARAM)
+			req.params().size() != 2
+				|| !req.params().contains(CHR_PARAM)
+				|| !req.params().contains(POS_PARAM)
 		) {
-			String chr = req.getParam(CHR_PARAM);
-			String pos = req.getParam(POS_PARAM);
-
-			singleQueryHandler(chr, pos, false);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
 
 			return;
 		}
 
-		Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
+		String chr = req.getParam(CHR_PARAM);
+		String pos = req.getParam(POS_PARAM);
+
+		singleQueryHandler(chr, pos, false);
 	}
 
 	protected void singleQueryHandler(String chr, String pos, boolean isBatched) throws IOException {

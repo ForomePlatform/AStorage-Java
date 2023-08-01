@@ -26,11 +26,15 @@ public class FastaIngestor implements Ingestor, Constants, FastaConstants {
 
 	public void ingestionHandler() {
 		HttpServerRequest req = context.request();
-		if (!(req.params().size() == 3
-			&& req.params().contains(ARRAY_NAME_PARAM)
-			&& req.params().contains(DATA_URL_PARAM)
-			&& req.params().contains(METADATA_URL_PARAM))) {
+
+		if (
+			req.params().size() != 3
+				|| !req.params().contains(ARRAY_NAME_PARAM)
+				|| !req.params().contains(DATA_URL_PARAM)
+				|| !req.params().contains(METADATA_URL_PARAM)
+		) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
+
 			return;
 		}
 
@@ -45,8 +49,8 @@ public class FastaIngestor implements Ingestor, Constants, FastaConstants {
 			Constants.decompressGzip(COMPRESSED_DATA_FILENAME, DATA_FILENAME);
 			storeData(arrayName, metadata);
 		} catch (IOException | SecurityException | URISyntaxException e) {
-			e.printStackTrace();
 			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, DOWNLOADING_DATA_ERROR);
+
 			return;
 		}
 
@@ -101,7 +105,7 @@ public class FastaIngestor implements Ingestor, Constants, FastaConstants {
 				String refSeq = columns[6];
 				String uscs = columns.length >= 10 ? columns[9] : "";
 
-				result.put(refSeq, uscs.length() != 0 ? uscs : seqName);
+				result.put(refSeq, !uscs.isEmpty() ? uscs : seqName);
 			}
 		}
 
