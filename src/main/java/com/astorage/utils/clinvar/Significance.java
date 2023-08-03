@@ -20,6 +20,10 @@ public class Significance implements JsonConvertible, Constants, ClinVarConstant
 	}
 
 	public byte[] getKey() {
+		if (!significanceColumnValues.containsKey(RCV_ACCESSION_COLUMN_NAME)) {
+			return null;
+		}
+
 		String rcvAccession = significanceColumnValues.get(RCV_ACCESSION_COLUMN_NAME);
 
 		return generateKey(rcvAccession);

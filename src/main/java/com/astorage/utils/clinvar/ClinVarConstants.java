@@ -23,6 +23,9 @@ public interface ClinVarConstants {
 	String END_POSITION_COLUMN_NAME = "Stop";
 	String SUBMITTER_ID_COLUMN_NAME = "SubmitterID";
 	String RCV_ACCESSION_COLUMN_NAME = "RCVaccession";
+	String RCV_ACCESSIONS_DELIMITER = "|";
+	String SIGNIFICANCES_JSON_KEY = "Significances";
+	String SUBMITTER_JSON_KEY = "Submitter";
 
 	// Success messages:
 	String INGESTION_FINISH_MSG = "All Data has been ingested.";

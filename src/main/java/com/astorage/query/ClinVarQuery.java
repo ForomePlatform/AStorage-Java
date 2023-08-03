@@ -7,6 +7,7 @@ import com.astorage.utils.clinvar.Significance;
 import com.astorage.utils.clinvar.Submitter;
 import com.astorage.utils.clinvar.Variant;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import org.rocksdb.ColumnFamilyHandle;
@@ -96,22 +97,32 @@ public class ClinVarQuery implements Query, Constants, ClinVarConstants {
 		String decompressedVariant = Constants.decompressJson(compressedVariant);
 		JsonObject result = new JsonObject(decompressedVariant);
 
-		String rcvAccession = result.getString(RCV_ACCESSION_COLUMN_NAME);
-		byte[] compressedSignificance = dbRep.getBytes(Significance.generateKey(rcvAccession), significanceColumnFamilyHandle);
-		if (compressedSignificance != null) {
-			String decompressedSignificance = Constants.decompressJson(compressedSignificance);
-			JsonObject significanceJson = new JsonObject(decompressedSignificance);
-			result.put(SIGNIFICANCE_COLUMN_FAMILY_NAME, significanceJson);
+		JsonArray significancesJson = new JsonArray();
 
-			String submitterId = significanceJson.getString(SUBMITTER_ID_COLUMN_NAME);
-			byte[] compressedSubmitter = dbRep.getBytes(Submitter.generateKey(submitterId), submitterColumnFamilyHandle);
+		String[] rcvAccessions = result.getString(RCV_ACCESSION_COLUMN_NAME).split(RCV_ACCESSIONS_DELIMITER);
+		for (int i = 0; i < rcvAccessions.length; i++) {
+			String rcvAccession = rcvAccessions[i];
 
-			if (compressedSubmitter != null) {
-				String decompressedSubmitter = Constants.decompressJson(compressedSubmitter);
-				JsonObject submitterJson = new JsonObject(decompressedSubmitter);
-				result.put(SUBMITTER_COLUMN_FAMILY_NAME, submitterJson);
+			byte[] compressedSignificance = dbRep.getBytes(Significance.generateKey(rcvAccession), significanceColumnFamilyHandle);
+			if (compressedSignificance != null) {
+				String decompressedSignificance = Constants.decompressJson(compressedSignificance);
+				JsonObject significanceJson = new JsonObject(decompressedSignificance);
+
+				// Add submitter info to significance json item
+				String submitterId = significanceJson.getString(SUBMITTER_ID_COLUMN_NAME);
+				byte[] compressedSubmitter = dbRep.getBytes(Submitter.generateKey(submitterId), submitterColumnFamilyHandle);
+
+				if (compressedSubmitter != null) {
+					String decompressedSubmitter = Constants.decompressJson(compressedSubmitter);
+					JsonObject submitterJson = new JsonObject(decompressedSubmitter);
+					significanceJson.put(SUBMITTER_JSON_KEY, submitterJson);
+				}
+
+				significancesJson.add(significanceJson);
 			}
 		}
+
+		result.put(SIGNIFICANCES_JSON_KEY, significancesJson);
 
 		if (isBatched) {
 			req.response().write(result + "\n");

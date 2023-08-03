@@ -32,6 +32,8 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 
 	@Override
 	public void start(Promise<Void> startPromise) {
+		setSystemProperties();
+
 		HttpServer server = vertx.createHttpServer();
 		Router router = Router.router(vertx);
 
@@ -90,6 +92,12 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 		System.out.println(HTTP_SERVER_STOP);
 
 		stopPromise.complete();
+	}
+
+	private void setSystemProperties() {
+		System.setProperty("entityExpansionLimit", "0");
+		System.setProperty("totalEntitySizeLimit", "0");
+		System.setProperty("jdk.xml.totalEntitySizeLimit", "0");
 	}
 
 	private void setIngestionHandler(String formatName, Router router) {

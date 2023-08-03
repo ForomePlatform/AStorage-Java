@@ -19,6 +19,10 @@ public class Submitter implements JsonConvertible, Constants, ClinVarConstants {
 	}
 
 	public byte[] getKey() {
+		if (!submitterColumnValues.containsKey(SUBMITTER_ID_COLUMN_NAME)) {
+			return null;
+		}
+
 		String submitterId = submitterColumnValues.get(SUBMITTER_ID_COLUMN_NAME);
 
 		return generateKey(submitterId);

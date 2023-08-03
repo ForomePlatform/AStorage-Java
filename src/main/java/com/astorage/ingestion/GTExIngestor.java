@@ -2,13 +2,13 @@ package com.astorage.ingestion;
 
 import com.astorage.db.RocksDBRepository;
 import com.astorage.utils.Constants;
+import com.astorage.utils.Pair;
 import com.astorage.utils.gtex.GTExConstants;
 import com.astorage.utils.gtex.Gene;
 import com.astorage.utils.gtex.GeneToTissue;
 import com.astorage.utils.gtex.Tissue;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.ext.web.RoutingContext;
-import javafx.util.Pair;
 import org.rocksdb.ColumnFamilyHandle;
 
 import java.io.*;
@@ -95,8 +95,8 @@ public class GTExIngestor implements Ingestor, Constants, GTExConstants {
 			negExpressions.add(negExpression);
 		}
 
-		negExpressions.sort(Comparator.comparingDouble(Pair::getValue));
-		double topExpression = -1 * negExpressions.get(0).getValue();
+		negExpressions.sort(Comparator.comparingDouble(Pair::value));
+		double topExpression = -1 * negExpressions.get(0).value();
 
 		if (topExpression <= 0) {
 			return;
@@ -117,12 +117,12 @@ public class GTExIngestor implements Ingestor, Constants, GTExConstants {
 		));
 
 		for (Pair<String, Double> negExpression : negExpressions) {
-			if (negExpression.getValue() >= 0) {
+			if (negExpression.value() >= 0) {
 				return;
 			}
 
-			String tissueNo = negExpression.getKey();
-			double expression = -1 * negExpression.getValue();
+			String tissueNo = negExpression.key();
+			double expression = -1 * negExpression.value();
 
 			ingestGeneToTissue(new GeneToTissue(
 				new String[]{

@@ -2,8 +2,8 @@ package com.astorage.utils.gtex;
 
 import com.astorage.utils.Constants;
 import com.astorage.utils.JsonConvertible;
+import com.astorage.utils.Pair;
 import io.vertx.core.json.JsonObject;
-import javafx.util.Pair;
 
 import java.util.HashMap;
 import java.util.List;
@@ -27,10 +27,10 @@ public class Gene implements JsonConvertible, Constants, GTExConstants {
 
 		for (int i = 0; i < 3; i++) {
 			String tissueNumber = null;
-			Double negExpression = negExpressions.get(i).getValue();
+			Double negExpression = negExpressions.get(i).value();
 
 			if (negExpression < 0) {
-				tissueNumber = negExpressions.get(i).getKey();
+				tissueNumber = negExpressions.get(i).key();
 			}
 
 			geneColumnValues.put(GENE_COLUMNS[i + 3], tissueNumber);

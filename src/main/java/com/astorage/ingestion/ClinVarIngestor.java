@@ -2,15 +2,19 @@ package com.astorage.ingestion;
 
 import com.astorage.db.RocksDBRepository;
 import com.astorage.utils.Constants;
-import com.astorage.utils.clinvar.*;
+import com.astorage.utils.clinvar.ClinVarConstants;
+import com.astorage.utils.clinvar.Significance;
+import com.astorage.utils.clinvar.Submitter;
+import com.astorage.utils.clinvar.Variant;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.ext.web.RoutingContext;
 import org.rocksdb.ColumnFamilyHandle;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
+import javax.xml.namespace.QName;
+import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.*;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
@@ -24,15 +28,21 @@ public class ClinVarIngestor implements Ingestor, Constants, ClinVarConstants {
 	private final RoutingContext context;
 	private final RocksDBRepository dbRep;
 	private final ColumnFamilyHandle significanceColumnFamilyHandle;
-	private final ColumnFamilyHandle submittersColumnFamilyHandle;
+	private final ColumnFamilyHandle submitterColumnFamilyHandle;
 	private final ColumnFamilyHandle variatnsColumnFamilyHandle;
+
+	// Variables for temporary data storage during XML parsing
+	private Submitter lastSubmitter = new Submitter();
+	private Significance lastSignificance = new Significance();
+	private boolean isReferenceBlock = false;
+	private boolean isClinicalSignificanceDescriptionBlock = false;
 
 	public ClinVarIngestor(RoutingContext context, RocksDBRepository dbRep) {
 		this.context = context;
 		this.dbRep = dbRep;
 
 		significanceColumnFamilyHandle = dbRep.getOrCreateColumnFamily(SIGNIFICANCE_COLUMN_FAMILY_NAME);
-		submittersColumnFamilyHandle = dbRep.getOrCreateColumnFamily(SUBMITTER_COLUMN_FAMILY_NAME);
+		submitterColumnFamilyHandle = dbRep.getOrCreateColumnFamily(SUBMITTER_COLUMN_FAMILY_NAME);
 		variatnsColumnFamilyHandle = dbRep.getOrCreateColumnFamily(VARIANT_SUMMARY_COLUMN_FAMILY_NAME);
 	}
 
@@ -67,26 +77,72 @@ public class ClinVarIngestor implements Ingestor, Constants, ClinVarConstants {
 			InputStream fileInputStream = new FileInputStream(dataPath);
 			InputStream gzipInputStream = new GZIPInputStream(fileInputStream);
 
-			SAXParserFactory factory = SAXParserFactory.newInstance();
-			SAXParser parser = factory.newSAXParser();
-			ClinVarXMLParser xmlParser = new ClinVarXMLParser();
-			parser.parse(gzipInputStream, xmlParser);
+			XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
+			XMLEventReader eventReader = xmlInputFactory.createXMLEventReader(gzipInputStream);
 
-			for (Significance significance : xmlParser.getSignificances()) {
-				byte[] key = significance.getKey();
-				byte[] compressedSignificance = Constants.compressJson(significance.toString());
+			while (eventReader.hasNext()) {
+				XMLEvent nextEvent = eventReader.nextEvent();
 
-				dbRep.saveBytes(key, compressedSignificance, significanceColumnFamilyHandle);
+				if (nextEvent.isStartElement()) {
+					handleXMLStartElement(nextEvent.asStartElement());
+				} else if (nextEvent.isCharacters()) {
+					handleXMLCharacters(nextEvent.asCharacters());
+				} else if (nextEvent.isEndElement()) {
+					handleXMLEndElement(nextEvent.asEndElement());
+				}
 			}
-
-			for (Submitter submitter : xmlParser.getSubmitters()) {
-				byte[] key = submitter.getKey();
-				byte[] compressedSubmitter = Constants.compressJson(submitter.toString());
-
-				dbRep.saveBytes(key, compressedSubmitter, submittersColumnFamilyHandle);
-			}
-		} catch (ParserConfigurationException | SAXException | IOException e) {
+		} catch (XMLStreamException | IOException e) {
 			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
+		}
+	}
+
+	private void handleXMLStartElement(StartElement startElement) {
+		switch (startElement.getName().getLocalPart()) {
+			case "ClinVarSet":
+				this.lastSubmitter = new Submitter();
+				this.lastSignificance = new Significance();
+			case "ReferenceClinVarAssertion":
+				this.isReferenceBlock = true;
+				break;
+			case "ClinVarAssertion":
+				this.isReferenceBlock = false;
+				break;
+			case "ClinVarSubmissionID":
+				Attribute submitterNameAttribute = startElement.getAttributeByName(new QName("submitter"));
+				this.lastSubmitter.setSubmitterName(submitterNameAttribute.getValue());
+				break;
+			case "ClinVarAccession":
+				if (this.isReferenceBlock) {
+					Attribute rcvAccessionAttribute = startElement.getAttributeByName(new QName("Acc"));
+					this.lastSignificance.setRCVAccession(rcvAccessionAttribute.getValue());
+				} else {
+					Attribute submitterIdAttribute = startElement.getAttributeByName(new QName("OrgID"));
+					this.lastSignificance.setSubmitterId(submitterIdAttribute.getValue());
+					this.lastSubmitter.setSubmitterId(submitterIdAttribute.getValue());
+				}
+				break;
+			case "Description":
+				if (!this.isReferenceBlock) {
+					this.isClinicalSignificanceDescriptionBlock = true;
+				}
+		}
+	}
+
+	private void handleXMLCharacters(Characters characters) {
+		if (this.isClinicalSignificanceDescriptionBlock) {
+			this.lastSignificance.setClinicalSignificance(characters.getData());
+		}
+	}
+
+	private void handleXMLEndElement(EndElement endElement) throws IOException {
+		if (endElement.getName().getLocalPart().equals("ClinVarSet")) {
+			byte[] significanceKey = lastSignificance.getKey();
+			byte[] compressedSignificance = Constants.compressJson(lastSignificance.toString());
+			byte[] submitterKey = lastSubmitter.getKey();
+			byte[] compressedSubmitter = Constants.compressJson(lastSubmitter.toString());
+
+			dbRep.saveBytes(significanceKey, compressedSignificance, significanceColumnFamilyHandle);
+			dbRep.saveBytes(submitterKey, compressedSubmitter, submitterColumnFamilyHandle);
 		}
 	}
 
