@@ -137,12 +137,16 @@ public class ClinVarIngestor implements Ingestor, Constants, ClinVarConstants {
 	private void handleXMLEndElement(EndElement endElement) throws IOException {
 		if (endElement.getName().getLocalPart().equals("ClinVarSet")) {
 			byte[] significanceKey = lastSignificance.getKey();
-			byte[] compressedSignificance = Constants.compressJson(lastSignificance.toString());
-			byte[] submitterKey = lastSubmitter.getKey();
-			byte[] compressedSubmitter = Constants.compressJson(lastSubmitter.toString());
+			if (significanceKey != null) {
+				byte[] compressedSignificance = Constants.compressJson(lastSignificance.toString());
+				dbRep.saveBytes(significanceKey, compressedSignificance, significanceColumnFamilyHandle);
+			}
 
-			dbRep.saveBytes(significanceKey, compressedSignificance, significanceColumnFamilyHandle);
-			dbRep.saveBytes(submitterKey, compressedSubmitter, submitterColumnFamilyHandle);
+			byte[] submitterKey = lastSubmitter.getKey();
+			if (submitterKey != null) {
+				byte[] compressedSubmitter = Constants.compressJson(lastSubmitter.toString());
+				dbRep.saveBytes(submitterKey, compressedSubmitter, submitterColumnFamilyHandle);
+			}
 		}
 	}
 
