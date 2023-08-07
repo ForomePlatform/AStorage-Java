@@ -10,9 +10,9 @@ image:https://img.shields.io/badge/vert.x-4.4.4-white.svg[link="https://vertx.io
 * PharmGKB
 * ClinVar
 * GTEx v8
+* GTF
 
 .Formats that will be supported soon:
-* GTF
 * GERP
 * dbSNP
 
@@ -174,6 +174,22 @@ To query GeneToTissue data:
 [source]
 ----
 curl "localhost:8080/query/gtex?dataType=geneToTissue&geneId=<gene_id>&subId=<sub_id>&tissueNo=<tissue_number>"
+----
+====
+
+.*GTF*
+[%collapsible]
+====
+To ingest data:
+[source]
+----
+curl -X POST "localhost:8080/ingestion/gtf?dataPath=<data_path>"
+----
+
+To query data:
+[source]
+----
+curl "localhost:8080/query/gtf?chr=<chr_num>&startPos=<start_pos>&endPos=<end_pos>"
 ----
 ====
 
