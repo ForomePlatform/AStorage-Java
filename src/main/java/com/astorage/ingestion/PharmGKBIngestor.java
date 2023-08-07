@@ -66,8 +66,8 @@ public class PharmGKBIngestor implements Ingestor, PharmGKBConstants, Constants 
 
 		try {
 			InputStream fileInputStream = new FileInputStream(file);
-			Reader InputStreamReader = new InputStreamReader(fileInputStream, StandardCharsets.UTF_8);
-			BufferedReader bufferedReader = new BufferedReader(InputStreamReader);
+			Reader inputStreamReader = new InputStreamReader(fileInputStream, StandardCharsets.UTF_8);
+			BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
 
 			storeData(dataType, bufferedReader, columnFamilyHandle);
 		} catch (IOException e) {

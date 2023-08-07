@@ -11,16 +11,13 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 @SuppressWarnings("unused")
 public class GTFIngestor implements Ingestor, Constants, GTFConstants {
 	private final RoutingContext context;
 	private final RocksDBRepository dbRep;
-	private final Map<String, Integer> infoFieldNamesToIndices = new HashMap<>();
 
 	public GTFIngestor(RoutingContext context, RocksDBRepository dbRep) {
 		this.context = context;
