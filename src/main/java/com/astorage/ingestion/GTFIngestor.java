@@ -67,9 +67,9 @@ public class GTFIngestor implements Ingestor, Constants, GTFConstants {
 	private boolean storeData(BufferedReader reader) throws IOException {
 		String line;
 
-        do {
-            line = reader.readLine();
-        } while (line != null && line.startsWith(COMMENT_LINE_PREFIX));
+		do {
+			line = reader.readLine();
+		} while (line != null && line.startsWith(COMMENT_LINE_PREFIX));
 
 		if (line == null) {
 			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_BAD_REQUEST, INVALID_FILE_CONTENT);
