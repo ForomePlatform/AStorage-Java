@@ -2,6 +2,7 @@ package com.astorage.utils;
 
 import com.astorage.utils.clinvar.ClinVarConstants;
 import com.astorage.utils.dbnsfp.DbNSFPConstants;
+import com.astorage.utils.dbsnp.DbSNPConstants;
 import com.astorage.utils.fasta.FastaConstants;
 import com.astorage.utils.gerp.GERPConstants;
 import com.astorage.utils.gnomad.GnomADConstants;
@@ -40,12 +41,14 @@ public interface Constants {
 		ClinVarConstants.CLINVAR_FORMAT_NAME,
 		GTExConstants.GTEX_FORMAT_NAME,
 		GTFConstants.GTF_FORMAT_NAME,
-		GERPConstants.GERP_FORMAT_NAME
+		GERPConstants.GERP_FORMAT_NAME,
+		DbSNPConstants.DBSNP_FORMAT_NAME
 	};
 	String HTTP_SERVER_START = "HTTP server started on port: " + HTTP_SERVER_PORT + "!";
 	String HTTP_SERVER_STOP = "HTTP server stopped.";
 
 	// Error messages:
+	String ERROR = "error";
 	String ROCKS_DB_INIT_ERROR = "RocksDB couldn't initialize...";
 	String INVALID_PARAMS_ERROR = "Invalid parameters...";
 	String HTTP_SERVER_FAIL = "Server failed to start...";

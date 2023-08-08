@@ -52,7 +52,7 @@ public class SpliceAIQuery implements Query, Constants, SpliceAIConstants {
 
 			Long.parseLong(pos);
 		} catch (NumberFormatException e) {
-			errorJson.put("error", INVALID_CHR_OR_POS_ERROR);
+			errorJson.put(ERROR, INVALID_CHR_OR_POS_ERROR);
 
 			Constants.errorResponse(
 				req,
@@ -67,7 +67,7 @@ public class SpliceAIQuery implements Query, Constants, SpliceAIConstants {
 
 		byte[] compressedVariant = dbRep.getBytes(key);
 		if (compressedVariant == null) {
-			errorJson.put("error", VARIANT_NOT_FOUND_ERROR);
+			errorJson.put(ERROR, VARIANT_NOT_FOUND_ERROR);
 
 			Constants.errorResponse(
 				req,

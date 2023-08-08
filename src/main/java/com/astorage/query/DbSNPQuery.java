@@ -2,22 +2,22 @@ package com.astorage.query;
 
 import com.astorage.db.RocksDBRepository;
 import com.astorage.utils.Constants;
-import com.astorage.utils.gnomad.GnomADConstants;
-import com.astorage.utils.gnomad.GnomADHelper;
+import com.astorage.utils.dbsnp.DbSNPConstants;
+import com.astorage.utils.dbsnp.DbSNPHelper;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
-import org.rocksdb.ColumnFamilyHandle;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
-public class GnomADQuery implements Query, Constants, GnomADConstants {
+public class DbSNPQuery implements Query, Constants, DbSNPConstants {
 	protected final RoutingContext context;
 	protected final RocksDBRepository dbRep;
 
-	public GnomADQuery(RoutingContext context, RocksDBRepository dbRep) {
+	public DbSNPQuery(RoutingContext context, RocksDBRepository dbRep) {
 		this.context = context;
 		this.dbRep = dbRep;
 	}
@@ -26,10 +26,9 @@ public class GnomADQuery implements Query, Constants, GnomADConstants {
 		HttpServerRequest req = context.request();
 
 		if (
-			req.params().size() != 3
+			req.params().size() != 2
 				|| !req.params().contains(CHR_PARAM)
 				|| !req.params().contains(POS_PARAM)
-				|| !req.params().contains(SOURCE_TYPE_PARAM)
 		) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
 
@@ -38,12 +37,11 @@ public class GnomADQuery implements Query, Constants, GnomADConstants {
 
 		String chr = req.getParam(CHR_PARAM);
 		String pos = req.getParam(POS_PARAM);
-		String sourceType = req.getParam(SOURCE_TYPE_PARAM);
 
-		singleQueryHandler(chr, pos, sourceType, false);
+		singleQueryHandler(chr, pos, false);
 	}
 
-	protected void singleQueryHandler(String chr, String pos, String sourceType, boolean isBatched) throws IOException {
+	protected void singleQueryHandler(String chr, String pos, boolean isBatched) throws IOException {
 		HttpServerRequest req = context.request();
 		JsonObject errorJson = new JsonObject();
 
@@ -65,28 +63,10 @@ public class GnomADQuery implements Query, Constants, GnomADConstants {
 			return;
 		}
 
-		if (!(sourceType.length() == 1 && SOURCE_TYPES.contains(sourceType.toLowerCase()))) {
-			errorJson.put(ERROR, INVALID_SOURCE_TYPE_ERROR);
+		byte[] key = DbSNPHelper.createKey(chr, pos);
+		byte[] compressedVariants = dbRep.getBytes(key);
 
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
-
-			return;
-		}
-
-		byte[] key = GnomADHelper.createKey(chr, pos);
-
-		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(sourceType);
-		if (columnFamilyHandle == null) {
-			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, COLUMN_FAMILY_NULL_ERROR);
-			return;
-		}
-
-		byte[] compressedVariant = dbRep.getBytes(key, columnFamilyHandle);
-		if (compressedVariant == null) {
+		if (compressedVariants == null) {
 			errorJson.put(ERROR, VARIANT_NOT_FOUND_ERROR);
 
 			Constants.errorResponse(
@@ -98,9 +78,14 @@ public class GnomADQuery implements Query, Constants, GnomADConstants {
 			return;
 		}
 
-		String decompressedVariant = Constants.decompressJson(compressedVariant);
-		JsonObject result = new JsonObject(decompressedVariant);
-		result.put(SOURCE_TYPE_FIELD_NAME, sourceType);
+		JsonObject result = new JsonObject();
+		result.put(CHR_PARAM, chr);
+		result.put(POS_PARAM, pos);
+
+		String variantsString = Constants.decompressJson(compressedVariants);
+		JsonArray variantsJson = new JsonArray(variantsString);
+
+		result.put(VARIANTS_KEY, variantsJson);
 
 		if (isBatched) {
 			req.response().write(result + "\n");

@@ -2,7 +2,9 @@ package com.astorage.ingestion;
 
 import com.astorage.db.RocksDBRepository;
 import com.astorage.utils.Constants;
-import com.astorage.utils.dbnsfp.*;
+import com.astorage.utils.dbsnp.DbSNPConstants;
+import com.astorage.utils.dbsnp.DbSNPHelper;
+import com.astorage.utils.dbsnp.Variant;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.web.RoutingContext;
@@ -10,18 +12,18 @@ import io.vertx.ext.web.RoutingContext;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
-/**
- * For dbNSFP v4.3a!
- */
 @SuppressWarnings("unused")
-public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
+public class DbSNPIngestor implements Ingestor, Constants, DbSNPConstants {
 	private final RoutingContext context;
 	private final RocksDBRepository dbRep;
 
-	public DbNSFPIngestor(RoutingContext context, RocksDBRepository dbRep) {
+	public DbSNPIngestor(RoutingContext context, RocksDBRepository dbRep) {
 		this.context = context;
 		this.dbRep = dbRep;
 	}
@@ -53,14 +55,20 @@ public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
 			String line;
 			Map<String, Integer> columns = null;
 
-			if ((line = bufferedReader.readLine()) != null) {
-				if (!line.startsWith(DbNSFPHelper.CHR_COLUMN_NAME)) {
-					Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_DBNSFP_FILE);
-
-					return;
+			while ((line = bufferedReader.readLine()) != null) {
+				if (line.startsWith("##")) {
+					continue;
 				}
 
-				columns = Constants.mapColumns(line, DATA_DELIMITER);
+				if (!line.startsWith(CHR_COLUMN_NAME)) {
+					Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_DBSNP_FILE);
+
+					return;
+				} else {
+					columns = Constants.mapColumns(line, DATA_DELIMITER);
+
+					break;
+				}
 			}
 
 			int lineCount = 0;
@@ -91,28 +99,16 @@ public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
 	private byte[] processLine(String line, Map<String, Integer> columns, byte[] lastKey, List<Variant> lastVariants) throws IOException {
 		String[] row = line.split(DATA_DELIMITER);
 
-		byte[] key = DbNSFPHelper.createKey(columns, row);
 		Variant newVariant = new Variant(columns, row);
-		Facet newFacet = new Facet(columns, row);
-		List<Transcript> newTranscripts = Transcript.parseTranscripts(columns, row);
-
-		newFacet.transcripts.addAll(newTranscripts);
+		byte[] key = DbSNPHelper.createKey(columns, row);
 
 		if (Arrays.equals(key, lastKey)) {
-			Variant lastVariant = lastVariants.get(lastVariants.size() - 1);
-
-			if (newVariant.equals(lastVariant)) {
-				lastVariant.facets.add(newFacet);
-			} else {
-				newVariant.facets.add(newFacet);
-				lastVariants.add(newVariant);
-			}
+			lastVariants.add(newVariant);
 		} else {
 			if (!lastVariants.isEmpty()) {
 				saveVariantsInDb(lastKey, lastVariants);
 			}
 
-			newVariant.facets.add(newFacet);
 			lastVariants.clear();
 			lastVariants.add(newVariant);
 		}

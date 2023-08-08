@@ -54,7 +54,7 @@ public class DbNSFPQuery implements Query, Constants, DbNSFPConstants {
 
 			Long.parseLong(pos);
 		} catch (NumberFormatException e) {
-			errorJson.put("error", INVALID_CHR_OR_POS_ERROR);
+			errorJson.put(ERROR, INVALID_CHR_OR_POS_ERROR);
 
 			Constants.errorResponse(
 				req,
@@ -66,7 +66,7 @@ public class DbNSFPQuery implements Query, Constants, DbNSFPConstants {
 		}
 
 		if (alt != null && (alt.length() != 1 || !NUCLEOTIDES.contains(alt))) {
-			errorJson.put("error", INVALID_ALT_ERROR);
+			errorJson.put(ERROR, INVALID_ALT_ERROR);
 
 			Constants.errorResponse(
 				req,
@@ -81,7 +81,7 @@ public class DbNSFPQuery implements Query, Constants, DbNSFPConstants {
 		byte[] compressedVariants = dbRep.getBytes(key);
 
 		if (compressedVariants == null) {
-			errorJson.put("error", VARIANT_NOT_FOUND_ERROR);
+			errorJson.put(ERROR, VARIANT_NOT_FOUND_ERROR);
 
 			Constants.errorResponse(
 				req,

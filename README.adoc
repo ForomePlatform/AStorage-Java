@@ -12,8 +12,6 @@ image:https://img.shields.io/badge/vert.x-4.4.4-white.svg[link="https://vertx.io
 * GTEx v8
 * GTF
 * GERP
-
-.Formats that will be supported soon:
 * dbSNP
 
 == Building
@@ -206,6 +204,22 @@ To query data:
 [source]
 ----
 curl "localhost:8080/query/gerp?chr=<chr_num>&pos=<pos>"
+----
+====
+
+.*dbSNP*
+[%collapsible]
+====
+To ingest data:
+[source]
+----
+curl -X POST "localhost:8080/ingestion/dbsnp?dataPath=<data_path>"
+----
+
+To query data:
+[source]
+----
+curl "localhost:8080/query/dbsnp?chr=<chr_num>&pos=<pos>"
 ----
 ====
 

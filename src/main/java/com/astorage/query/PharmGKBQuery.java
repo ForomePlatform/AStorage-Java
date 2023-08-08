@@ -45,7 +45,7 @@ public class PharmGKBQuery implements Query, Constants, PharmGKBConstants {
 		JsonObject errorJson = new JsonObject();
 
 		if (!(DATA_TYPES.contains(dataType))) {
-			errorJson.put("error", INVALID_DATA_TYPE_ERROR);
+			errorJson.put(ERROR, INVALID_DATA_TYPE_ERROR);
 
 			Constants.errorResponse(
 				req,
@@ -64,7 +64,7 @@ public class PharmGKBQuery implements Query, Constants, PharmGKBConstants {
 
 		byte[] compressedVariant = dbRep.getBytes(id.getBytes(), columnFamilyHandle);
 		if (compressedVariant == null) {
-			errorJson.put("error", VARIANT_NOT_FOUND_ERROR);
+			errorJson.put(ERROR, VARIANT_NOT_FOUND_ERROR);
 
 			Constants.errorResponse(
 				req,
