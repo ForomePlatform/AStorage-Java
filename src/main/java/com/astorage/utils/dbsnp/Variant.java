@@ -33,19 +33,6 @@ public class Variant implements JsonConvertible, DbSNPConstants {
 		}
 	}
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) {
-			return true;
-		}
-
-		if (!(o instanceof Variant variant)) {
-			return false;
-		}
-
-		return variantColumnValues.equals(variant.variantColumnValues);
-	}
-
 	public JsonObject toJson() {
 		JsonObject variantJson = new JsonObject();
 
