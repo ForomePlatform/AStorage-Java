@@ -3,6 +3,7 @@ package com.astorage.utils;
 import com.astorage.utils.clinvar.ClinVarConstants;
 import com.astorage.utils.dbnsfp.DbNSFPConstants;
 import com.astorage.utils.fasta.FastaConstants;
+import com.astorage.utils.gerp.GERPConstants;
 import com.astorage.utils.gnomad.GnomADConstants;
 import com.astorage.utils.gtex.GTExConstants;
 import com.astorage.utils.gtf.GTFConstants;
@@ -38,7 +39,8 @@ public interface Constants {
 		PharmGKBConstants.PHARMGKB_FORMAT_NAME,
 		ClinVarConstants.CLINVAR_FORMAT_NAME,
 		GTExConstants.GTEX_FORMAT_NAME,
-		GTFConstants.GTF_FORMAT_NAME
+		GTFConstants.GTF_FORMAT_NAME,
+		GERPConstants.GERP_FORMAT_NAME
 	};
 	String HTTP_SERVER_START = "HTTP server started on port: " + HTTP_SERVER_PORT + "!";
 	String HTTP_SERVER_STOP = "HTTP server stopped.";
