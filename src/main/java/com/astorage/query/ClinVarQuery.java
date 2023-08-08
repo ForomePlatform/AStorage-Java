@@ -58,7 +58,7 @@ public class ClinVarQuery implements Query, Constants, ClinVarConstants {
 			Long.parseLong(startPos);
 			Long.parseLong(endPos);
 		} catch (NumberFormatException e) {
-			errorJson.put("error", INVALID_CHR_OR_POS_ERROR);
+			errorJson.put(ERROR, INVALID_CHR_OR_POS_ERROR);
 
 			Constants.errorResponse(
 				req,
@@ -83,7 +83,7 @@ public class ClinVarQuery implements Query, Constants, ClinVarConstants {
 
 		byte[] compressedVariant = dbRep.getBytes(Variant.generateKey(chr, startPos, endPos), variantColumnFamilyHandle);
 		if (compressedVariant == null) {
-			errorJson.put("error", RESULT_NOT_FOUND_ERROR);
+			errorJson.put(ERROR, RESULT_NOT_FOUND_ERROR);
 
 			Constants.errorResponse(
 				req,

@@ -11,7 +11,7 @@ public class DbNSFPHelper implements DbNSFPConstants {
 		String chr = row[columns.get(CHR_COLUMN_NAME)];
 		String pos = row[columns.get(POS_COLUMN_NAME)];
 
-		return (chr + "_" + pos).getBytes();
+		return createKey(chr, pos);
 	}
 
 	public static byte[] createKey(String chr, String pos) {

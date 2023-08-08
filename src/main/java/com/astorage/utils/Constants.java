@@ -46,6 +46,7 @@ public interface Constants {
 	String HTTP_SERVER_STOP = "HTTP server stopped.";
 
 	// Error messages:
+	String ERROR = "error";
 	String ROCKS_DB_INIT_ERROR = "RocksDB couldn't initialize...";
 	String INVALID_PARAMS_ERROR = "Invalid parameters...";
 	String HTTP_SERVER_FAIL = "Server failed to start...";

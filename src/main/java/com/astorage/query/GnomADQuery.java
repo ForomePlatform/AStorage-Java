@@ -54,7 +54,7 @@ public class GnomADQuery implements Query, Constants, GnomADConstants {
 
 			Long.parseLong(pos);
 		} catch (NumberFormatException e) {
-			errorJson.put("error", INVALID_CHR_OR_POS_ERROR);
+			errorJson.put(ERROR, INVALID_CHR_OR_POS_ERROR);
 
 			Constants.errorResponse(
 				req,
@@ -66,7 +66,7 @@ public class GnomADQuery implements Query, Constants, GnomADConstants {
 		}
 
 		if (!(sourceType.length() == 1 && SOURCE_TYPES.contains(sourceType.toLowerCase()))) {
-			errorJson.put("error", INVALID_SOURCE_TYPE_ERROR);
+			errorJson.put(ERROR, INVALID_SOURCE_TYPE_ERROR);
 
 			Constants.errorResponse(
 				req,
@@ -87,7 +87,7 @@ public class GnomADQuery implements Query, Constants, GnomADConstants {
 
 		byte[] compressedVariant = dbRep.getBytes(key, columnFamilyHandle);
 		if (compressedVariant == null) {
-			errorJson.put("error", VARIANT_NOT_FOUND_ERROR);
+			errorJson.put(ERROR, VARIANT_NOT_FOUND_ERROR);
 
 			Constants.errorResponse(
 				req,

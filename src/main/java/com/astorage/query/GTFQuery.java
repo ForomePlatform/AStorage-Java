@@ -53,7 +53,7 @@ public class GTFQuery implements Query, Constants, GTFConstants {
 			Long.parseLong(startPos);
 			Long.parseLong(endPos);
 		} catch (NumberFormatException e) {
-			errorJson.put("error", INVALID_CHR_OR_POS_ERROR);
+			errorJson.put(ERROR, INVALID_CHR_OR_POS_ERROR);
 
 			Constants.errorResponse(
 				req,
@@ -66,7 +66,7 @@ public class GTFQuery implements Query, Constants, GTFConstants {
 
 		byte[] compressedVariant = dbRep.getBytes(Variant.generateKey(chr, startPos, endPos));
 		if (compressedVariant == null) {
-			errorJson.put("error", VARIANT_NOT_FOUND_ERROR);
+			errorJson.put(ERROR, VARIANT_NOT_FOUND_ERROR);
 
 			Constants.errorResponse(
 				req,

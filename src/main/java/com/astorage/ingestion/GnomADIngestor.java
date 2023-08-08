@@ -50,7 +50,7 @@ public class GnomADIngestor implements Ingestor, Constants, GnomADConstants {
 				columnFamilyHandle = dbRep.createColumnFamily(sourceType);
 			} else {
 				JsonObject errorJson = new JsonObject();
-				errorJson.put("error", INVALID_SOURCE_TYPE_ERROR);
+				errorJson.put(ERROR, INVALID_SOURCE_TYPE_ERROR);
 
 				Constants.errorResponse(
 					req,

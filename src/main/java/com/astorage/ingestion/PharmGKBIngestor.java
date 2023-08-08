@@ -45,7 +45,7 @@ public class PharmGKBIngestor implements Ingestor, PharmGKBConstants, Constants 
 				columnFamilyHandle = dbRep.createColumnFamily(dataType);
 			} else {
 				JsonObject errorJson = new JsonObject();
-				errorJson.put("error", INVALID_DATA_TYPE_ERROR);
+				errorJson.put(ERROR, INVALID_DATA_TYPE_ERROR);
 
 				Constants.errorResponse(
 					req,

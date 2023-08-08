@@ -83,7 +83,7 @@ public class GTExQuery implements Query, Constants, GTExConstants {
 			geneColumnFamilyHandle
 		);
 		if (compressedGene == null) {
-			errorJson.put("error", GENE_RESULT_NOT_FOUND_ERROR);
+			errorJson.put(ERROR, GENE_RESULT_NOT_FOUND_ERROR);
 
 			Constants.errorResponse(
 				req,
@@ -113,7 +113,7 @@ public class GTExQuery implements Query, Constants, GTExConstants {
 		try {
 			Integer.parseInt(tissueNo);
 		} catch (NumberFormatException e) {
-			errorJson.put("error", INVALID_TISSUE_NUMBER_ERROR);
+			errorJson.put(ERROR, INVALID_TISSUE_NUMBER_ERROR);
 
 			Constants.errorResponse(
 				req,
@@ -136,7 +136,7 @@ public class GTExQuery implements Query, Constants, GTExConstants {
 			tissueColumnFamilyHandle
 		);
 		if (compressedTissue == null) {
-			errorJson.put("error", TISSUE_RESULT_NOT_FOUND_ERROR);
+			errorJson.put(ERROR, TISSUE_RESULT_NOT_FOUND_ERROR);
 
 			Constants.errorResponse(
 				req,
@@ -166,7 +166,7 @@ public class GTExQuery implements Query, Constants, GTExConstants {
 		try {
 			Integer.parseInt(tissueNo);
 		} catch (NumberFormatException e) {
-			errorJson.put("error", INVALID_TISSUE_NUMBER_ERROR);
+			errorJson.put(ERROR, INVALID_TISSUE_NUMBER_ERROR);
 
 			Constants.errorResponse(
 				req,
@@ -189,7 +189,7 @@ public class GTExQuery implements Query, Constants, GTExConstants {
 			geneToTissueColumnFamilyHandle
 		);
 		if (compressedGeneToTissue == null) {
-			errorJson.put("error", GENE_TO_TISSUE_RESULT_NOT_FOUND_ERROR);
+			errorJson.put(ERROR, GENE_TO_TISSUE_RESULT_NOT_FOUND_ERROR);
 
 			Constants.errorResponse(
 				req,

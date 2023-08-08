@@ -81,7 +81,7 @@ public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
 			}
 
 			req.response()
-				.putHeader("content-type", "text/json")
+				.putHeader("content-type", "text/plain")
 				.end(lineCount + " lines have been ingested in " + dbRep.dbName + "!\n");
 		} catch (IOException e) {
 			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
