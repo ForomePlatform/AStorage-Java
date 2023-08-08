@@ -33,17 +33,6 @@ public class Variant implements JsonConvertible, DbSNPConstants {
 		}
 	}
 
-	public static byte[] generateKey(String chr, String pos) {
-		return (chr + "_" + pos).getBytes();
-	}
-
-	public byte[] getKey() {
-		String chr = variantColumnValues.get(CHR_COLUMN_NAME);
-		String pos = variantColumnValues.get(POS_COLUMN_NAME);
-
-		return generateKey(chr, pos);
-	}
-
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) {
