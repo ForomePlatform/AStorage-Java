@@ -9,10 +9,11 @@ import org.rocksdb.ColumnFamilyHandle;
 
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.zip.GZIPInputStream;
 
 @SuppressWarnings("unused")
 public class FastaIngestor implements Ingestor, Constants, FastaConstants {
@@ -30,8 +31,8 @@ public class FastaIngestor implements Ingestor, Constants, FastaConstants {
 		if (
 			req.params().size() != 3
 				|| !req.params().contains(ARRAY_NAME_PARAM)
-				|| !req.params().contains(DATA_URL_PARAM)
-				|| !req.params().contains(METADATA_URL_PARAM)
+				|| !req.params().contains(DATA_PATH_PARAM)
+				|| !req.params().contains(METADATA_PATH_PARAM)
 		) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
 
@@ -39,33 +40,45 @@ public class FastaIngestor implements Ingestor, Constants, FastaConstants {
 		}
 
 		String arrayName = req.getParam(ARRAY_NAME_PARAM);
-		String dataURL = req.getParam(DATA_URL_PARAM);
-		String metadataURL = req.getParam(METADATA_URL_PARAM);
+		String dataPath = req.getParam(DATA_PATH_PARAM);
+		String metadataPath = req.getParam(METADATA_PATH_PARAM);
 
-		try {
-			Constants.downloadUsingStream(metadataURL, METADATA_FILENAME);
-			Map<String, String> metadata = readMetadata();
-			Constants.downloadUsingStream(dataURL, COMPRESSED_DATA_FILENAME);
-			Constants.decompressGzip(COMPRESSED_DATA_FILENAME, DATA_FILENAME);
-			storeData(arrayName, metadata);
-		} catch (IOException | SecurityException | URISyntaxException e) {
-			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, DOWNLOADING_DATA_ERROR);
+		File dataFile = new File(dataPath);
+		File metadataFile = new File(metadataPath);
+		if (!dataFile.exists() || !metadataFile.exists()) {
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, FILE_NOT_FOUND_ERROR);
+
+			return;
+		}
+
+		try (
+			InputStream dataFileInputStream = new FileInputStream(dataFile);
+			InputStream gzipInputStream = new GZIPInputStream(dataFileInputStream);
+			Reader dataDecoder = new InputStreamReader(gzipInputStream, StandardCharsets.UTF_8);
+			BufferedReader bufferedDataReader = new BufferedReader(dataDecoder);
+
+			InputStream metadataFileInputStream = new FileInputStream(metadataFile);
+			Reader metadataReader = new InputStreamReader(metadataFileInputStream, StandardCharsets.UTF_8);
+			BufferedReader bufferedMetadataReader = new BufferedReader(metadataReader)
+		) {
+			Map<String, String> metadata = readMetadata(bufferedMetadataReader);
+			storeData(arrayName, metadata, bufferedDataReader);
+		} catch (IOException e) {
+			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 
 			return;
 		}
 
 		String resp = "arrayName: " + arrayName + "\n" +
-			"dataURL: " + dataURL + "\n" +
-			"metadataURL: " + metadataURL + "\n";
+			"dataUrl: " + dataPath + "\n" +
+			"metadataUrl: " + metadataPath + "\n";
 
 		req.response()
 			.putHeader("content-type", "text/plain")
 			.end(resp);
 	}
 
-	private void storeData(String arrayName, Map<String, String> metadata) throws IOException {
-		File dataFile = new File(DATA_DIRECTORY_PATH, DATA_FILENAME);
-		BufferedReader reader = new BufferedReader(new FileReader(dataFile));
+	private void storeData(String arrayName, Map<String, String> metadata, BufferedReader reader) throws IOException {
 		String line;
 		String seqName = null;
 		int idx = 1;
@@ -82,19 +95,15 @@ public class FastaIngestor implements Ingestor, Constants, FastaConstants {
 				idx = 1;
 			} else if (seqName != null) {
 				for (int i = 0; i < line.length(); i++) {
-					dbRep.saveString(generateDBKey(seqName, idx), String.valueOf(line.charAt(i)), columnFamilyHandle);
+					dbRep.saveString(generateKey(seqName, idx), String.valueOf(line.charAt(i)), columnFamilyHandle);
 					idx++;
 				}
 			}
 		}
-
-		reader.close();
 	}
 
-	private static Map<String, String> readMetadata() throws IOException {
+	private static Map<String, String> readMetadata(BufferedReader reader) throws IOException {
 		Map<String, String> result = new HashMap<>();
-		File metadataFile = new File(DATA_DIRECTORY_PATH, METADATA_FILENAME);
-		BufferedReader reader = new BufferedReader(new FileReader(metadataFile));
 		String line;
 
 		while ((line = reader.readLine()) != null) {
@@ -109,14 +118,12 @@ public class FastaIngestor implements Ingestor, Constants, FastaConstants {
 			}
 		}
 
-		reader.close();
-
 		return result;
 	}
 
-	public static byte[] generateDBKey(String seqName, int idx) {
+	public static byte[] generateKey(String seqName, long idx) {
 		byte[] a = seqName.getBytes();
-		byte[] b = ByteBuffer.allocate(4).putInt(idx).array();
+		byte[] b = ByteBuffer.allocate(8).putLong(idx).array();
 
 		byte[] result = new byte[a.length + b.length];
 		System.arraycopy(a, 0, result, 0, a.length);

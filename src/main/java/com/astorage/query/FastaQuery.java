@@ -1,13 +1,12 @@
 package com.astorage.query;
 
 import com.astorage.db.RocksDBRepository;
-import com.astorage.ingestion.FastaIngestor;
 import com.astorage.utils.Constants;
 import com.astorage.utils.fasta.FastaConstants;
+import com.astorage.utils.fasta.FastaHelper;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
-import org.rocksdb.ColumnFamilyHandle;
 
 import java.net.HttpURLConnection;
 
@@ -44,25 +43,23 @@ public class FastaQuery implements Query, Constants, FastaConstants {
 		singleQueryHandler(arrayName, sectionName, startPosition, endPosition, false);
 	}
 
-	public void singleQueryHandler(String arrayName, String sectionName, int startPosition, int endPosition, boolean isBatched) {
+	public void singleQueryHandler(String arrayName, String sectionName, int startPos, int endPos, boolean isBatched) {
 		HttpServerRequest req = context.request();
-		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(arrayName);
 
-		if (columnFamilyHandle == null) {
-			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, COLUMN_FAMILY_NULL_ERROR);
+		String data;
+		try {
+			data = FastaHelper.queryData(dbRep, arrayName, sectionName, startPos, endPos);
+		} catch (InternalError e) {
+			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
+
 			return;
-		}
-
-		StringBuilder stringBuilder = new StringBuilder();
-		for (int i = startPosition; i <= endPosition; i++) {
-			stringBuilder.append(dbRep.getString(FastaIngestor.generateDBKey(sectionName, i), columnFamilyHandle));
 		}
 
 		String result = new JsonObject().put("array", arrayName)
 			.put("section", sectionName)
-			.put("start", startPosition)
-			.put("end", endPosition)
-			.put("data", stringBuilder.toString())
+			.put("start", startPos)
+			.put("end", endPos)
+			.put("data", data)
 			.toString();
 
 		if (isBatched) {

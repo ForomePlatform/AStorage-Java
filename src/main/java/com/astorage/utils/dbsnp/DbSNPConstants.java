@@ -4,7 +4,6 @@ public interface DbSNPConstants {
 	// General:
 	String DBSNP_FORMAT_NAME = "DbSNP";
 	String DATA_DELIMITER = "\t";
-	String LETTER_CHROMOSOMES = "XYM";
 	String CHR_COLUMN_NAME = "#CHROM";
 	String POS_COLUMN_NAME = "POS";
 	String VARIANTS_KEY = "variants";

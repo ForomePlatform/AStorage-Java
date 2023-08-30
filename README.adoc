@@ -57,13 +57,13 @@ java -jar astorage-java-1.0.0.jar [config_json_path]
 To ingest data:
 [source]
 ----
-curl -X POST "localhost:8080/query/fasta?arrayName=<arr_name>&dataURL=<data_url>&metadataURL=<metadata_url>"
+curl -X POST "localhost:8080/ingestion/fasta?arrayName=<arr_name>&dataPath=<data_url>&metadataPath=<metadata_url>"
 ----
 
 To query data:
 [source]
 ----
-curl "localhost:8080/query/fasta?arrayName=<arr_name>&sectionName=<sec_name>&startPosition=<start_pos>&stopPosition=<stop_pos>"
+curl "localhost:8080/query/fasta?arrayName=<arr_name>&sectionName=<sec_name>&startPos=<start_pos>&stopPos=<stop_pos>"
 ----
 ====
 

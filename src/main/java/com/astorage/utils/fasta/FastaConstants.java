@@ -6,11 +6,11 @@ public interface FastaConstants {
 
 	// Ingestion/query request params:
 	String ARRAY_NAME_PARAM = "arrayName";
-	String DATA_URL_PARAM = "dataURL";
-	String METADATA_URL_PARAM = "metadataURL";
+	String DATA_PATH_PARAM = "dataPath";
+	String METADATA_PATH_PARAM = "metadataPath";
 	String SECTION_NAME_PARAM = "sectionName";
-	String START_POS_PARAM = "startPosition";
-	String END_POS_PARAM = "endPosition";
+	String START_POS_PARAM = "startPos";
+	String END_POS_PARAM = "endPos";
 
 	// Other:
 	String METADATA_FILENAME = "metadata";
