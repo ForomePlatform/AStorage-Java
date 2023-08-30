@@ -37,18 +37,40 @@ public class FastaQuery implements Query, Constants, FastaConstants {
 
 		String arrayName = req.getParam(ARRAY_NAME_PARAM);
 		String sectionName = req.getParam(SECTION_NAME_PARAM);
-		int startPosition = Integer.parseInt(req.getParam(START_POS_PARAM));
-		int endPosition = Integer.parseInt(req.getParam(END_POS_PARAM));
+		String startPos = req.getParam(START_POS_PARAM);
+		String endPos = req.getParam(END_POS_PARAM);
 
-		singleQueryHandler(arrayName, sectionName, startPosition, endPosition, false);
+		singleQueryHandler(arrayName, sectionName, startPos, endPos, false);
 	}
 
-	public void singleQueryHandler(String arrayName, String sectionName, int startPos, int endPos, boolean isBatched) {
+	public void singleQueryHandler(String arrayName, String sectionName, String startPos, String endPos, boolean isBatched) {
 		HttpServerRequest req = context.request();
+		JsonObject errorJson = new JsonObject();
+
+		try {
+			Long.parseLong(startPos);
+			Long.parseLong(endPos);
+		} catch (NumberFormatException e) {
+			errorJson.put(ERROR, INVALID_START_OR_END_POS_ERROR);
+
+			Constants.errorResponse(
+				req,
+				HttpURLConnection.HTTP_BAD_REQUEST,
+				errorJson.toString()
+			);
+
+			return;
+		}
 
 		String data;
 		try {
-			data = FastaHelper.queryData(dbRep, arrayName, sectionName, startPos, endPos);
+			data = FastaHelper.queryData(
+				dbRep,
+				arrayName,
+				sectionName,
+				Long.parseLong(startPos),
+				Long.parseLong(endPos)
+			);
 		} catch (InternalError e) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 

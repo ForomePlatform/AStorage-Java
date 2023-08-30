@@ -9,8 +9,8 @@ public class FastaHelper implements FastaConstants {
 		RocksDBRepository dbRep,
 		String arrayName,
 		String sectionName,
-		int startPosition,
-		int endPosition
+		long startPos,
+		long endPos
 	) throws InternalError {
 		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(arrayName);
 
@@ -19,7 +19,7 @@ public class FastaHelper implements FastaConstants {
 		}
 
 		StringBuilder data = new StringBuilder();
-		for (int i = startPosition; i <= endPosition; i++) {
+		for (long i = startPos; i <= endPos; i++) {
 			data.append(dbRep.getString(FastaIngestor.generateKey(sectionName, i), columnFamilyHandle));
 		}
 

@@ -32,8 +32,8 @@ public class FastaBatchQuery extends FastaQuery implements Query, Constants, Fas
 
 					String arrayName = query.getString(ARRAY_NAME_PARAM);
 					String sectionName = query.getString(SECTION_NAME_PARAM);
-					int startPosition = Integer.parseInt(query.getString(START_POS_PARAM));
-					int endPosition = Integer.parseInt(query.getString(END_POS_PARAM));
+					String startPosition = query.getString(START_POS_PARAM);
+					String endPosition = query.getString(END_POS_PARAM);
 
 					singleQueryHandler(arrayName, sectionName, startPosition, endPosition, true);
 				}

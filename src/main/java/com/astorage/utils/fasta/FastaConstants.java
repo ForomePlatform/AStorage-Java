@@ -13,5 +13,6 @@ public interface FastaConstants {
 	String END_POS_PARAM = "endPos";
 
 	// Error messages:
+	String INVALID_START_OR_END_POS_ERROR = "Invalid 'start_pos' or 'end_pos'...";
 	String COLUMN_FAMILY_NULL_ERROR = "Array with the given name doesn't exist...";
 }
