@@ -62,26 +62,24 @@ public class FastaIngestor implements Ingestor, Constants, FastaConstants {
 			BufferedReader bufferedMetadataReader = new BufferedReader(metadataReader)
 		) {
 			Map<String, String> metadata = readMetadata(bufferedMetadataReader);
-			storeData(arrayName, metadata, bufferedDataReader);
+
+			System.out.println("Metadata read complete, starting ingestion...");
+
+			int lineCount = storeData(arrayName, metadata, bufferedDataReader);
+
+			req.response()
+				.putHeader("content-type", "text/plain")
+				.end(lineCount + " lines have been ingested in " + dbRep.dbName + "!\n");
 		} catch (IOException e) {
 			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
-
-			return;
 		}
-
-		String resp = "arrayName: " + arrayName + "\n" +
-			"dataUrl: " + dataPath + "\n" +
-			"metadataUrl: " + metadataPath + "\n";
-
-		req.response()
-			.putHeader("content-type", "text/plain")
-			.end(resp);
 	}
 
-	private void storeData(String arrayName, Map<String, String> metadata, BufferedReader reader) throws IOException {
+	private int storeData(String arrayName, Map<String, String> metadata, BufferedReader reader) throws IOException {
 		String line;
 		String seqName = null;
 		int idx = 1;
+		int lineCount = 0;
 
 		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(arrayName);
 		if (columnFamilyHandle == null) {
@@ -99,7 +97,15 @@ public class FastaIngestor implements Ingestor, Constants, FastaConstants {
 					idx++;
 				}
 			}
+
+			lineCount++;
+
+			if (lineCount % 10000 == 0) {
+				System.out.println(dbRep.dbName + " progress: " + lineCount + " lines have been ingested...");
+			}
 		}
+
+		return lineCount;
 	}
 
 	private static Map<String, String> readMetadata(BufferedReader reader) throws IOException {
