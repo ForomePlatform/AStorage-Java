@@ -65,7 +65,6 @@ public interface Constants {
 	String JSON_DECODE_ERROR = "Given file isn't a valid JSON...";
 	String COMPRESSION_ERROR = "Error while compressing JSON string...";
 	String DECOMPRESSION_ERROR = "Error while decompressing JSON string...";
-	String GZIP_DECOMPRESSION_ERROR = "Error while decompressing gzip file...";
 	String COLUMN_DOESNT_EXIST = "Column does not exist: ";
 
 	// Helper functions:

@@ -12,11 +12,6 @@ public interface FastaConstants {
 	String START_POS_PARAM = "startPos";
 	String END_POS_PARAM = "endPos";
 
-	// Other:
-	String METADATA_FILENAME = "metadata";
-	String COMPRESSED_DATA_FILENAME = "data.gz";
-	String DATA_FILENAME = "data";
-
 	// Error messages:
 	String COLUMN_FAMILY_NULL_ERROR = "Array with the given name doesn't exist...";
 }
