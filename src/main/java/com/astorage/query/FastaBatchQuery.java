@@ -30,12 +30,12 @@ public class FastaBatchQuery extends FastaQuery implements Query, Constants, Fas
 				for (Object queryObject : queries) {
 					JsonObject query = (JsonObject) queryObject;
 
-					String arrayName = query.getString(ARRAY_NAME_PARAM);
-					String sectionName = query.getString(SECTION_NAME_PARAM);
+					String refBuild = query.getString(REF_BUILD_PARAM);
+					String chr = query.getString(CHR_PARAM);
 					String startPosition = query.getString(START_POS_PARAM);
 					String endPosition = query.getString(END_POS_PARAM);
 
-					singleQueryHandler(arrayName, sectionName, startPosition, endPosition, true);
+					singleQueryHandler(refBuild, chr, startPosition, endPosition, true);
 				}
 
 				req.response().end();

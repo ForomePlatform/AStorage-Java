@@ -25,8 +25,8 @@ public class FastaQuery implements Query, Constants, FastaConstants {
 
 		if (
 			req.params().size() != 4
-				|| !req.params().contains(ARRAY_NAME_PARAM)
-				|| !req.params().contains(SECTION_NAME_PARAM)
+				|| !req.params().contains(REF_BUILD_PARAM)
+				|| !req.params().contains(CHR_PARAM)
 				|| !req.params().contains(START_POS_PARAM)
 				|| !req.params().contains(END_POS_PARAM)
 		) {
@@ -35,23 +35,27 @@ public class FastaQuery implements Query, Constants, FastaConstants {
 			return;
 		}
 
-		String arrayName = req.getParam(ARRAY_NAME_PARAM);
-		String sectionName = req.getParam(SECTION_NAME_PARAM);
+		String refBuild = req.getParam(REF_BUILD_PARAM);
+		String chr = req.getParam(CHR_PARAM);
 		String startPos = req.getParam(START_POS_PARAM);
 		String endPos = req.getParam(END_POS_PARAM);
 
-		singleQueryHandler(arrayName, sectionName, startPos, endPos, false);
+		singleQueryHandler(refBuild, chr, startPos, endPos, false);
 	}
 
-	public void singleQueryHandler(String arrayName, String sectionName, String startPos, String endPos, boolean isBatched) {
+	public void singleQueryHandler(String refBuild, String chr, String startPos, String endPos, boolean isBatched) {
 		HttpServerRequest req = context.request();
 		JsonObject errorJson = new JsonObject();
 
 		try {
+			if (!LETTER_CHROMOSOMES.contains(chr.toUpperCase())) {
+				Integer.parseInt(chr);
+			}
+
 			Long.parseLong(startPos);
 			Long.parseLong(endPos);
 		} catch (NumberFormatException e) {
-			errorJson.put(ERROR, INVALID_START_OR_END_POS_ERROR);
+			errorJson.put(ERROR, INVALID_CHR_START_POS_OR_END_POS_ERROR);
 
 			Constants.errorResponse(
 				req,
@@ -66,8 +70,8 @@ public class FastaQuery implements Query, Constants, FastaConstants {
 		try {
 			data = FastaHelper.queryData(
 				dbRep,
-				arrayName,
-				sectionName,
+				refBuild,
+				chr,
 				Long.parseLong(startPos),
 				Long.parseLong(endPos)
 			);
@@ -77,8 +81,9 @@ public class FastaQuery implements Query, Constants, FastaConstants {
 			return;
 		}
 
-		String result = new JsonObject().put("array", arrayName)
-			.put("section", sectionName)
+		String result = new JsonObject()
+			.put("refBuild", refBuild)
+			.put("chr", chr)
 			.put("start", startPos)
 			.put("end", endPos)
 			.put("data", data)

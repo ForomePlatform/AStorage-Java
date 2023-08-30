@@ -94,6 +94,9 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 		stopPromise.complete();
 	}
 
+	/**
+	 * For XML...
+	 */
 	private void setSystemProperties() {
 		System.setProperty("entityExpansionLimit", "0");
 		System.setProperty("totalEntitySizeLimit", "0");

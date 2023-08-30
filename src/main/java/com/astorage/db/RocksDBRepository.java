@@ -132,11 +132,23 @@ public class RocksDBRepository implements Constants {
 	}
 
 	public String getString(byte[] key) {
-		return new String(getBytes(key));
+		byte[] result = getBytes(key);
+
+		if (result == null) {
+			return null;
+		}
+
+		return new String(result);
 	}
 
 	public String getString(byte[] key, ColumnFamilyHandle column) {
-		return new String(getBytes(key, column));
+		byte[] result = getBytes(key, column);
+
+		if (result == null) {
+			return null;
+		}
+
+		return new String(result);
 	}
 
 	public synchronized ColumnFamilyHandle createColumnFamily(String name) {

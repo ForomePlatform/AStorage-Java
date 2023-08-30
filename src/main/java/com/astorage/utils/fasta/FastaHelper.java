@@ -7,12 +7,12 @@ import org.rocksdb.ColumnFamilyHandle;
 public class FastaHelper implements FastaConstants {
 	public static String queryData(
 		RocksDBRepository dbRep,
-		String arrayName,
-		String sectionName,
+		String refBuild,
+		String chr,
 		long startPos,
 		long endPos
 	) throws InternalError {
-		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(arrayName);
+		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(refBuild);
 
 		if (columnFamilyHandle == null) {
 			throw new InternalError(COLUMN_FAMILY_NULL_ERROR);
@@ -20,7 +20,13 @@ public class FastaHelper implements FastaConstants {
 
 		StringBuilder data = new StringBuilder();
 		for (long i = startPos; i <= endPos; i++) {
-			data.append(dbRep.getString(FastaIngestor.generateKey(sectionName, i), columnFamilyHandle));
+			String retrievedData = dbRep.getString(FastaIngestor.generateKey(chr, i), columnFamilyHandle);
+
+			if (retrievedData == null) {
+				return null;
+			}
+
+			data.append(retrievedData);
 		}
 
 		return data.toString();

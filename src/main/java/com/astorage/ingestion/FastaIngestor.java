@@ -30,7 +30,7 @@ public class FastaIngestor implements Ingestor, Constants, FastaConstants {
 
 		if (
 			req.params().size() != 3
-				|| !req.params().contains(ARRAY_NAME_PARAM)
+				|| !req.params().contains(REF_BUILD_PARAM)
 				|| !req.params().contains(DATA_PATH_PARAM)
 				|| !req.params().contains(METADATA_PATH_PARAM)
 		) {
@@ -39,7 +39,7 @@ public class FastaIngestor implements Ingestor, Constants, FastaConstants {
 			return;
 		}
 
-		String arrayName = req.getParam(ARRAY_NAME_PARAM);
+		String refBuild = req.getParam(REF_BUILD_PARAM);
 		String dataPath = req.getParam(DATA_PATH_PARAM);
 		String metadataPath = req.getParam(METADATA_PATH_PARAM);
 
@@ -65,7 +65,7 @@ public class FastaIngestor implements Ingestor, Constants, FastaConstants {
 
 			System.out.println("Metadata read complete, starting ingestion...");
 
-			int lineCount = storeData(arrayName, metadata, bufferedDataReader);
+			int lineCount = storeData(refBuild, metadata, bufferedDataReader);
 
 			req.response()
 				.putHeader("content-type", "text/plain")
@@ -75,25 +75,25 @@ public class FastaIngestor implements Ingestor, Constants, FastaConstants {
 		}
 	}
 
-	private int storeData(String arrayName, Map<String, String> metadata, BufferedReader reader) throws IOException {
+	private int storeData(String refBuild, Map<String, String> metadata, BufferedReader reader) throws IOException {
 		String line;
-		String seqName = null;
-		int idx = 1;
+		String chr = null;
+		long idx = 1;
 		int lineCount = 0;
 
-		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(arrayName);
+		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(refBuild);
 		if (columnFamilyHandle == null) {
-			columnFamilyHandle = dbRep.createColumnFamily(arrayName);
+			columnFamilyHandle = dbRep.createColumnFamily(refBuild);
 		}
 
 		while ((line = reader.readLine()) != null) {
 			if (line.startsWith(">")) {
 				String refSeq = line.substring(1).split(" ")[0];
-				seqName = metadata.get(refSeq);
+				chr = metadata.get(refSeq);
 				idx = 1;
-			} else if (seqName != null) {
+			} else if (chr != null) {
 				for (int i = 0; i < line.length(); i++) {
-					dbRep.saveString(generateKey(seqName, idx), String.valueOf(line.charAt(i)), columnFamilyHandle);
+					dbRep.saveString(generateKey(chr, idx), String.valueOf(line.charAt(i)), columnFamilyHandle);
 					idx++;
 				}
 			}
@@ -127,8 +127,8 @@ public class FastaIngestor implements Ingestor, Constants, FastaConstants {
 		return result;
 	}
 
-	public static byte[] generateKey(String seqName, long idx) {
-		byte[] a = seqName.getBytes();
+	public static byte[] generateKey(String chr, long idx) {
+		byte[] a = chr.getBytes();
 		byte[] b = ByteBuffer.allocate(8).putLong(idx).array();
 
 		byte[] result = new byte[a.length + b.length];
