@@ -242,6 +242,21 @@ curl -X POST \
 ]
 ----
 
+To use the normalization service appropriate genome reference builds(e.g. *hg38*) should be ingested into *Fasta* first. Afterward normalization can be done using this request:
+[source]
+----
+curl "localhost:8080/normalization?refBuild=<ref_build>&chr=<chr_num>&pos=<pos>&ref=<ref>&alt=<alt>"
+----
+
+To batch-normalize the data same approach is used as in the batch-query. This is the example of the request:
+[source]
+----
+curl -X POST \
+	-H "Content-Type: application/json" \
+	-d @normalization_query_file.json \
+	"localhost:8080/batch-normalization" > results.jsonl
+----
+
 To stop the service:
 [source]
 ----

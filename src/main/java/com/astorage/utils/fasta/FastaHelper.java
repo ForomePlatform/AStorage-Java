@@ -31,4 +31,19 @@ public class FastaHelper implements FastaConstants {
 
 		return data.toString();
 	}
+
+	public static String queryData(
+		RocksDBRepository dbRep,
+		String refBuild,
+		String chr,
+		long pos
+	) {
+		String retrievedData = queryData(dbRep, refBuild, chr, pos, pos);
+
+		if (retrievedData == null) {
+			return null;
+		}
+
+		return Character.toString(retrievedData.charAt(0));
+	}
 }

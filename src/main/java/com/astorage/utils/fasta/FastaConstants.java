@@ -14,5 +14,5 @@ public interface FastaConstants {
 
 	// Error messages:
 	String INVALID_CHR_START_POS_OR_END_POS_ERROR = "Invalid 'chr', 'start_pos' or 'end_pos'...";
-	String COLUMN_FAMILY_NULL_ERROR = "Array with the given name doesn't exist...";
+	String COLUMN_FAMILY_NULL_ERROR = "Reference build with the given name doesn't exist...";
 }

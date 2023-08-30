@@ -6,7 +6,7 @@ public interface GnomADConstants {
 	String COLUMNS_DELIMITER = "\t";
 	String INFO_FIELDS_DELIMITER = ";";
 	String INFO_FIELD_KEY_VALUE_DELIMITER = "=";
-	String SOURCE_TYPES = "ge";
+	String SOURCE_TYPES = "ge"; // g - genome, e - exome
 	String COMMENT_LINE_PREFIX = "##";
 	String COLUMN_NAMES_LINE_PREFIX = "#";
 
