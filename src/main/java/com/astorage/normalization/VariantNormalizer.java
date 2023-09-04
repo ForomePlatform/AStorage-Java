@@ -2,6 +2,7 @@ package com.astorage.normalization;
 
 import com.astorage.db.RocksDBRepository;
 import com.astorage.utils.Constants;
+import com.astorage.utils.fasta.FastaConstants;
 import com.astorage.utils.fasta.FastaHelper;
 import com.astorage.utils.variantNormalizer.VariantNormalizerConstants;
 import io.vertx.core.http.HttpServerRequest;
@@ -11,14 +12,20 @@ import io.vertx.ext.web.RoutingContext;
 import java.net.HttpURLConnection;
 
 /**
- * Written according to GA4GH normalization technique
+ * Written according to GA4GH normalization technique.
  * Link: <a href="https://vrs.ga4gh.org/en/stable/impl-guide/normalization.html">...</a>
+ *
+ * Uses the Fasta DB as a source for reference genome.
  */
 public class VariantNormalizer implements Normalizer, Constants, VariantNormalizerConstants {
 	protected final RoutingContext context;
 	protected final RocksDBRepository dbRep;
 
-	public VariantNormalizer(RoutingContext context, RocksDBRepository dbRep) {
+	public VariantNormalizer(RoutingContext context, RocksDBRepository dbRep) throws IllegalArgumentException {
+		if (dbRep.dbFormatName.equals(FastaConstants.FASTA_FORMAT_NAME.toLowerCase())) {
+			throw new IllegalArgumentException(INCORRECT_DB_FORMAT);
+		}
+
 		this.context = context;
 		this.dbRep = dbRep;
 	}

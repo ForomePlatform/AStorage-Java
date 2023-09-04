@@ -11,4 +11,5 @@ public interface VariantNormalizerConstants {
 	// Error messages:
 	String INVALID_CHR_OR_POS_ERROR = "Invalid 'chr' or 'pos'...";
 	String REF_NOT_FOUND_ERROR = "Couldn't find the reference specified in the Fasta database...";
+	String INCORRECT_DB_FORMAT = "Normalizer tried initialization with an incorrect DB format...";
 }

@@ -13,15 +13,15 @@ import java.util.List;
 
 public class RocksDBRepository implements Constants {
 	private final HashMap<String, ColumnFamilyHandle> columnFamilyHandleMap = new HashMap<>();
-	private final String dbFilename;
 	private final String dbDirectoryPath;
 	private final RocksDB db;
+	public final String dbFormatName;
 	public final String dbName;
 
-	public RocksDBRepository(String dbFilename, String dataDirectoryPath) throws RocksDBException, IOException {
-		this.dbFilename = dbFilename;
+	public RocksDBRepository(String dbFormatName, String dataDirectoryPath) throws RocksDBException, IOException {
+		this.dbFormatName = dbFormatName;
 		this.dbDirectoryPath = dataDirectoryPath + "/rocks-db";
-		this.dbName = "RocksDB<" + dbFilename + ">";
+		this.dbName = "RocksDB<" + dbFormatName + ">";
 
 		List<ColumnFamilyDescriptor> columnFamilyDescriptors = new ArrayList<>();
 		List<ColumnFamilyHandle> columnFamilyHandles = new ArrayList<>();
@@ -34,7 +34,7 @@ public class RocksDBRepository implements Constants {
 			dbOptions.setCreateIfMissing(true);
 			dbOptions.setCreateMissingColumnFamilies(true);
 
-			File dbDir = new File(this.dbDirectoryPath, this.dbFilename);
+			File dbDir = new File(this.dbDirectoryPath, this.dbFormatName);
 			if (!dbDir.exists()) {
 				Files.createDirectories(dbDir.getParentFile().toPath());
 				Files.createDirectory(dbDir.getAbsoluteFile().toPath());
@@ -53,7 +53,7 @@ public class RocksDBRepository implements Constants {
 		} catch (IOException | RocksDBException e) {
 			System.err.printf(
 				"Error initializing RocksDB<%s>, check configurations and permissions, exception: %s, message: %s, stackTrace: %s%n",
-				dbFilename,
+				dbFormatName,
 				e.getCause(),
 				e.getMessage(),
 				Arrays.toString(e.getStackTrace())
@@ -62,7 +62,7 @@ public class RocksDBRepository implements Constants {
 			throw e;
 		}
 
-		System.out.printf("RocksDB<%s> initialized and ready to use%n", dbFilename);
+		System.out.printf("RocksDB<%s> initialized and ready to use%n", dbFormatName);
 	}
 
 	public synchronized void saveBytes(byte[] key, byte[] value) {
@@ -71,7 +71,7 @@ public class RocksDBRepository implements Constants {
 		} catch (RocksDBException e) {
 			System.err.printf(
 				"Error saving entry in RocksDB<%s>, cause: %s, message: %s%n",
-				dbFilename,
+				dbFormatName,
 				e.getCause(),
 				e.getMessage()
 			);
@@ -84,7 +84,7 @@ public class RocksDBRepository implements Constants {
 		} catch (RocksDBException e) {
 			System.err.printf(
 				"Error saving entry in RocksDB<%s>, cause: %s, message: %s%n",
-				dbFilename,
+				dbFormatName,
 				e.getCause(),
 				e.getMessage()
 			);
@@ -105,7 +105,7 @@ public class RocksDBRepository implements Constants {
 		} catch (RocksDBException e) {
 			System.err.printf(
 				"Error retrieving the entry in RocksDB<%s> from key: %s, cause: %s, message: %s%n",
-				dbFilename,
+				dbFormatName,
 				Arrays.toString(key),
 				e.getCause(),
 				e.getMessage()
@@ -121,7 +121,7 @@ public class RocksDBRepository implements Constants {
 		} catch (RocksDBException e) {
 			System.err.printf(
 				"Error retrieving the entry in RocksDB<%s> from key: %s, cause: %s, message: %s%n",
-				dbFilename,
+				dbFormatName,
 				Arrays.toString(key),
 				e.getCause(),
 				e.getMessage()
@@ -159,7 +159,7 @@ public class RocksDBRepository implements Constants {
 		} catch (RocksDBException e) {
 			System.err.printf(
 				"Error creating column family in RocksDB<%s>, cause: %s, message: %s%n",
-				dbFilename,
+				dbFormatName,
 				e.getCause(),
 				e.getMessage()
 			);
@@ -190,7 +190,7 @@ public class RocksDBRepository implements Constants {
 		List<ColumnFamilyDescriptor> columnFamilyDescriptors = new ArrayList<>();
 
 		try {
-			File dbDir = new File(this.dbDirectoryPath, this.dbFilename);
+			File dbDir = new File(this.dbDirectoryPath, this.dbFormatName);
 			if (dbDir.exists()) {
 				List<byte[]> columnFamilyByteNames = RocksDB.listColumnFamilies(new Options(), dbDir.getAbsolutePath());
 				for (byte[] name : columnFamilyByteNames) {
