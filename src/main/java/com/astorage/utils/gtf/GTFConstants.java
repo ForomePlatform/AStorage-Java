@@ -6,7 +6,6 @@ public interface GTFConstants {
     String COLUMNS_DELIMITER = "\t";
     String ATTRIBUTES_DELIMITER = ";";
     String ATTRIBUTE_PAIR_DELIMITER = " ";
-    String LETTER_CHROMOSOMES = "XYM";
     String COMMENT_LINE_PREFIX = "#!";
 
     // Ingestion/query request params:

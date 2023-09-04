@@ -4,8 +4,6 @@ public interface DbNSFPConstants {
 	// General:
 	String DBNSFP_FORMAT_NAME = "DbNSFP";
 	String DATA_DELIMITER = "\t";
-	String NUCLEOTIDES = "AGTCU";
-	String LETTER_CHROMOSOMES = "XYM";
 	String CHR_COLUMN_NAME = "#chr";
 	String POS_COLUMN_NAME = "pos(1-based)";
 	String COMPACTED_DATA_KEY = "data";

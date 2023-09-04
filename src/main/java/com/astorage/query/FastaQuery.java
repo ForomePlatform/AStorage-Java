@@ -1,13 +1,12 @@
 package com.astorage.query;
 
 import com.astorage.db.RocksDBRepository;
-import com.astorage.ingestion.FastaIngestor;
 import com.astorage.utils.Constants;
 import com.astorage.utils.fasta.FastaConstants;
+import com.astorage.utils.fasta.FastaHelper;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
-import org.rocksdb.ColumnFamilyHandle;
 
 import java.net.HttpURLConnection;
 
@@ -26,8 +25,8 @@ public class FastaQuery implements Query, Constants, FastaConstants {
 
 		if (
 			req.params().size() != 4
-				|| !req.params().contains(ARRAY_NAME_PARAM)
-				|| !req.params().contains(SECTION_NAME_PARAM)
+				|| !req.params().contains(REF_BUILD_PARAM)
+				|| !req.params().contains(CHR_PARAM)
 				|| !req.params().contains(START_POS_PARAM)
 				|| !req.params().contains(END_POS_PARAM)
 		) {
@@ -36,33 +35,58 @@ public class FastaQuery implements Query, Constants, FastaConstants {
 			return;
 		}
 
-		String arrayName = req.getParam(ARRAY_NAME_PARAM);
-		String sectionName = req.getParam(SECTION_NAME_PARAM);
-		int startPosition = Integer.parseInt(req.getParam(START_POS_PARAM));
-		int endPosition = Integer.parseInt(req.getParam(END_POS_PARAM));
+		String refBuild = req.getParam(REF_BUILD_PARAM);
+		String chr = req.getParam(CHR_PARAM);
+		String startPos = req.getParam(START_POS_PARAM);
+		String endPos = req.getParam(END_POS_PARAM);
 
-		singleQueryHandler(arrayName, sectionName, startPosition, endPosition, false);
+		singleQueryHandler(refBuild, chr, startPos, endPos, false);
 	}
 
-	public void singleQueryHandler(String arrayName, String sectionName, int startPosition, int endPosition, boolean isBatched) {
+	public void singleQueryHandler(String refBuild, String chr, String startPos, String endPos, boolean isBatched) {
 		HttpServerRequest req = context.request();
-		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(arrayName);
+		JsonObject errorJson = new JsonObject();
 
-		if (columnFamilyHandle == null) {
-			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, COLUMN_FAMILY_NULL_ERROR);
+		try {
+			if (!LETTER_CHROMOSOMES.contains(chr.toUpperCase())) {
+				Integer.parseInt(chr);
+			}
+
+			Long.parseLong(startPos);
+			Long.parseLong(endPos);
+		} catch (NumberFormatException e) {
+			errorJson.put(ERROR, INVALID_CHR_START_POS_OR_END_POS_ERROR);
+
+			Constants.errorResponse(
+				req,
+				HttpURLConnection.HTTP_BAD_REQUEST,
+				errorJson.toString()
+			);
+
 			return;
 		}
 
-		StringBuilder stringBuilder = new StringBuilder();
-		for (int i = startPosition; i <= endPosition; i++) {
-			stringBuilder.append(dbRep.getString(FastaIngestor.generateDBKey(sectionName, i), columnFamilyHandle));
+		String data;
+		try {
+			data = FastaHelper.queryData(
+				dbRep,
+				refBuild,
+				chr,
+				Long.parseLong(startPos),
+				Long.parseLong(endPos)
+			);
+		} catch (InternalError e) {
+			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
+
+			return;
 		}
 
-		String result = new JsonObject().put("array", arrayName)
-			.put("section", sectionName)
-			.put("start", startPosition)
-			.put("end", endPosition)
-			.put("data", stringBuilder.toString())
+		String result = new JsonObject()
+			.put("refBuild", refBuild)
+			.put("chr", chr)
+			.put("start", startPos)
+			.put("end", endPos)
+			.put("data", data)
 			.toString();
 
 		if (isBatched) {

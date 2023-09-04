@@ -9,10 +9,11 @@ import org.rocksdb.ColumnFamilyHandle;
 
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.zip.GZIPInputStream;
 
 @SuppressWarnings("unused")
 public class FastaIngestor implements Ingestor, Constants, FastaConstants {
@@ -29,72 +30,86 @@ public class FastaIngestor implements Ingestor, Constants, FastaConstants {
 
 		if (
 			req.params().size() != 3
-				|| !req.params().contains(ARRAY_NAME_PARAM)
-				|| !req.params().contains(DATA_URL_PARAM)
-				|| !req.params().contains(METADATA_URL_PARAM)
+				|| !req.params().contains(REF_BUILD_PARAM)
+				|| !req.params().contains(DATA_PATH_PARAM)
+				|| !req.params().contains(METADATA_PATH_PARAM)
 		) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
 
 			return;
 		}
 
-		String arrayName = req.getParam(ARRAY_NAME_PARAM);
-		String dataURL = req.getParam(DATA_URL_PARAM);
-		String metadataURL = req.getParam(METADATA_URL_PARAM);
+		String refBuild = req.getParam(REF_BUILD_PARAM);
+		String dataPath = req.getParam(DATA_PATH_PARAM);
+		String metadataPath = req.getParam(METADATA_PATH_PARAM);
 
-		try {
-			Constants.downloadUsingStream(metadataURL, METADATA_FILENAME);
-			Map<String, String> metadata = readMetadata();
-			Constants.downloadUsingStream(dataURL, COMPRESSED_DATA_FILENAME);
-			Constants.decompressGzip(COMPRESSED_DATA_FILENAME, DATA_FILENAME);
-			storeData(arrayName, metadata);
-		} catch (IOException | SecurityException | URISyntaxException e) {
-			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, DOWNLOADING_DATA_ERROR);
+		File dataFile = new File(dataPath);
+		File metadataFile = new File(metadataPath);
+		if (!dataFile.exists() || !metadataFile.exists()) {
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, FILE_NOT_FOUND_ERROR);
 
 			return;
 		}
 
-		String resp = "arrayName: " + arrayName + "\n" +
-			"dataURL: " + dataURL + "\n" +
-			"metadataURL: " + metadataURL + "\n";
+		try (
+			InputStream dataFileInputStream = new FileInputStream(dataFile);
+			InputStream gzipInputStream = new GZIPInputStream(dataFileInputStream);
+			Reader dataDecoder = new InputStreamReader(gzipInputStream, StandardCharsets.UTF_8);
+			BufferedReader bufferedDataReader = new BufferedReader(dataDecoder);
 
-		req.response()
-			.putHeader("content-type", "text/plain")
-			.end(resp);
+			InputStream metadataFileInputStream = new FileInputStream(metadataFile);
+			Reader metadataReader = new InputStreamReader(metadataFileInputStream, StandardCharsets.UTF_8);
+			BufferedReader bufferedMetadataReader = new BufferedReader(metadataReader)
+		) {
+			Map<String, String> metadata = readMetadata(bufferedMetadataReader);
+
+			System.out.println("Metadata read complete, starting ingestion...");
+
+			int lineCount = storeData(refBuild, metadata, bufferedDataReader);
+
+			req.response()
+				.putHeader("content-type", "text/plain")
+				.end(lineCount + " lines have been ingested in " + dbRep.dbName + "!\n");
+		} catch (IOException e) {
+			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
+		}
 	}
 
-	private void storeData(String arrayName, Map<String, String> metadata) throws IOException {
-		File dataFile = new File(DATA_DIRECTORY_PATH, DATA_FILENAME);
-		BufferedReader reader = new BufferedReader(new FileReader(dataFile));
+	private int storeData(String refBuild, Map<String, String> metadata, BufferedReader reader) throws IOException {
 		String line;
-		String seqName = null;
-		int idx = 1;
+		String chr = null;
+		long idx = 1;
+		int lineCount = 0;
 
-		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(arrayName);
+		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(refBuild);
 		if (columnFamilyHandle == null) {
-			columnFamilyHandle = dbRep.createColumnFamily(arrayName);
+			columnFamilyHandle = dbRep.createColumnFamily(refBuild);
 		}
 
 		while ((line = reader.readLine()) != null) {
 			if (line.startsWith(">")) {
 				String refSeq = line.substring(1).split(" ")[0];
-				seqName = metadata.get(refSeq);
+				chr = metadata.get(refSeq);
 				idx = 1;
-			} else if (seqName != null) {
+			} else if (chr != null) {
 				for (int i = 0; i < line.length(); i++) {
-					dbRep.saveString(generateDBKey(seqName, idx), String.valueOf(line.charAt(i)), columnFamilyHandle);
+					dbRep.saveString(generateKey(chr, idx), String.valueOf(line.charAt(i)), columnFamilyHandle);
 					idx++;
 				}
 			}
+
+			lineCount++;
+
+			if (lineCount % 10000 == 0) {
+				System.out.println(dbRep.dbName + " progress: " + lineCount + " lines have been ingested...");
+			}
 		}
 
-		reader.close();
+		return lineCount;
 	}
 
-	private static Map<String, String> readMetadata() throws IOException {
+	private static Map<String, String> readMetadata(BufferedReader reader) throws IOException {
 		Map<String, String> result = new HashMap<>();
-		File metadataFile = new File(DATA_DIRECTORY_PATH, METADATA_FILENAME);
-		BufferedReader reader = new BufferedReader(new FileReader(metadataFile));
 		String line;
 
 		while ((line = reader.readLine()) != null) {
@@ -109,14 +124,12 @@ public class FastaIngestor implements Ingestor, Constants, FastaConstants {
 			}
 		}
 
-		reader.close();
-
 		return result;
 	}
 
-	public static byte[] generateDBKey(String seqName, int idx) {
-		byte[] a = seqName.getBytes();
-		byte[] b = ByteBuffer.allocate(4).putInt(idx).array();
+	public static byte[] generateKey(String chr, long idx) {
+		byte[] a = chr.getBytes();
+		byte[] b = ByteBuffer.allocate(8).putLong(idx).array();
 
 		byte[] result = new byte[a.length + b.length];
 		System.arraycopy(a, 0, result, 0, a.length);

@@ -2,6 +2,8 @@ package com.astorage.main;
 
 import com.astorage.db.RocksDBRepository;
 import com.astorage.ingestion.Ingestor;
+import com.astorage.normalization.VariantBatchNormalizer;
+import com.astorage.normalization.VariantNormalizer;
 import com.astorage.query.Query;
 import com.astorage.utils.Constants;
 import com.astorage.utils.dbnsfp.DbNSFPConstants;
@@ -56,6 +58,8 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 				this.setIngestionHandler(formatName, router);
 				this.setQueryHandler(formatName, router);
 				this.setBatchQueryHandler(formatName, router);
+				this.setNormalizationHandler(router);
+				this.setBatchNormalizationHandler(router);
 			}
 		} catch (IOException | RocksDBException e) {
 			startPromise.fail(ROCKS_DB_INIT_ERROR);
@@ -94,6 +98,9 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 		stopPromise.complete();
 	}
 
+	/**
+	 * For XML...
+	 */
 	private void setSystemProperties() {
 		System.setProperty("entityExpansionLimit", "0");
 		System.setProperty("totalEntitySizeLimit", "0");
@@ -136,6 +143,36 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 
 				Query query = (Query) constructor.newInstance(context, dbRepositories.get(formatName));
 				query.queryHandler();
+			} catch (Exception e) {
+				Constants.errorResponse(context.request(), HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
+			}
+		});
+	}
+
+	private void setNormalizationHandler(Router router) {
+		router.get("/normalization").handler((RoutingContext context) -> {
+			try {
+				VariantNormalizer variantNormalizer = new VariantNormalizer(
+					context,
+					dbRepositories.get(FASTA_FORMAT_NAME)
+				);
+
+				variantNormalizer.normalizationHandler();
+			} catch (Exception e) {
+				Constants.errorResponse(context.request(), HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
+			}
+		});
+	}
+
+	private void setBatchNormalizationHandler(	Router router) {
+		router.post("/batch-normalization").handler((RoutingContext context) -> {
+			try {
+				VariantBatchNormalizer variantBatchNormalizer = new VariantBatchNormalizer(
+					context,
+					dbRepositories.get(FASTA_FORMAT_NAME)
+				);
+
+				variantBatchNormalizer.normalizationHandler();
 			} catch (Exception e) {
 				Constants.errorResponse(context.request(), HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
 			}

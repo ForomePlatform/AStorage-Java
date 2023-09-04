@@ -1,8 +1,7 @@
-package com.astorage.query;
+package com.astorage.normalization;
 
 import com.astorage.db.RocksDBRepository;
 import com.astorage.utils.Constants;
-import com.astorage.utils.fasta.FastaConstants;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonArray;
@@ -11,13 +10,16 @@ import io.vertx.ext.web.RoutingContext;
 
 import java.net.HttpURLConnection;
 
-@SuppressWarnings("unused")
-public class FastaBatchQuery extends FastaQuery implements Query, Constants, FastaConstants {
-	public FastaBatchQuery(RoutingContext context, RocksDBRepository dbRep) {
+public class VariantBatchNormalizer extends VariantNormalizer implements Normalizer {
+	public VariantBatchNormalizer(RoutingContext context, RocksDBRepository dbRep) {
 		super(context, dbRep);
 	}
 
-	public void queryHandler() {
+	public void normalizationHandler() {
+		batchNormalizationHandler();
+	}
+
+	private void batchNormalizationHandler() {
 		HttpServerRequest req = context.request();
 
 		req.bodyHandler(buffer -> {
@@ -32,10 +34,11 @@ public class FastaBatchQuery extends FastaQuery implements Query, Constants, Fas
 
 					String refBuild = query.getString(REF_BUILD_PARAM);
 					String chr = query.getString(CHR_PARAM);
-					String startPosition = query.getString(START_POS_PARAM);
-					String endPosition = query.getString(END_POS_PARAM);
+					String pos = query.getString(POS_PARAM);
+					String ref = query.getString(REF_PARAM);
+					String alt = query.getString(ALT_PARAM);
 
-					singleQueryHandler(refBuild, chr, startPosition, endPosition, true);
+					singleNormalizationHandler(refBuild, chr, pos, ref, alt, true);
 				}
 
 				req.response().end();

@@ -47,6 +47,10 @@ public interface Constants {
 	String HTTP_SERVER_START = "HTTP server started on port: " + HTTP_SERVER_PORT + "!";
 	String HTTP_SERVER_STOP = "HTTP server stopped.";
 
+	// Variant related:
+	String NUCLEOTIDES = "AGTCU";
+	String LETTER_CHROMOSOMES = "XYM";
+
 	// Error messages:
 	String ERROR = "error";
 	String ROCKS_DB_INIT_ERROR = "RocksDB couldn't initialize...";
@@ -61,7 +65,6 @@ public interface Constants {
 	String JSON_DECODE_ERROR = "Given file isn't a valid JSON...";
 	String COMPRESSION_ERROR = "Error while compressing JSON string...";
 	String DECOMPRESSION_ERROR = "Error while decompressing JSON string...";
-	String GZIP_DECOMPRESSION_ERROR = "Error while decompressing gzip file...";
 	String COLUMN_DOESNT_EXIST = "Column does not exist: ";
 
 	// Helper functions:
@@ -145,25 +148,6 @@ public interface Constants {
 
 		bufferedInputStream.close();
 		fileOutputStream.close();
-	}
-
-	static void decompressGzip(String compressedFilename, String decompressedFilename) throws IOException {
-		File sourceFile = new File(DATA_DIRECTORY_PATH, compressedFilename);
-		File targetFile = new File(DATA_DIRECTORY_PATH, decompressedFilename);
-
-		try (
-			GZIPInputStream gzipInputStream = new GZIPInputStream(new FileInputStream(sourceFile));
-			FileOutputStream fileOutputStream = new FileOutputStream(targetFile)
-		) {
-			byte[] buffer = new byte[1024];
-
-			int bytesRead;
-			while ((bytesRead = gzipInputStream.read(buffer)) != -1) {
-				fileOutputStream.write(buffer, 0, bytesRead);
-			}
-		} catch (IOException e) {
-			throw new IOException(GZIP_DECOMPRESSION_ERROR, e);
-		}
 	}
 
 	static Map<String, Integer> mapColumns(String line, String dataDelimiter) {

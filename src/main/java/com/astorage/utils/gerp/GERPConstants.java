@@ -6,7 +6,6 @@ public interface GERPConstants {
 	String COLUMNS_DELIMITER = "\t";
 	String FILENAME_CHROMOSOME_PREFIX = "chr";
 	String FILENAME_CHROMOSOME_SUFFIX = ".";
-	String LETTER_CHROMOSOMES = "XYM";
 
 	// Ingestion/query request params:
 	String DATA_PATH_PARAM = "dataPath";

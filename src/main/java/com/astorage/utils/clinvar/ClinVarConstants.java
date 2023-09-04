@@ -12,7 +12,6 @@ public interface ClinVarConstants {
 	String END_POS_PARAM = "endPos";
 
 	// Other:
-	String LETTER_CHROMOSOMES = "XYM";
 	String SIGNIFICANCE_COLUMN_FAMILY_NAME = "significance";
 	String SUBMITTER_COLUMN_FAMILY_NAME = "submitter";
 	String VARIANT_SUMMARY_COLUMN_FAMILY_NAME = "variant";

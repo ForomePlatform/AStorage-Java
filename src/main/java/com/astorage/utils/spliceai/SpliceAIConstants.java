@@ -5,7 +5,6 @@ public interface SpliceAIConstants {
 	String SPLICEAI_FORMAT_NAME = "SpliceAI";
 	String COLUMNS_DELIMITER = "\t";
 	String INFO_FIELDS_DELIMITER = "\\|";
-	String LETTER_CHROMOSOMES = "XYM";
 	String COMMENT_LINE_PREFIX = "##";
 	String INFO_LINE_PREFIX = "##INFO";
 	String INFO_LINE_FIELD_NAME_FORMAT_PREFIX = "Format: ";
