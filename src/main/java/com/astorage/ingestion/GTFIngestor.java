@@ -15,13 +15,14 @@ import java.util.List;
 import java.util.zip.GZIPInputStream;
 
 @SuppressWarnings("unused")
-public class GTFIngestor implements Ingestor, Constants, GTFConstants {
-	private final RoutingContext context;
-	private final RocksDBRepository dbRep;
-
-	public GTFIngestor(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+public class GTFIngestor extends Ingestor implements Constants, GTFConstants {
+	public GTFIngestor(
+		RoutingContext context,
+		RocksDBRepository dbRep,
+		RocksDBRepository universalVariantDbRep,
+		RocksDBRepository fastaDbRep
+	) {
+		super(context, dbRep, universalVariantDbRep, fastaDbRep);
 	}
 
 	public void ingestionHandler() {

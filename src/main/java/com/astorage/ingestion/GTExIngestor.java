@@ -20,16 +20,18 @@ import java.util.List;
 import java.util.zip.GZIPInputStream;
 
 @SuppressWarnings("unused")
-public class GTExIngestor implements Ingestor, Constants, GTExConstants {
-	private final RoutingContext context;
-	private final RocksDBRepository dbRep;
+public class GTExIngestor extends Ingestor implements Constants, GTExConstants {
 	private final ColumnFamilyHandle geneColumnFamilyHandle;
 	private final ColumnFamilyHandle tissueColumnFamilyHandle;
 	private final ColumnFamilyHandle geneToTissueColumnFamilyHandle;
 
-	public GTExIngestor(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+	public GTExIngestor(
+		RoutingContext context,
+		RocksDBRepository dbRep,
+		RocksDBRepository universalVariantDbRep,
+		RocksDBRepository fastaDbRep
+	) {
+		super(context, dbRep, universalVariantDbRep, fastaDbRep);
 
 		geneColumnFamilyHandle = dbRep.getOrCreateColumnFamily(GENE_COLUMN_FAMILY_NAME);
 		tissueColumnFamilyHandle = dbRep.getOrCreateColumnFamily(TISSUE_COLUMN_FAMILY_NAME);

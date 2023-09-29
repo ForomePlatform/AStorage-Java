@@ -13,13 +13,9 @@ import java.net.HttpURLConnection;
 import static com.astorage.utils.spliceai.SpliceAIHelper.createKey;
 
 @SuppressWarnings("unused")
-public class SpliceAIQuery implements Query, Constants, SpliceAIConstants {
-	protected final RoutingContext context;
-	protected final RocksDBRepository dbRep;
-
+public class SpliceAIQuery extends SingleFormatQuery implements Constants, SpliceAIConstants {
 	public SpliceAIQuery(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+		super(context, dbRep);
 	}
 
 	public void queryHandler() throws IOException {

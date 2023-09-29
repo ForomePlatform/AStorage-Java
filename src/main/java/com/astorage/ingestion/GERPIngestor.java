@@ -15,14 +15,16 @@ import java.util.Arrays;
 import static com.astorage.utils.gerp.GERPHelper.createKey;
 
 @SuppressWarnings("unused")
-public class GERPIngestor implements Ingestor, Constants, GERPConstants {
-	private final RoutingContext context;
-	private final RocksDBRepository dbRep;
+public class GERPIngestor extends Ingestor implements Constants, GERPConstants {
 	private String chromosome;
 
-	public GERPIngestor(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+	public GERPIngestor(
+		RoutingContext context,
+		RocksDBRepository dbRep,
+		RocksDBRepository universalVariantDbRep,
+		RocksDBRepository fastaDbRep
+	) {
+		super(context, dbRep, universalVariantDbRep, fastaDbRep);
 	}
 
 	public void ingestionHandler() {

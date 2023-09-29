@@ -19,14 +19,16 @@ import java.util.zip.GZIPInputStream;
  * For spliceAI v1.3!
  */
 @SuppressWarnings("unused")
-public class SpliceAIIngestor implements Ingestor, Constants, SpliceAIConstants {
-	private final RoutingContext context;
-	private final RocksDBRepository dbRep;
+public class SpliceAIIngestor extends Ingestor implements Constants, SpliceAIConstants {
 	private final Map<String, Integer> infoFieldNamesToIndices = new HashMap<>();
 
-	public SpliceAIIngestor(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+	public SpliceAIIngestor(
+		RoutingContext context,
+		RocksDBRepository dbRep,
+		RocksDBRepository universalVariantDbRep,
+		RocksDBRepository fastaDbRep
+	) {
+		super(context, dbRep, universalVariantDbRep, fastaDbRep);
 	}
 
 	public void ingestionHandler() {

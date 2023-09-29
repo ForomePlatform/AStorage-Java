@@ -15,13 +15,9 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
-public class GTExQuery implements Query, Constants, GTExConstants {
-	protected final RoutingContext context;
-	protected final RocksDBRepository dbRep;
-
+public class GTExQuery extends SingleFormatQuery implements Constants, GTExConstants {
 	public GTExQuery(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+		super(context, dbRep);
 	}
 
 	public void queryHandler() throws IOException {

@@ -1,4 +1,4 @@
-package com.astorage.utils.variantNormalizer;
+package com.astorage.utils.variant_normalizer;
 
 public interface VariantNormalizerConstants {
 	// Normalization request params:

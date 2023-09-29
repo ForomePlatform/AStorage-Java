@@ -11,13 +11,9 @@ import io.vertx.ext.web.RoutingContext;
 import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
-public class FastaQuery implements Query, Constants, FastaConstants {
-	protected final RoutingContext context;
-	protected final RocksDBRepository dbRep;
-
+public class FastaQuery extends SingleFormatQuery implements Constants, FastaConstants {
 	public FastaQuery(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+		super(context, dbRep);
 	}
 
 	public void queryHandler() {

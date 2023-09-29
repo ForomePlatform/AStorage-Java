@@ -13,13 +13,9 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
-public class GnomADQuery implements Query, Constants, GnomADConstants {
-	protected final RoutingContext context;
-	protected final RocksDBRepository dbRep;
-
+public class GnomADQuery extends SingleFormatQuery implements Constants, GnomADConstants {
 	public GnomADQuery(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+		super(context, dbRep);
 	}
 
 	public void queryHandler() throws IOException {

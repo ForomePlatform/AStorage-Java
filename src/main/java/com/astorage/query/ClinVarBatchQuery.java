@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
-public class ClinVarBatchQuery extends ClinVarQuery implements Query, Constants, ClinVarConstants {
+public class ClinVarBatchQuery extends ClinVarQuery implements Constants, ClinVarConstants {
 	public ClinVarBatchQuery(RoutingContext context, RocksDBRepository dbRep) {
 		super(context, dbRep);
 	}

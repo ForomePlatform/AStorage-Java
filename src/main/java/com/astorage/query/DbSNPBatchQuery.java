@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
-public class DbSNPBatchQuery extends DbSNPQuery implements Query, Constants, DbSNPConstants {
+public class DbSNPBatchQuery extends DbSNPQuery implements Constants, DbSNPConstants {
 	public DbSNPBatchQuery(RoutingContext context, RocksDBRepository dbRep) {
 		super(context, dbRep);
 	}

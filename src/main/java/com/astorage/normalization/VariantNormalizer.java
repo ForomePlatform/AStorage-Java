@@ -4,7 +4,8 @@ import com.astorage.db.RocksDBRepository;
 import com.astorage.utils.Constants;
 import com.astorage.utils.fasta.FastaConstants;
 import com.astorage.utils.fasta.FastaHelper;
-import com.astorage.utils.variantNormalizer.VariantNormalizerConstants;
+import com.astorage.utils.variant_normalizer.VariantNormalizerConstants;
+import com.astorage.utils.variant_normalizer.VariantNormalizerHelper;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
@@ -17,7 +18,7 @@ import java.net.HttpURLConnection;
  *
  * Uses the Fasta DB as a source for reference genome.
  */
-public class VariantNormalizer implements Normalizer, Constants, VariantNormalizerConstants {
+public class VariantNormalizer implements Constants, VariantNormalizerConstants {
 	protected final RoutingContext context;
 	protected final RocksDBRepository dbRep;
 
@@ -85,6 +86,35 @@ public class VariantNormalizer implements Normalizer, Constants, VariantNormaliz
 		}
 
 		try {
+			JsonObject result = normalizeVariant(refBuild, chr, pos, ref, alt, dbRep);
+
+			if (isBatched) {
+				req.response().write(result + "\n");
+			} else {
+				req.response()
+					.putHeader("content-type", "text/json")
+					.end(result + "\n");
+			}
+		} catch (Exception e) {
+			Constants.errorResponse(
+				req,
+				HttpURLConnection.HTTP_BAD_REQUEST,
+				e.getMessage()
+			);
+		}
+	}
+
+	public static JsonObject normalizeVariant(
+		String refBuild,
+		String chr,
+		String pos,
+		String ref,
+		String alt,
+		RocksDBRepository dbRep
+	) throws Exception {
+		JsonObject errorJson = new JsonObject();
+
+		try {
 			String refFromFasta = FastaHelper.queryData(
 				dbRep,
 				refBuild,
@@ -96,92 +126,76 @@ public class VariantNormalizer implements Normalizer, Constants, VariantNormaliz
 			if (refFromFasta == null || !refFromFasta.equals(ref)) {
 				errorJson.put(ERROR, REF_NOT_FOUND_ERROR);
 
-				Constants.errorResponse(
-					req,
-					HttpURLConnection.HTTP_BAD_REQUEST,
-					errorJson.toString()
-				);
-
-				return;
+				throw new Exception(errorJson.toString());
 			}
 		} catch (InternalError e) {
-			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
+			errorJson.put(ERROR, e.getMessage());
 
-			return;
+			throw new Exception(errorJson.toString());
 		}
 
-		JsonObject result;
-
 		if (ref.equals(alt)) {
-			result = createNormalizedVariantJson(
+			return VariantNormalizerHelper.createNormalizedVariantJson(
 				refBuild,
 				chr,
 				Long.parseLong(pos),
 				ref,
 				alt
 			);
-		} else {
-			int commonSuffixLength = commonAffixLength(ref, alt, false);
-			String trimmedRef = ref.substring(0, ref.length() - commonSuffixLength);
-			String trimmedAlt = alt.substring(0, alt.length() - commonSuffixLength);
-
-			int commonPrefixLength = commonAffixLength(trimmedRef, trimmedAlt, true);
-			trimmedRef = trimmedRef.substring(commonPrefixLength);
-			trimmedAlt = trimmedAlt.substring(commonPrefixLength);
-
-			long newPos = Long.parseLong(pos) + commonPrefixLength;
-
-			try {
-				if (!trimmedRef.isEmpty() && !trimmedAlt.isEmpty()) {
-					result = createNormalizedVariantJson(
-						refBuild,
-						chr,
-						newPos,
-						trimmedRef,
-						trimmedAlt
-					);
-				} else if (trimmedAlt.isEmpty()) {
-					String leftRollSequence = rollLeft(trimmedRef, newPos, refBuild, chr);
-					String rightRollSequence = rollRight(trimmedRef, newPos + trimmedRef.length(), refBuild, chr);
-					newPos -= leftRollSequence.length();
-
-					result = createNormalizedVariantJson(
-						refBuild,
-						chr,
-						newPos,
-						leftRollSequence + trimmedRef + rightRollSequence,
-						leftRollSequence + rightRollSequence
-					);
-				} else {
-					String leftRollSequence = rollLeft(trimmedAlt, newPos, refBuild, chr);
-					String rightRollSequence = rollRight(trimmedAlt, newPos, refBuild, chr);
-					newPos -= leftRollSequence.length();
-
-					result = createNormalizedVariantJson(
-						refBuild,
-						chr,
-						newPos,
-						leftRollSequence + rightRollSequence,
-						leftRollSequence + trimmedAlt + rightRollSequence
-					);
-				}
-			} catch (InternalError e) {
-				Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
-
-				return;
-			}
 		}
 
-		if (isBatched) {
-			req.response().write(result + "\n");
-		} else {
-			req.response()
-				.putHeader("content-type", "text/json")
-				.end(result + "\n");
+		int commonSuffixLength = commonAffixLength(ref, alt, false);
+		String trimmedRef = ref.substring(0, ref.length() - commonSuffixLength);
+		String trimmedAlt = alt.substring(0, alt.length() - commonSuffixLength);
+
+		int commonPrefixLength = commonAffixLength(trimmedRef, trimmedAlt, true);
+		trimmedRef = trimmedRef.substring(commonPrefixLength);
+		trimmedAlt = trimmedAlt.substring(commonPrefixLength);
+
+		long newPos = Long.parseLong(pos) + commonPrefixLength;
+
+		try {
+			if (!trimmedRef.isEmpty() && !trimmedAlt.isEmpty()) {
+				return VariantNormalizerHelper.createNormalizedVariantJson(
+					refBuild,
+					chr,
+					newPos,
+					trimmedRef,
+					trimmedAlt
+				);
+			} else if (trimmedAlt.isEmpty()) {
+				String leftRollSequence = rollLeft(trimmedRef, newPos, refBuild, chr, dbRep);
+				String rightRollSequence = rollRight(trimmedRef, newPos + trimmedRef.length(), refBuild, chr, dbRep);
+				newPos -= leftRollSequence.length();
+
+				return VariantNormalizerHelper.createNormalizedVariantJson(
+					refBuild,
+					chr,
+					newPos,
+					leftRollSequence + trimmedRef + rightRollSequence,
+					leftRollSequence + rightRollSequence
+				);
+			} else {
+				String leftRollSequence = rollLeft(trimmedAlt, newPos, refBuild, chr, dbRep);
+				String rightRollSequence = rollRight(trimmedAlt, newPos, refBuild, chr, dbRep);
+				newPos -= leftRollSequence.length();
+
+				return VariantNormalizerHelper.createNormalizedVariantJson(
+					refBuild,
+					chr,
+					newPos,
+					leftRollSequence + rightRollSequence,
+					leftRollSequence + trimmedAlt + rightRollSequence
+				);
+			}
+		} catch (InternalError e) {
+			errorJson.put(ERROR, e.getMessage());
+
+			throw new Exception(errorJson.toString());
 		}
 	}
 
-	private int commonAffixLength(String ref, String alt, boolean calcPrefixLength) {
+	private static int commonAffixLength(String ref, String alt, boolean calcPrefixLength) {
 		int commonAffixLength = 0;
 
 		int refLen = ref.length();
@@ -206,7 +220,13 @@ public class VariantNormalizer implements Normalizer, Constants, VariantNormaliz
 		return commonAffixLength;
 	}
 
-	private String rollLeft(String section, long startPos, String refBuild, String chr) throws InternalError {
+	private static String rollLeft(
+		String section,
+		long startPos,
+		String refBuild,
+		String chr,
+		RocksDBRepository dbRep
+	) throws InternalError {
 		StringBuilder result = new StringBuilder();
 
 		long currPos = startPos - 1;
@@ -226,7 +246,13 @@ public class VariantNormalizer implements Normalizer, Constants, VariantNormaliz
         return result.reverse().toString();
     }
 
-	private String rollRight(String section, long endPos, String refBuild, String chr) throws InternalError {
+	private static String rollRight(
+		String section,
+		long endPos,
+		String refBuild,
+		String chr,
+		RocksDBRepository dbRep
+	) throws InternalError {
 		StringBuilder result = new StringBuilder();
 
 		long currPos = endPos;
@@ -244,20 +270,5 @@ public class VariantNormalizer implements Normalizer, Constants, VariantNormaliz
 		}
 
 		return result.toString();
-	}
-
-	private JsonObject createNormalizedVariantJson(
-		String refBuild,
-		String chr,
-		long pos,
-		String ref,
-		String alt
-	) {
-		return new JsonObject()
-			.put("refBuild", refBuild)
-			.put("chr", chr)
-			.put("pos", pos)
-			.put("ref", ref)
-			.put("alt", alt);
 	}
 }

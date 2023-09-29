@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
-public class GnomADBatchQuery extends GnomADQuery implements Query, Constants, GnomADConstants {
+public class GnomADBatchQuery extends GnomADQuery implements Constants, GnomADConstants {
 	public GnomADBatchQuery(RoutingContext context, RocksDBRepository dbRep) {
 		super(context, dbRep);
 	}

@@ -32,6 +32,8 @@ public interface Constants {
 	String ASTORAGE_DIRECTORY_NAME = "/AStorage";
 	String DATA_DIRECTORY_PATH = System.getProperty("user.home") + "/AStorage";
 	String DATA_DIRECTORY_PATH_JSON_KEY = "dataDirectoryPath";
+
+	// Ordering should not be changed as the UniversalVariant DB is dependent on it
 	String[] FORMAT_NAMES = {
 		FastaConstants.FASTA_FORMAT_NAME,
 		DbNSFPConstants.DBNSFP_FORMAT_NAME,
@@ -84,7 +86,7 @@ public interface Constants {
 			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 			GZIPOutputStream gzipOutputStream = new GZIPOutputStream(outputStream)
 		) {
-			gzipOutputStream.write(json.getBytes(StandardCharsets.UTF_8));
+			gzipOutputStream.write(json.getBytes());
 			gzipOutputStream.finish();
 
 			return outputStream.toByteArray();

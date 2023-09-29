@@ -19,13 +19,14 @@ import java.util.zip.GZIPInputStream;
  * For gnomAD v2.1.1!
  */
 @SuppressWarnings("unused")
-public class GnomADIngestor implements Ingestor, Constants, GnomADConstants {
-	private final RoutingContext context;
-	private final RocksDBRepository dbRep;
-
-	public GnomADIngestor(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+public class GnomADIngestor extends Ingestor implements Constants, GnomADConstants {
+	public GnomADIngestor(
+		RoutingContext context,
+		RocksDBRepository dbRep,
+		RocksDBRepository universalVariantDbRep,
+		RocksDBRepository fastaDbRep
+	) {
+		super(context, dbRep, universalVariantDbRep, fastaDbRep);
 	}
 
 	public void ingestionHandler() {

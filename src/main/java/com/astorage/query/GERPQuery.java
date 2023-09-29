@@ -14,13 +14,9 @@ import java.net.HttpURLConnection;
 import static com.astorage.utils.gerp.GERPHelper.createKey;
 
 @SuppressWarnings("unused")
-public class GERPQuery implements Query, Constants, GERPConstants {
-	protected final RoutingContext context;
-	protected final RocksDBRepository dbRep;
-
+public class GERPQuery extends SingleFormatQuery implements Constants, GERPConstants {
 	public GERPQuery(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+		super(context, dbRep);
 	}
 
 	public void queryHandler() throws IOException {

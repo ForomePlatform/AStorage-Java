@@ -10,7 +10,7 @@ import io.vertx.ext.web.RoutingContext;
 
 import java.net.HttpURLConnection;
 
-public class VariantBatchNormalizer extends VariantNormalizer implements Normalizer {
+public class VariantBatchNormalizer extends VariantNormalizer {
 	public VariantBatchNormalizer(RoutingContext context, RocksDBRepository dbRep) {
 		super(context, dbRep);
 	}

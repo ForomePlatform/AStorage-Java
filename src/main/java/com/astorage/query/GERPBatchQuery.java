@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
-public class GERPBatchQuery extends GERPQuery implements Query, Constants, GERPConstants {
+public class GERPBatchQuery extends GERPQuery implements Constants, GERPConstants {
 	public GERPBatchQuery(RoutingContext context, RocksDBRepository dbRep) {
 		super(context, dbRep);
 	}

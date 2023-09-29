@@ -11,13 +11,9 @@ import io.vertx.ext.web.RoutingContext;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 
-public class GTFQuery implements Query, Constants, GTFConstants {
-	protected final RoutingContext context;
-	protected final RocksDBRepository dbRep;
-
+public class GTFQuery extends SingleFormatQuery implements Constants, GTFConstants {
 	public GTFQuery(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+		super(context, dbRep);
 	}
 
 	public void queryHandler() throws IOException {

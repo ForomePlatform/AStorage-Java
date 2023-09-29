@@ -13,13 +13,9 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
-public class DbSNPQuery implements Query, Constants, DbSNPConstants {
-	protected final RoutingContext context;
-	protected final RocksDBRepository dbRep;
-
+public class DbSNPQuery extends SingleFormatQuery implements Constants, DbSNPConstants {
 	public DbSNPQuery(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+		super(context, dbRep);
 	}
 
 	public void queryHandler() throws IOException {

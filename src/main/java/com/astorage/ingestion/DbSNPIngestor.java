@@ -19,13 +19,14 @@ import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 @SuppressWarnings("unused")
-public class DbSNPIngestor implements Ingestor, Constants, DbSNPConstants {
-	private final RoutingContext context;
-	private final RocksDBRepository dbRep;
-
-	public DbSNPIngestor(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+public class DbSNPIngestor extends Ingestor implements Constants, DbSNPConstants {
+	public DbSNPIngestor(
+		RoutingContext context,
+		RocksDBRepository dbRep,
+		RocksDBRepository universalVariantDbRep,
+		RocksDBRepository fastaDbRep
+	) {
+		super(context, dbRep, universalVariantDbRep, fastaDbRep);
 	}
 
 	public void ingestionHandler() {

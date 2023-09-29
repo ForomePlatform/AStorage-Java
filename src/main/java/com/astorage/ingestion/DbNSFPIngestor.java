@@ -17,13 +17,14 @@ import java.util.zip.GZIPInputStream;
  * For dbNSFP v4.3a!
  */
 @SuppressWarnings("unused")
-public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
-	private final RoutingContext context;
-	private final RocksDBRepository dbRep;
-
-	public DbNSFPIngestor(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+public class DbNSFPIngestor extends Ingestor implements Constants, DbNSFPConstants {
+	public DbNSFPIngestor(
+		RoutingContext context,
+		RocksDBRepository dbRep,
+		RocksDBRepository universalVariantDbRep,
+		RocksDBRepository fastaDbRep
+	) {
+		super(context, dbRep, universalVariantDbRep, fastaDbRep);
 	}
 
 	public void ingestionHandler() {

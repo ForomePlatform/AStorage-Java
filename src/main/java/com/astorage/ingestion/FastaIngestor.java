@@ -16,13 +16,14 @@ import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 @SuppressWarnings("unused")
-public class FastaIngestor implements Ingestor, Constants, FastaConstants {
-	private final RoutingContext context;
-	private final RocksDBRepository dbRep;
-
-	public FastaIngestor(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+public class FastaIngestor extends Ingestor implements Constants, FastaConstants {
+	public FastaIngestor(
+		RoutingContext context,
+		RocksDBRepository dbRep,
+		RocksDBRepository universalVariantDbRep,
+		RocksDBRepository fastaDbRep
+	) {
+		super(context, dbRep, universalVariantDbRep, fastaDbRep);
 	}
 
 	public void ingestionHandler() {

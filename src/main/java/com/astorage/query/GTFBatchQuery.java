@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
-public class GTFBatchQuery extends GTFQuery implements Query, Constants, GTFConstants  {
+public class GTFBatchQuery extends GTFQuery implements Constants, GTFConstants  {
 	public GTFBatchQuery(RoutingContext context, RocksDBRepository dbRep) {
 		super(context, dbRep);
 	}

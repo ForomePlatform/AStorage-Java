@@ -14,13 +14,14 @@ import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 
 @SuppressWarnings("unused")
-public class PharmGKBIngestor implements Ingestor, PharmGKBConstants, Constants {
-	private final RoutingContext context;
-	private final RocksDBRepository dbRep;
-
-	public PharmGKBIngestor(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+public class PharmGKBIngestor extends Ingestor implements PharmGKBConstants, Constants {
+	public PharmGKBIngestor(
+		RoutingContext context,
+		RocksDBRepository dbRep,
+		RocksDBRepository universalVariantDbRep,
+		RocksDBRepository fastaDbRep
+	) {
+		super(context, dbRep, universalVariantDbRep, fastaDbRep);
 	}
 
 	public void ingestionHandler() {

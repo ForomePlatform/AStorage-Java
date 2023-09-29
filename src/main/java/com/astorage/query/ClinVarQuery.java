@@ -16,13 +16,9 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
-public class ClinVarQuery implements Query, Constants, ClinVarConstants {
-	protected final RoutingContext context;
-	protected final RocksDBRepository dbRep;
-
+public class ClinVarQuery extends SingleFormatQuery implements Constants, ClinVarConstants {
 	public ClinVarQuery(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+		super(context, dbRep);
 	}
 
 	public void queryHandler() throws IOException {

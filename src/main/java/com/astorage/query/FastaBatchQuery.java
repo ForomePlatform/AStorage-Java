@@ -12,7 +12,7 @@ import io.vertx.ext.web.RoutingContext;
 import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
-public class FastaBatchQuery extends FastaQuery implements Query, Constants, FastaConstants {
+public class FastaBatchQuery extends FastaQuery implements Constants, FastaConstants {
 	public FastaBatchQuery(RoutingContext context, RocksDBRepository dbRep) {
 		super(context, dbRep);
 	}

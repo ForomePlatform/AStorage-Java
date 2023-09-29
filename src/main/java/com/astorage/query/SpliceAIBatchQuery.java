@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
-public class SpliceAIBatchQuery extends SpliceAIQuery implements Query, Constants, SpliceAIConstants {
+public class SpliceAIBatchQuery extends SpliceAIQuery implements Constants, SpliceAIConstants {
 	public SpliceAIBatchQuery(RoutingContext context, RocksDBRepository dbRep) {
 		super(context, dbRep);
 	}

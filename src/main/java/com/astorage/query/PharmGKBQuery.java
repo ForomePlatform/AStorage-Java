@@ -12,13 +12,9 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
-public class PharmGKBQuery implements Query, Constants, PharmGKBConstants {
-	protected final RoutingContext context;
-	protected final RocksDBRepository dbRep;
-
+public class PharmGKBQuery extends SingleFormatQuery implements Constants, PharmGKBConstants {
 	public PharmGKBQuery(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+		super(context, dbRep);
 	}
 
 	public void queryHandler() throws IOException {

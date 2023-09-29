@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
-public class PharmGKBBatchQuery extends PharmGKBQuery implements Query, Constants, PharmGKBConstants {
+public class PharmGKBBatchQuery extends PharmGKBQuery implements Constants, PharmGKBConstants {
 	public PharmGKBBatchQuery(RoutingContext context, RocksDBRepository dbRep) {
 		super(context, dbRep);
 	}

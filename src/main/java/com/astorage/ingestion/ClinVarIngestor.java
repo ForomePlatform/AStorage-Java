@@ -24,9 +24,7 @@ import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 @SuppressWarnings("unused")
-public class ClinVarIngestor implements Ingestor, Constants, ClinVarConstants {
-	private final RoutingContext context;
-	private final RocksDBRepository dbRep;
+public class ClinVarIngestor extends Ingestor implements Constants, ClinVarConstants {
 	private final ColumnFamilyHandle significanceColumnFamilyHandle;
 	private final ColumnFamilyHandle submitterColumnFamilyHandle;
 	private final ColumnFamilyHandle variatnsColumnFamilyHandle;
@@ -37,9 +35,13 @@ public class ClinVarIngestor implements Ingestor, Constants, ClinVarConstants {
 	private boolean isReferenceBlock = false;
 	private boolean isClinicalSignificanceDescriptionBlock = false;
 
-	public ClinVarIngestor(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+	public ClinVarIngestor(
+		RoutingContext context,
+		RocksDBRepository dbRep,
+		RocksDBRepository universalVariantDbRep,
+		RocksDBRepository fastaDbRep
+	) {
+		super(context, dbRep, universalVariantDbRep, fastaDbRep);
 
 		significanceColumnFamilyHandle = dbRep.getOrCreateColumnFamily(SIGNIFICANCE_COLUMN_FAMILY_NAME);
 		submitterColumnFamilyHandle = dbRep.getOrCreateColumnFamily(SUBMITTER_COLUMN_FAMILY_NAME);
