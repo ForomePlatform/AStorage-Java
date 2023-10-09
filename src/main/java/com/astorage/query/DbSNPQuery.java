@@ -59,19 +59,35 @@ public class DbSNPQuery extends SingleFormatQuery implements Constants, DbSNPCon
 			return;
 		}
 
+		try {
+			JsonObject result = queryData(dbRep, chr, pos);
+
+			if (isBatched) {
+				req.response().write(result + "\n");
+			} else {
+				req.response()
+					.putHeader("content-type", "text/json")
+					.end(result + "\n");
+			}
+		} catch (Exception e) {
+			Constants.errorResponse(
+				req,
+				HttpURLConnection.HTTP_BAD_REQUEST,
+				e.getMessage()
+			);
+		}
+	}
+
+	public static JsonObject queryData(RocksDBRepository dbRep, String chr, String pos) throws Exception {
+		JsonObject errorJson = new JsonObject();
+
 		byte[] key = DbSNPHelper.createKey(chr, pos);
 		byte[] compressedVariants = dbRep.getBytes(key);
 
 		if (compressedVariants == null) {
 			errorJson.put(ERROR, VARIANT_NOT_FOUND_ERROR);
 
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
-
-			return;
+			throw new Exception(errorJson.toString());
 		}
 
 		JsonObject result = new JsonObject();
@@ -83,12 +99,6 @@ public class DbSNPQuery extends SingleFormatQuery implements Constants, DbSNPCon
 
 		result.put(VARIANTS_KEY, variantsJson);
 
-		if (isBatched) {
-			req.response().write(result + "\n");
-		} else {
-			req.response()
-				.putHeader("content-type", "text/json")
-				.end(result + "\n");
-		}
+		return result;
 	}
 }

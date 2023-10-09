@@ -2,10 +2,7 @@ package com.astorage.query;
 
 import com.astorage.db.RocksDBRepository;
 import com.astorage.utils.Constants;
-import com.astorage.utils.clinvar.ClinVarConstants;
-import com.astorage.utils.clinvar.Significance;
-import com.astorage.utils.clinvar.Submitter;
-import com.astorage.utils.clinvar.Variant;
+import com.astorage.utils.clinvar.*;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -65,29 +62,46 @@ public class ClinVarQuery extends SingleFormatQuery implements Constants, ClinVa
 			return;
 		}
 
+		try {
+			JsonObject result = queryData(dbRep, chr, startPos, endPos);
+
+			if (isBatched) {
+				req.response().write(result + "\n");
+			} else {
+				req.response()
+					.putHeader("content-type", "text/json")
+					.end(result + "\n");
+			}
+		} catch (Exception e) {
+			Constants.errorResponse(
+				req,
+				HttpURLConnection.HTTP_BAD_REQUEST,
+				e.getMessage()
+			);
+		}
+	}
+
+	public static JsonObject queryData(RocksDBRepository dbRep, String chr, String startPos, String endPos) throws Exception {
+		JsonObject errorJson = new JsonObject();
+
 		ColumnFamilyHandle variantColumnFamilyHandle = dbRep.getColumnFamilyHandle(VARIANT_SUMMARY_COLUMN_FAMILY_NAME);
 		ColumnFamilyHandle significanceColumnFamilyHandle = dbRep.getColumnFamilyHandle(SIGNIFICANCE_COLUMN_FAMILY_NAME);
 		ColumnFamilyHandle submitterColumnFamilyHandle = dbRep.getColumnFamilyHandle(SUBMITTER_COLUMN_FAMILY_NAME);
 		if (
 			variantColumnFamilyHandle == null
-			|| significanceColumnFamilyHandle == null
-			|| submitterColumnFamilyHandle == null
+				|| significanceColumnFamilyHandle == null
+				|| submitterColumnFamilyHandle == null
 		) {
-			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, COLUMN_FAMILY_NULL_ERROR);
-			return;
+			errorJson.put(ERROR, COLUMN_FAMILY_NULL_ERROR);
+
+			throw new Exception(errorJson.toString());
 		}
 
 		byte[] compressedVariant = dbRep.getBytes(Variant.generateKey(chr, startPos, endPos), variantColumnFamilyHandle);
 		if (compressedVariant == null) {
 			errorJson.put(ERROR, RESULT_NOT_FOUND_ERROR);
 
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
-
-			return;
+			throw new Exception(errorJson.toString());
 		}
 
 		String decompressedVariant = Constants.decompressJson(compressedVariant);
@@ -96,9 +110,7 @@ public class ClinVarQuery extends SingleFormatQuery implements Constants, ClinVa
 		JsonArray significancesJson = new JsonArray();
 
 		String[] rcvAccessions = result.getString(RCV_ACCESSION_COLUMN_NAME).split(RCV_ACCESSIONS_DELIMITER);
-		for (int i = 0; i < rcvAccessions.length; i++) {
-			String rcvAccession = rcvAccessions[i];
-
+		for (String rcvAccession : rcvAccessions) {
 			byte[] compressedSignificance = dbRep.getBytes(Significance.generateKey(rcvAccession), significanceColumnFamilyHandle);
 			if (compressedSignificance != null) {
 				String decompressedSignificance = Constants.decompressJson(compressedSignificance);
@@ -120,12 +132,6 @@ public class ClinVarQuery extends SingleFormatQuery implements Constants, ClinVa
 
 		result.put(SIGNIFICANCES_JSON_KEY, significancesJson);
 
-		if (isBatched) {
-			req.response().write(result + "\n");
-		} else {
-			req.response()
-				.putHeader("content-type", "text/json")
-				.end(result + "\n");
-		}
+		return result;
 	}
 }

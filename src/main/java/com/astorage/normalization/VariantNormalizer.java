@@ -1,9 +1,9 @@
 package com.astorage.normalization;
 
 import com.astorage.db.RocksDBRepository;
+import com.astorage.query.FastaQuery;
 import com.astorage.utils.Constants;
 import com.astorage.utils.fasta.FastaConstants;
-import com.astorage.utils.fasta.FastaHelper;
 import com.astorage.utils.variant_normalizer.VariantNormalizerConstants;
 import com.astorage.utils.variant_normalizer.VariantNormalizerHelper;
 import io.vertx.core.http.HttpServerRequest;
@@ -115,7 +115,7 @@ public class VariantNormalizer implements Constants, VariantNormalizerConstants 
 		JsonObject errorJson = new JsonObject();
 
 		try {
-			String refFromFasta = FastaHelper.queryData(
+			String refFromFasta = FastaQuery.queryData(
 				dbRep,
 				refBuild,
 				chr,
@@ -230,7 +230,7 @@ public class VariantNormalizer implements Constants, VariantNormalizerConstants 
 		StringBuilder result = new StringBuilder();
 
 		long currPos = startPos - 1;
-		String referenceNucleotide = FastaHelper.queryData(dbRep, refBuild, chr, currPos);
+		String referenceNucleotide = FastaQuery.queryData(dbRep, refBuild, chr, currPos);
 
 		int i = 0;
 		while (Character.toString(section.charAt(section.length() - 1 - i)).equals(referenceNucleotide)) {
@@ -240,7 +240,7 @@ public class VariantNormalizer implements Constants, VariantNormalizerConstants 
 			i %= section.length();
 			currPos--;
 
-			referenceNucleotide = FastaHelper.queryData(dbRep, refBuild, chr, currPos);
+			referenceNucleotide = FastaQuery.queryData(dbRep, refBuild, chr, currPos);
 		}
 
         return result.reverse().toString();
@@ -256,7 +256,7 @@ public class VariantNormalizer implements Constants, VariantNormalizerConstants 
 		StringBuilder result = new StringBuilder();
 
 		long currPos = endPos;
-		String referenceNucleotide = FastaHelper.queryData(dbRep, refBuild, chr, currPos);
+		String referenceNucleotide = FastaQuery.queryData(dbRep, refBuild, chr, currPos);
 
 		int i = 0;
 		while (Character.toString(section.charAt(i)).equals(referenceNucleotide)) {
@@ -266,7 +266,7 @@ public class VariantNormalizer implements Constants, VariantNormalizerConstants 
 			i %= section.length();
 			currPos++;
 
-			referenceNucleotide = FastaHelper.queryData(dbRep, refBuild, chr, currPos);
+			referenceNucleotide = FastaQuery.queryData(dbRep, refBuild, chr, currPos);
 		}
 
 		return result.toString();

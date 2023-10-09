@@ -15,7 +15,7 @@ public class UniversalVariantHelper {
 		String formatName,
 		RocksDBRepository universalVariantDbRep
 	) throws IOException {
-		JsonObject variantQueries = new JsonObject();;
+		JsonObject variantQueries = new JsonObject();
 
 		byte[] compressedVariantQueries = universalVariantDbRep.getBytes(key);
 
