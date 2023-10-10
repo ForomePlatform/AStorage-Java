@@ -96,4 +96,14 @@ public class GERPQuery extends SingleFormatQuery implements Constants, GERPConst
 
         return result;
 	}
+
+	public static String[] normalizedParamsToParams(
+		String refBuild,
+		String chr,
+		String pos,
+		String ref,
+		String alt
+	) {
+		return new String[] {chr, pos};
+	}
 }
