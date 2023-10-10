@@ -1,8 +1,11 @@
 package com.astorage.ingestion;
 
 import com.astorage.db.RocksDBRepository;
+import com.astorage.normalization.VariantNormalizer;
 import com.astorage.utils.Constants;
 import com.astorage.utils.gnomad.*;
+import com.astorage.utils.universal_variant.UniversalVariantConstants;
+import com.astorage.utils.universal_variant.UniversalVariantHelper;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
@@ -10,7 +13,6 @@ import org.rocksdb.ColumnFamilyHandle;
 
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
@@ -71,8 +73,8 @@ public class GnomADIngestor extends Ingestor implements Constants, GnomADConstan
 			Reader decoder = new InputStreamReader(gzipInputStream, StandardCharsets.UTF_8);
 			BufferedReader bufferedReader = new BufferedReader(decoder);
 
-			storeData(bufferedReader, columnFamilyHandle);
-		} catch (IOException | SecurityException | URISyntaxException e) {
+			storeData(bufferedReader, columnFamilyHandle, sourceType);
+		} catch (Exception e) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, DOWNLOADING_DATA_ERROR);
 
 			return;
@@ -85,7 +87,11 @@ public class GnomADIngestor extends Ingestor implements Constants, GnomADConstan
 			.end(response);
 	}
 
-	private void storeData(BufferedReader reader, ColumnFamilyHandle columnFamilyHandle) throws IOException {
+	private void storeData(
+		BufferedReader reader,
+		ColumnFamilyHandle columnFamilyHandle,
+		String sourceType
+	) throws Exception {
 		String line;
 
 		do {
@@ -111,9 +117,48 @@ public class GnomADIngestor extends Ingestor implements Constants, GnomADConstan
 			byte[] key = GnomADHelper.createKey(chr, pos);
 			byte[] compressedVariant = Constants.compressJson(variant.toString());
 
+			ingestQueryParams(chr, pos, variant, sourceType);
+
 			dbRep.saveBytes(key, compressedVariant, columnFamilyHandle);
 		}
 
 		reader.close();
+	}
+
+	private void ingestQueryParams(String chr, String pos, Variant variant, String sourceType) throws Exception {
+		String ref = variant.variantColumnValues.get(REF_COLUMN_NAME);
+		String alt = variant.variantColumnValues.get(ALT_COLUMN_NAME);
+
+		JsonObject normalizedVariantJson = VariantNormalizer.normalizeVariant(
+			"hg38",
+			chr,
+			pos,
+			ref,
+			alt,
+			fastaDbRep
+		);
+
+		byte[] universalVariantKey = UniversalVariantHelper.generateKey(
+			"hg38",
+			chr,
+			normalizedVariantJson.getLong("pos"),
+			normalizedVariantJson.getString("ref"),
+			normalizedVariantJson.getString("alt")
+		);
+
+		// Param ordering should match query specification
+		String variantQuery = String.join(
+			UniversalVariantConstants.QUERY_PARAMS_DELIMITER,
+			chr,
+			pos,
+			sourceType
+		);
+
+		UniversalVariantHelper.ingestUniversalVariant(
+			universalVariantKey,
+			variantQuery,
+			GNOMAD_FORMAT_NAME,
+			universalVariantDbRep
+		);
 	}
 }

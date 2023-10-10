@@ -18,6 +18,8 @@ public interface SpliceAIConstants {
 	String POS_PARAM = "pos";
 	String CHR_COLUMN_NAME = "CHROM";
 	String POS_COLUMN_NAME = "POS";
+	String REF_COLUMN_NAME = "REF";
+	String ALT_COLUMN_NAME = "ALT";
 	String INFO_COLUMN_NAME = "INFO";
 
 	// Success messages:

@@ -1,11 +1,15 @@
 package com.astorage.ingestion;
 
 import com.astorage.db.RocksDBRepository;
+import com.astorage.normalization.VariantNormalizer;
 import com.astorage.utils.Constants;
 import com.astorage.utils.spliceai.SpliceAIConstants;
 import com.astorage.utils.spliceai.SpliceAIHelper;
 import com.astorage.utils.spliceai.Variant;
+import com.astorage.utils.universal_variant.UniversalVariantHelper;
+import com.astorage.utils.universal_variant.UniversalVariantConstants;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
 import java.io.*;
@@ -63,12 +67,12 @@ public class SpliceAIIngestor extends Ingestor implements Constants, SpliceAICon
 					.putHeader("content-type", "text/plain")
 					.end(response);
 			}
-		} catch (IOException e) {
+		} catch (Exception e) {
 			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 		}
 	}
 
-	private boolean storeData(BufferedReader reader) throws IOException {
+	private boolean storeData(BufferedReader reader) throws Exception {
 		String line;
 
 		while ((line = reader.readLine()) != null && line.startsWith(COMMENT_LINE_PREFIX)) {
@@ -94,6 +98,8 @@ public class SpliceAIIngestor extends Ingestor implements Constants, SpliceAICon
 			byte[] key = SpliceAIHelper.createKey(chr, pos);
 			byte[] compressedVariant = Constants.compressJson(variant.toString());
 
+			ingestQueryParams(chr, pos, variant);
+
 			dbRep.saveBytes(key, compressedVariant);
 		}
 
@@ -111,5 +117,41 @@ public class SpliceAIIngestor extends Ingestor implements Constants, SpliceAICon
 		for (int i = 0; i < infoFieldNames.length; i++) {
 			infoFieldNamesToIndices.put(infoFieldNames[i], i);
 		}
+	}
+
+	private void ingestQueryParams(String chr, String pos, Variant variant) throws Exception {
+		String ref = variant.variantColumnValues.get(REF_COLUMN_NAME);
+		String alt = variant.variantColumnValues.get(ALT_COLUMN_NAME);
+
+		JsonObject normalizedVariantJson = VariantNormalizer.normalizeVariant(
+			"hg38",
+			chr,
+			pos,
+			ref,
+			alt,
+			fastaDbRep
+		);
+
+		byte[] universalVariantKey = UniversalVariantHelper.generateKey(
+			"hg38",
+			chr,
+			normalizedVariantJson.getLong("pos"),
+			normalizedVariantJson.getString("ref"),
+			normalizedVariantJson.getString("alt")
+		);
+
+		// Param ordering should match query specification
+		String variantQuery = String.join(
+			UniversalVariantConstants.QUERY_PARAMS_DELIMITER,
+			chr,
+			pos
+		);
+
+		UniversalVariantHelper.ingestUniversalVariant(
+			universalVariantKey,
+			variantQuery,
+			SPLICEAI_FORMAT_NAME,
+			universalVariantDbRep
+		);
 	}
 }
