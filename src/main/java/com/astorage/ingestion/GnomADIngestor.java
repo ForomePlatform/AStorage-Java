@@ -138,13 +138,7 @@ public class GnomADIngestor extends Ingestor implements Constants, GnomADConstan
 			fastaDbRep
 		);
 
-		byte[] universalVariantKey = UniversalVariantHelper.generateKey(
-			"hg38",
-			chr,
-			normalizedVariantJson.getLong("pos"),
-			normalizedVariantJson.getString("ref"),
-			normalizedVariantJson.getString("alt")
-		);
+		byte[] universalVariantKey = UniversalVariantHelper.generateKey(normalizedVariantJson);
 
 		// Param ordering should match query specification
 		String variantQuery = String.join(

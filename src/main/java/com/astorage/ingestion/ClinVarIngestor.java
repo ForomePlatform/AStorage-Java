@@ -1,12 +1,16 @@
 package com.astorage.ingestion;
 
 import com.astorage.db.RocksDBRepository;
+import com.astorage.normalization.VariantNormalizer;
 import com.astorage.utils.Constants;
 import com.astorage.utils.clinvar.ClinVarConstants;
 import com.astorage.utils.clinvar.Significance;
 import com.astorage.utils.clinvar.Submitter;
 import com.astorage.utils.clinvar.Variant;
+import com.astorage.utils.universal_variant.UniversalVariantConstants;
+import com.astorage.utils.universal_variant.UniversalVariantHelper;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import org.rocksdb.ColumnFamilyHandle;
 
@@ -178,10 +182,46 @@ public class ClinVarIngestor extends Ingestor implements Constants, ClinVarConst
 				byte[] key = variant.getKey();
 				byte[] compressedVariant = Constants.compressJson(variant.toString());
 
+				ingestQueryParams(variant);
+
 				dbRep.saveBytes(key, compressedVariant, variatnsColumnFamilyHandle);
 			}
-		} catch (IOException e) {
+		} catch (Exception e) {
 			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 		}
+    }
+
+	private void ingestQueryParams(Variant variant) throws Exception {
+		String chr = variant.variantColumnValues.get(CHROMOSOME_COLUMN_NAME);
+		String start_pos = variant.variantColumnValues.get(START_POSITION_COLUMN_NAME);
+		String end_pos = variant.variantColumnValues.get(END_POSITION_COLUMN_NAME);
+		String ref = variant.variantColumnValues.get(REF_COLUMN_NAME);
+		String alt = variant.variantColumnValues.get(ALT_COLUMN_NAME);
+
+		JsonObject normalizedVariantJson = VariantNormalizer.normalizeVariant(
+			"hg38",
+			chr,
+			start_pos,
+			ref,
+			alt,
+			fastaDbRep
+		);
+
+		byte[] universalVariantKey = UniversalVariantHelper.generateKey(normalizedVariantJson);
+
+		// Param ordering should match query specification
+		String variantQuery = String.join(
+			UniversalVariantConstants.QUERY_PARAMS_DELIMITER,
+			chr,
+			start_pos,
+			end_pos
+		);
+
+		UniversalVariantHelper.ingestUniversalVariant(
+			universalVariantKey,
+			variantQuery,
+			CLINVAR_FORMAT_NAME,
+			universalVariantDbRep
+		);
 	}
 }

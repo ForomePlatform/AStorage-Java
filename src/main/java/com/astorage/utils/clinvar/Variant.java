@@ -41,7 +41,7 @@ public class Variant implements JsonConvertible, Constants, ClinVarConstants {
 		"SubmitterCategories",
 		"VariationID"
 	};
-	private final Map<String, String> variantColumnValues = new HashMap<>();
+	public final Map<String, String> variantColumnValues = new HashMap<>();
 
 	public Variant(Map<String, Integer> columns, String[] row) {
 		for (String columnName : VARIANT_COLUMNS) {

@@ -5,6 +5,7 @@ import com.astorage.utils.Constants;
 import com.astorage.utils.universal_variant.UniversalVariantConstants;
 import com.astorage.utils.universal_variant.UniversalVariantHelper;
 import com.astorage.utils.variant_normalizer.VariantNormalizerConstants;
+import com.astorage.utils.variant_normalizer.VariantNormalizerHelper;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
@@ -83,7 +84,14 @@ public class UniversalVariantQuery implements Query, Constants, UniversalVariant
 			return;
 		}
 
-		byte[] key = UniversalVariantHelper.generateKey(refBuild, chr, Long.parseLong(pos), ref, alt);
+		JsonObject normalizedVariantJson = VariantNormalizerHelper.createNormalizedVariantJson(
+			refBuild,
+			chr,
+			Long.parseLong(pos),
+			ref,
+			alt
+		);
+		byte[] key = UniversalVariantHelper.generateKey(normalizedVariantJson);
 
 		byte[] compressedVariantQueries = dbRep.getBytes(key);
 		JsonObject variantQueries = null;

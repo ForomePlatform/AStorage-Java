@@ -37,8 +37,9 @@ public class DbSNPBatchQuery extends DbSNPQuery implements Constants, DbSNPConst
 
 					String chr = query.getString(CHR_PARAM);
 					String pos = query.getString(POS_PARAM);
+					String alt = query.containsKey(ALT_PARAM) ? query.getString(ALT_PARAM).toUpperCase() : null;
 
-					singleQueryHandler(chr, pos, true);
+					singleQueryHandler(chr, pos, alt, true);
 				}
 
 				req.response().end();

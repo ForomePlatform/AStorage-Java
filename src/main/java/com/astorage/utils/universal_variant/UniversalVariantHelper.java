@@ -32,15 +32,7 @@ public class UniversalVariantHelper {
 		universalVariantDbRep.saveBytes(key, compressedNewVariantQueries);
 	}
 
-	public static byte[] generateKey(String refBuild, String chr, long pos, String ref, String alt) {
-		JsonObject normalizedVariantJson = VariantNormalizerHelper.createNormalizedVariantJson(
-			refBuild,
-			chr,
-			pos,
-			ref,
-			alt
-		);
-
+	public static byte[] generateKey(JsonObject normalizedVariantJson) {
 		return normalizedVariantJson.toString().getBytes();
 	}
 }
