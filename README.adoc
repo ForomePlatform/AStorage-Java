@@ -14,6 +14,14 @@ image:https://img.shields.io/badge/vert.x-4.4.4-white.svg[link="https://vertx.io
 * GERP
 * dbSNP
 
+.Formats mapped in the universal variant query:
+* dbNSFP v4.3a
+* gnomAD v2.1.1
+* SpliceAI v1.3
+* ClinVar
+* GERP
+* dbSNP
+
 == Building
 
 To launch the tests:
@@ -255,6 +263,12 @@ curl -X POST \
 	-H "Content-Type: application/json" \
 	-d @normalization_query_file.json \
 	"localhost:8080/batch-normalization" > results.jsonl
+----
+
+To query universal variant:
+[source]
+----
+curl "localhost:8080/query/universalvariant?refBuild=<ref_build>&chr=<chr_num>&pos=<pos>&ref=<ref>&alt=<alt>"
 ----
 
 To stop the service:
