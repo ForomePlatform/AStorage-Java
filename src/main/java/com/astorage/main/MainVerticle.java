@@ -19,6 +19,7 @@ import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.StaticHandler;
 import org.rocksdb.RocksDBException;
 
 import java.io.File;
@@ -78,6 +79,7 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 		}
 
 		setStopHandler(router);
+		this.setSwaggerHandler(router);
 
 		server.requestHandler(router).listen(HTTP_SERVER_PORT, result -> {
 			if (result.succeeded()) {
@@ -223,6 +225,10 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 
 			vertx.close();
 		});
+	}
+
+	private void setSwaggerHandler(Router router) {
+		router.route("/*").handler(StaticHandler.create());
 	}
 
 	private boolean initializeDirectories(String dataDirectoryPath) {

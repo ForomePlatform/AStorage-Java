@@ -24,25 +24,13 @@ image:https://img.shields.io/badge/vert.x-4.4.4-white.svg[link="https://vertx.io
 
 == Building
 
-To launch the tests:
-[source]
-----
-./mvnw clean test
-----
-
-To package the application:
+To package the application as JAR:
 [source]
 ----
 ./mvnw clean package
 ----
 
-To start the application:
-[source]
-----
-./mvnw clean compile exec:java
-----
-
-== Usage examples
+== Usage and examples
 
 The service is only running on *localhost:8080* for now. It creates DB directories in the user's home directory if not specified otherwise.
 
@@ -57,6 +45,11 @@ To start the application:
 [source]
 ----
 java -jar astorage-java-1.0.0.jar [config_json_path]
+----
+To see the API specification in the Swagger UI (Not complete):
+[source]
+----
+http://localhost:8080/swagger
 ----
 
 .*Fasta*
