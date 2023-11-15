@@ -58,11 +58,7 @@ public class GERPIngestor extends Ingestor implements Constants, GERPConstants {
 			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 		}
 
-		String response = INGESTION_FINISH_MSG + "\n";
-
-		req.response()
-			.putHeader("content-type", "text/plain")
-			.end(response);
+		Constants.successResponse(req, INGESTION_FINISH_MSG);
 	}
 
 	private boolean detectChromosomeFromFilename(String filename) {

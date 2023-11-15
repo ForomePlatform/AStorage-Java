@@ -219,9 +219,7 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 		router.get("/stop").handler((RoutingContext context) -> {
 			HttpServerRequest req = context.request();
 
-			req.response()
-				.putHeader("content-type", "text/plain")
-				.end(HTTP_SERVER_STOP + "\n");
+			Constants.successResponse(req, HTTP_SERVER_STOP);
 
 			vertx.close();
 		});

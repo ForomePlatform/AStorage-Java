@@ -71,11 +71,7 @@ public class ClinVarIngestor extends Ingestor implements Constants, ClinVarConst
 		storeXMLData(dataPath);
 		storeVariantSummeryData(dataSummaryPath);
 
-		String response = INGESTION_FINISH_MSG + "\n";
-
-		req.response()
-			.putHeader("content-type", "text/plain")
-			.end(response);
+		Constants.successResponse(req, INGESTION_FINISH_MSG);
 	}
 
 	private void storeXMLData(String dataPath) {

@@ -53,6 +53,9 @@ public interface Constants {
 	String NUCLEOTIDES = "AGTCU";
 	String LETTER_CHROMOSOMES = "XYM";
 
+	// Success messages:
+	String SUCCESS = "success";
+
 	// Error messages:
 	String ERROR = "error";
 	String ROCKS_DB_INIT_ERROR = "RocksDB couldn't initialize...";
@@ -112,6 +115,29 @@ public interface Constants {
 		} catch (IOException e) {
 			throw new IOException(DECOMPRESSION_ERROR, e);
 		}
+	}
+
+	static void successResponse(HttpServerRequest req, String successMsg) {
+		JsonObject successJson = new JsonObject();
+		successJson.put(SUCCESS, successMsg);
+
+		if (req.response().ended()) {
+			return;
+		}
+
+		if (req.response().headWritten()) {
+			if (req.response().isChunked()) {
+				req.response().write(successJson + "\n");
+			} else {
+				req.response().end(successJson + "\n");
+			}
+
+			return;
+		}
+
+		req.response()
+			.putHeader("content-type", "application/json")
+			.end(successJson + "\n");
 	}
 
 	static void errorResponse(HttpServerRequest req, int errorCode, String errorMsg) {

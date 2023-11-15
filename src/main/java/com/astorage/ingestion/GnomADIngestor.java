@@ -75,11 +75,7 @@ public class GnomADIngestor extends Ingestor implements Constants, GnomADConstan
 			return;
 		}
 
-		String response = INGESTION_FINISH_MSG + "\n";
-
-		req.response()
-			.putHeader("content-type", "text/plain")
-			.end(response);
+		Constants.successResponse(req, INGESTION_FINISH_MSG);
 	}
 
 	private void storeData(

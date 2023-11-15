@@ -84,9 +84,7 @@ public class DbNSFPIngestor extends Ingestor implements Constants, DbNSFPConstan
 				saveVariantsInDb(lastKey, lastVariants);
 			}
 
-			req.response()
-				.putHeader("content-type", "text/plain")
-				.end(lineCount + " lines have been ingested in " + dbRep.dbName + "!\n");
+			Constants.successResponse(req, lineCount + " lines have been ingested in " + dbRep.dbName + "!");
 		} catch (IOException e) {
 			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 		}

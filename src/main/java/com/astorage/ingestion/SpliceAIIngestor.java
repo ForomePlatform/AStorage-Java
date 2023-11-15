@@ -61,11 +61,7 @@ public class SpliceAIIngestor extends Ingestor implements Constants, SpliceAICon
 			boolean success = storeData(bufferedReader);
 
 			if (success) {
-				String response = INGESTION_FINISH_MSG + "\n";
-
-				req.response()
-					.putHeader("content-type", "text/plain")
-					.end(response);
+				Constants.successResponse(req, INGESTION_FINISH_MSG);
 			}
 		} catch (Exception e) {
 			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());

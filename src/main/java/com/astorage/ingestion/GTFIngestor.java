@@ -51,11 +51,7 @@ public class GTFIngestor extends Ingestor implements Constants, GTFConstants {
 			boolean success = storeData(bufferedReader);
 
 			if (success) {
-				String response = INGESTION_FINISH_MSG + "\n";
-
-				req.response()
-					.putHeader("content-type", "text/plain")
-					.end(response);
+				Constants.successResponse(req, INGESTION_FINISH_MSG);
 			}
 		} catch (IOException e) {
 			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
