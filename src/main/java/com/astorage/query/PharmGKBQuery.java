@@ -33,21 +33,14 @@ public class PharmGKBQuery extends SingleFormatQuery implements Constants, Pharm
 		String dataType = req.getParam(DATA_TYPE_PARAM);
 		String id = req.getParam(ID_PARAM);
 
-		singleQueryHandler(dataType, id,false);
+		singleQueryHandler(dataType, id, false);
 	}
 
 	protected void singleQueryHandler(String dataType, String id, boolean isBatched) throws IOException {
 		HttpServerRequest req = context.request();
-		JsonObject errorJson = new JsonObject();
 
 		if (!(DATA_TYPES.contains(dataType))) {
-			errorJson.put(ERROR, INVALID_DATA_TYPE_ERROR);
-
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_DATA_TYPE_ERROR);
 
 			return;
 		}
@@ -59,33 +52,23 @@ public class PharmGKBQuery extends SingleFormatQuery implements Constants, Pharm
 				req.response().write(result + "\n");
 			} else {
 				req.response()
-					.putHeader("content-type", "text/json")
+					.putHeader("content-type", "application/json")
 					.end(result + "\n");
 			}
 		} catch (Exception e) {
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				e.getMessage()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
 		}
 	}
 
 	public static JsonObject queryData(RocksDBRepository dbRep, String dataType, String id) throws Exception {
-		JsonObject errorJson = new JsonObject();
-
 		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(dataType);
 		if (columnFamilyHandle == null) {
-			errorJson.put(ERROR, COLUMN_FAMILY_NULL_ERROR);
-
-			throw new Exception(errorJson.toString());
+			throw new Exception(COLUMN_FAMILY_NULL_ERROR);
 		}
 
 		byte[] compressedVariant = dbRep.getBytes(id.getBytes(), columnFamilyHandle);
 		if (compressedVariant == null) {
-			errorJson.put(ERROR, VARIANT_NOT_FOUND_ERROR);
-
-			throw new Exception(errorJson.toString());
+			throw new Exception(VARIANT_NOT_FOUND_ERROR);
 		}
 
 		String decompressedVariant = Constants.decompressJson(compressedVariant);

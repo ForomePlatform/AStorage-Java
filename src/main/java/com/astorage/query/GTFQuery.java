@@ -39,7 +39,6 @@ public class GTFQuery extends SingleFormatQuery implements Constants, GTFConstan
 
 	protected void singleQueryHandler(String chr, String startPos, String endPos, boolean isBatched) throws IOException {
 		HttpServerRequest req = context.request();
-		JsonObject errorJson = new JsonObject();
 
 		try {
 			if (!LETTER_CHROMOSOMES.contains(chr.toUpperCase())) {
@@ -49,13 +48,7 @@ public class GTFQuery extends SingleFormatQuery implements Constants, GTFConstan
 			Long.parseLong(startPos);
 			Long.parseLong(endPos);
 		} catch (NumberFormatException e) {
-			errorJson.put(ERROR, INVALID_CHR_OR_POS_ERROR);
-
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_CHR_OR_POS_ERROR);
 
 			return;
 		}
@@ -67,26 +60,18 @@ public class GTFQuery extends SingleFormatQuery implements Constants, GTFConstan
 				req.response().write(result + "\n");
 			} else {
 				req.response()
-					.putHeader("content-type", "text/json")
+					.putHeader("content-type", "application/json")
 					.end(result + "\n");
 			}
 		} catch (Exception e) {
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				e.getMessage()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
 		}
 	}
 
 	public static JsonObject queryData(RocksDBRepository dbRep, String chr, String startPos, String endPos) throws Exception {
-		JsonObject errorJson = new JsonObject();
-
 		byte[] compressedVariant = dbRep.getBytes(Variant.generateKey(chr, startPos, endPos));
 		if (compressedVariant == null) {
-			errorJson.put(ERROR, VARIANT_NOT_FOUND_ERROR);
-
-			throw new Exception(errorJson.toString());
+			throw new Exception(VARIANT_NOT_FOUND_ERROR);
 		}
 
 		String decompressedVariant = Constants.decompressJson(compressedVariant);

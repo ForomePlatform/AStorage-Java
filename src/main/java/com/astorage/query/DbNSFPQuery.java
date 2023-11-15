@@ -41,7 +41,6 @@ public class DbNSFPQuery extends SingleFormatQuery implements Constants, DbNSFPC
 
 	protected void singleQueryHandler(String chr, String pos, String alt, boolean isBatched) throws IOException {
 		HttpServerRequest req = context.request();
-		JsonObject errorJson = new JsonObject();
 
 		try {
 			if (!LETTER_CHROMOSOMES.contains(chr.toUpperCase())) {
@@ -50,25 +49,13 @@ public class DbNSFPQuery extends SingleFormatQuery implements Constants, DbNSFPC
 
 			Long.parseLong(pos);
 		} catch (NumberFormatException e) {
-			errorJson.put(ERROR, INVALID_CHR_OR_POS_ERROR);
-
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_CHR_OR_POS_ERROR);
 
 			return;
 		}
 
 		if (alt != null && (alt.length() != 1 || !NUCLEOTIDES.contains(alt))) {
-			errorJson.put(ERROR, INVALID_ALT_ERROR);
-
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_ALT_ERROR);
 
 			return;
 		}
@@ -80,28 +67,20 @@ public class DbNSFPQuery extends SingleFormatQuery implements Constants, DbNSFPC
 				req.response().write(result + "\n");
 			} else {
 				req.response()
-					.putHeader("content-type", "text/json")
+					.putHeader("content-type", "application/json")
 					.end(result + "\n");
 			}
 		} catch (Exception e) {
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				e.getMessage()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
 		}
 	}
 
 	public static JsonObject queryData(RocksDBRepository dbRep, String chr, String pos, String alt) throws Exception {
-		JsonObject errorJson = new JsonObject();
-
 		byte[] key = DbNSFPHelper.createKey(chr, pos);
 		byte[] compressedVariants = dbRep.getBytes(key);
 
 		if (compressedVariants == null) {
-			errorJson.put(ERROR, VARIANT_NOT_FOUND_ERROR);
-
-			throw new Exception(errorJson.toString());
+			throw new Exception(VARIANT_NOT_FOUND_ERROR);
 		}
 
 		JsonObject result = new JsonObject();
@@ -141,6 +120,6 @@ public class DbNSFPQuery extends SingleFormatQuery implements Constants, DbNSFPC
 		String ref,
 		String alt
 	) {
-		return new String[] {chr, pos, alt};
+		return new String[]{chr, pos, alt};
 	}
 }

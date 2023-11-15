@@ -23,7 +23,7 @@ public interface SpliceAIConstants {
 	String INFO_COLUMN_NAME = "INFO";
 
 	// Success messages:
-	String INGESTION_FINISH_MSG = "All Data has been ingested.";
+	String INGESTION_FINISH_MSG = "All data has been ingested.";
 
 	// Error messages:
 	String INVALID_FILE_CONTENT = "Invalid file content...";

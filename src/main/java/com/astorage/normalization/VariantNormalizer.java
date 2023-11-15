@@ -15,7 +15,7 @@ import java.net.HttpURLConnection;
 /**
  * Written according to GA4GH normalization technique.
  * Link: <a href="https://vrs.ga4gh.org/en/stable/impl-guide/normalization.html">...</a>
- *
+ * <p>
  * Uses the Fasta DB as a source for reference genome.
  */
 public class VariantNormalizer implements Constants, VariantNormalizerConstants {
@@ -65,7 +65,6 @@ public class VariantNormalizer implements Constants, VariantNormalizerConstants 
 		boolean isBatched
 	) {
 		HttpServerRequest req = context.request();
-		JsonObject errorJson = new JsonObject();
 
 		try {
 			if (!LETTER_CHROMOSOMES.contains(chr.toUpperCase())) {
@@ -74,13 +73,7 @@ public class VariantNormalizer implements Constants, VariantNormalizerConstants 
 
 			Long.parseLong(pos);
 		} catch (NumberFormatException e) {
-			errorJson.put(ERROR, INVALID_CHR_OR_POS_ERROR);
-
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_CHR_OR_POS_ERROR);
 
 			return;
 		}
@@ -92,15 +85,11 @@ public class VariantNormalizer implements Constants, VariantNormalizerConstants 
 				req.response().write(result + "\n");
 			} else {
 				req.response()
-					.putHeader("content-type", "text/json")
+					.putHeader("content-type", "application/json")
 					.end(result + "\n");
 			}
 		} catch (Exception e) {
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				e.getMessage()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
 		}
 	}
 
@@ -112,8 +101,6 @@ public class VariantNormalizer implements Constants, VariantNormalizerConstants 
 		String alt,
 		RocksDBRepository dbRep
 	) throws Exception {
-		JsonObject errorJson = new JsonObject();
-
 		try {
 			String refFromFasta = FastaQuery.queryData(
 				dbRep,
@@ -124,14 +111,10 @@ public class VariantNormalizer implements Constants, VariantNormalizerConstants 
 			);
 
 			if (refFromFasta == null || !refFromFasta.equals(ref)) {
-				errorJson.put(ERROR, REF_NOT_FOUND_ERROR);
-
-				throw new Exception(errorJson.toString());
+				throw new Exception(REF_NOT_FOUND_ERROR);
 			}
 		} catch (InternalError e) {
-			errorJson.put(ERROR, e.getMessage());
-
-			throw new Exception(errorJson.toString());
+			throw new Exception(e.getMessage());
 		}
 
 		if (ref.equals(alt)) {
@@ -189,9 +172,7 @@ public class VariantNormalizer implements Constants, VariantNormalizerConstants 
 				);
 			}
 		} catch (InternalError e) {
-			errorJson.put(ERROR, e.getMessage());
-
-			throw new Exception(errorJson.toString());
+			throw new Exception(e.getMessage());
 		}
 	}
 
@@ -243,8 +224,8 @@ public class VariantNormalizer implements Constants, VariantNormalizerConstants 
 			referenceNucleotide = FastaQuery.queryData(dbRep, refBuild, chr, currPos);
 		}
 
-        return result.reverse().toString();
-    }
+		return result.reverse().toString();
+	}
 
 	private static String rollRight(
 		String section,

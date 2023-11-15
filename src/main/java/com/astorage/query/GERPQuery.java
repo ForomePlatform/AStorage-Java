@@ -40,7 +40,6 @@ public class GERPQuery extends SingleFormatQuery implements Constants, GERPConst
 
 	protected void singleQueryHandler(String chr, String pos, boolean isBatched) throws IOException {
 		HttpServerRequest req = context.request();
-		JsonObject errorJson = new JsonObject();
 
 		try {
 			if (!LETTER_CHROMOSOMES.contains(chr.toUpperCase())) {
@@ -49,13 +48,7 @@ public class GERPQuery extends SingleFormatQuery implements Constants, GERPConst
 
 			Long.parseLong(pos);
 		} catch (NumberFormatException e) {
-			errorJson.put(ERROR, INVALID_CHR_OR_POS_ERROR);
-
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_CHR_OR_POS_ERROR);
 
 			return;
 		}
@@ -67,26 +60,18 @@ public class GERPQuery extends SingleFormatQuery implements Constants, GERPConst
 				req.response().write(result + "\n");
 			} else {
 				req.response()
-					.putHeader("content-type", "text/json")
+					.putHeader("content-type", "application/json")
 					.end(result + "\n");
 			}
 		} catch (Exception e) {
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				e.getMessage()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
 		}
 	}
 
 	public static JsonObject queryData(RocksDBRepository dbRep, String chr, String pos) throws Exception {
-		JsonObject errorJson = new JsonObject();
-
 		byte[] compressedVariant = dbRep.getBytes(createKey(chr, pos));
 		if (compressedVariant == null) {
-			errorJson.put(ERROR, VARIANT_NOT_FOUND_ERROR);
-
-			throw new Exception(errorJson.toString());
+			throw new Exception(VARIANT_NOT_FOUND_ERROR);
 		}
 
 		String decompressedVariant = Constants.decompressJson(compressedVariant);
@@ -94,7 +79,7 @@ public class GERPQuery extends SingleFormatQuery implements Constants, GERPConst
 		JsonObject result = new JsonObject();
 		result.put("values", new JsonArray(decompressedVariant));
 
-        return result;
+		return result;
 	}
 
 	public static String[] normalizedParamsToParams(
@@ -104,6 +89,6 @@ public class GERPQuery extends SingleFormatQuery implements Constants, GERPConst
 		String ref,
 		String alt
 	) {
-		return new String[] {chr, pos};
+		return new String[]{chr, pos};
 	}
 }

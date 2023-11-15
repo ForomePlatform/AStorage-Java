@@ -42,7 +42,6 @@ public class FastaQuery extends SingleFormatQuery implements Constants, FastaCon
 
 	public void singleQueryHandler(String refBuild, String chr, String startPos, String endPos, boolean isBatched) {
 		HttpServerRequest req = context.request();
-		JsonObject errorJson = new JsonObject();
 
 		try {
 			if (!LETTER_CHROMOSOMES.contains(chr.toUpperCase())) {
@@ -52,13 +51,7 @@ public class FastaQuery extends SingleFormatQuery implements Constants, FastaCon
 			Long.parseLong(startPos);
 			Long.parseLong(endPos);
 		} catch (NumberFormatException e) {
-			errorJson.put(ERROR, INVALID_CHR_START_POS_OR_END_POS_ERROR);
-
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_CHR_START_POS_OR_END_POS_ERROR);
 
 			return;
 		}
@@ -89,7 +82,7 @@ public class FastaQuery extends SingleFormatQuery implements Constants, FastaCon
 			req.response().write(result + "\n");
 		} else {
 			req.response()
-				.putHeader("content-type", "text/json")
+				.putHeader("content-type", "application/json")
 				.end(result + "\n");
 		}
 	}
@@ -109,7 +102,7 @@ public class FastaQuery extends SingleFormatQuery implements Constants, FastaCon
 
 		StringBuilder data = new StringBuilder();
 		for (long i = startPos; i <= endPos; i++) {
-			String retrievedData = dbRep.getString(FastaIngestor.generateKey(chr, i), columnFamilyHandle);
+			String retrievedData = dbRep.getString(FastaIngestor.generateKey("chr" + chr, i), columnFamilyHandle);
 
 			if (retrievedData == null) {
 				return null;

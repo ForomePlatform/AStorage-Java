@@ -200,7 +200,7 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 		});
 	}
 
-	private void setBatchNormalizationHandler(	Router router) {
+	private void setBatchNormalizationHandler(Router router) {
 		router.post("/batch-normalization").handler((RoutingContext context) -> {
 			try {
 				VariantBatchNormalizer variantBatchNormalizer = new VariantBatchNormalizer(

@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
-public class GTFBatchQuery extends GTFQuery implements Constants, GTFConstants  {
+public class GTFBatchQuery extends GTFQuery implements Constants, GTFConstants {
 	public GTFBatchQuery(RoutingContext context, RocksDBRepository dbRep) {
 		super(context, dbRep);
 	}
@@ -26,7 +26,7 @@ public class GTFBatchQuery extends GTFQuery implements Constants, GTFConstants  
 				JsonArray queries = buffer.toJsonArray();
 
 				req.response().setChunked(true);
-				req.response().putHeader("content-type", "text/json");
+				req.response().putHeader("content-type", "application/json");
 
 				for (Object queryObject : queries) {
 					JsonObject query = (JsonObject) queryObject;

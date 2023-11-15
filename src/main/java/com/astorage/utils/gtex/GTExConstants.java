@@ -22,7 +22,7 @@ public interface GTExConstants {
 	String TISSUE_NUMBER_KEY = "TissueNo";
 
 	// Success messages:
-	String INGESTION_FINISH_MSG = "All Data has been ingested.";
+	String INGESTION_FINISH_MSG = "All data has been ingested.";
 
 	// Error messages:
 	String COLUMN_FAMILY_NULL_ERROR = "Data type with the given name doesn't exist...";

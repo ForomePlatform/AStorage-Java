@@ -5,7 +5,6 @@ import com.astorage.utils.Constants;
 import com.astorage.utils.pharmgkb.PharmGKBConstants;
 import com.astorage.utils.pharmgkb.Variant;
 import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import org.rocksdb.ColumnFamilyHandle;
 
@@ -45,14 +44,7 @@ public class PharmGKBIngestor extends Ingestor implements PharmGKBConstants, Con
 			if (DATA_TYPES.contains(dataType)) {
 				columnFamilyHandle = dbRep.createColumnFamily(dataType);
 			} else {
-				JsonObject errorJson = new JsonObject();
-				errorJson.put(ERROR, INVALID_DATA_TYPE_ERROR);
-
-				Constants.errorResponse(
-					req,
-					HttpURLConnection.HTTP_BAD_REQUEST,
-					errorJson.toString()
-				);
+				Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_DATA_TYPE_ERROR);
 
 				return;
 			}

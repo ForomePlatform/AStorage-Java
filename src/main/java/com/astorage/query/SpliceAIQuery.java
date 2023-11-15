@@ -39,7 +39,6 @@ public class SpliceAIQuery extends SingleFormatQuery implements Constants, Splic
 
 	protected void singleQueryHandler(String chr, String pos, boolean isBatched) throws IOException {
 		HttpServerRequest req = context.request();
-		JsonObject errorJson = new JsonObject();
 
 		try {
 			if (!LETTER_CHROMOSOMES.contains(chr.toUpperCase())) {
@@ -48,13 +47,7 @@ public class SpliceAIQuery extends SingleFormatQuery implements Constants, Splic
 
 			Long.parseLong(pos);
 		} catch (NumberFormatException e) {
-			errorJson.put(ERROR, INVALID_CHR_OR_POS_ERROR);
-
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_CHR_OR_POS_ERROR);
 
 			return;
 		}
@@ -66,32 +59,24 @@ public class SpliceAIQuery extends SingleFormatQuery implements Constants, Splic
 				req.response().write(result + "\n");
 			} else {
 				req.response()
-					.putHeader("content-type", "text/json")
+					.putHeader("content-type", "application/json")
 					.end(result + "\n");
 			}
 		} catch (Exception e) {
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				e.getMessage()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
 		}
 	}
 
 	public static JsonObject queryData(RocksDBRepository dbRep, String chr, String pos) throws Exception {
-		JsonObject errorJson = new JsonObject();
-
 		byte[] key = createKey(chr, pos);
 
 		byte[] compressedVariant = dbRep.getBytes(key);
 		if (compressedVariant == null) {
-			errorJson.put(ERROR, VARIANT_NOT_FOUND_ERROR);
-
-			throw new Exception(errorJson.toString());
+			throw new Exception(VARIANT_NOT_FOUND_ERROR);
 		}
 
 		String decompressedVariant = Constants.decompressJson(compressedVariant);
 
-        return new JsonObject(decompressedVariant);
+		return new JsonObject(decompressedVariant);
 	}
 }

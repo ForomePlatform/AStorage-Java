@@ -65,7 +65,6 @@ public class GTExQuery extends SingleFormatQuery implements Constants, GTExConst
 
 	protected void singleQueryHandlerForGene(String geneId, String subId, boolean isBatched) throws IOException {
 		HttpServerRequest req = context.request();
-		JsonObject errorJson = new JsonObject();
 
 		ColumnFamilyHandle geneColumnFamilyHandle = dbRep.getColumnFamilyHandle(GENE_COLUMN_FAMILY_NAME);
 		if (geneColumnFamilyHandle == null) {
@@ -79,13 +78,7 @@ public class GTExQuery extends SingleFormatQuery implements Constants, GTExConst
 			geneColumnFamilyHandle
 		);
 		if (compressedGene == null) {
-			errorJson.put(ERROR, GENE_RESULT_NOT_FOUND_ERROR);
-
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, GENE_RESULT_NOT_FOUND_ERROR);
 
 			return;
 		}
@@ -97,25 +90,18 @@ public class GTExQuery extends SingleFormatQuery implements Constants, GTExConst
 			req.response().write(result + "\n");
 		} else {
 			req.response()
-				.putHeader("content-type", "text/json")
+				.putHeader("content-type", "application/json")
 				.end(result + "\n");
 		}
 	}
 
 	protected void singleQueryHandlerForTissue(String tissueNo, boolean isBatched) throws IOException {
 		HttpServerRequest req = context.request();
-		JsonObject errorJson = new JsonObject();
 
 		try {
 			Integer.parseInt(tissueNo);
 		} catch (NumberFormatException e) {
-			errorJson.put(ERROR, INVALID_TISSUE_NUMBER_ERROR);
-
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_TISSUE_NUMBER_ERROR);
 
 			return;
 		}
@@ -132,13 +118,7 @@ public class GTExQuery extends SingleFormatQuery implements Constants, GTExConst
 			tissueColumnFamilyHandle
 		);
 		if (compressedTissue == null) {
-			errorJson.put(ERROR, TISSUE_RESULT_NOT_FOUND_ERROR);
-
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, TISSUE_RESULT_NOT_FOUND_ERROR);
 
 			return;
 		}
@@ -150,25 +130,18 @@ public class GTExQuery extends SingleFormatQuery implements Constants, GTExConst
 			req.response().write(result + "\n");
 		} else {
 			req.response()
-				.putHeader("content-type", "text/json")
+				.putHeader("content-type", "application/json")
 				.end(result + "\n");
 		}
 	}
 
 	protected void singleQueryHandlerForGeneToTissue(String geneId, String subId, String tissueNo, boolean isBatched) throws IOException {
 		HttpServerRequest req = context.request();
-		JsonObject errorJson = new JsonObject();
 
 		try {
 			Integer.parseInt(tissueNo);
 		} catch (NumberFormatException e) {
-			errorJson.put(ERROR, INVALID_TISSUE_NUMBER_ERROR);
-
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_TISSUE_NUMBER_ERROR);
 
 			return;
 		}
@@ -185,13 +158,7 @@ public class GTExQuery extends SingleFormatQuery implements Constants, GTExConst
 			geneToTissueColumnFamilyHandle
 		);
 		if (compressedGeneToTissue == null) {
-			errorJson.put(ERROR, GENE_TO_TISSUE_RESULT_NOT_FOUND_ERROR);
-
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, GENE_TO_TISSUE_RESULT_NOT_FOUND_ERROR);
 
 			return;
 		}
@@ -203,7 +170,7 @@ public class GTExQuery extends SingleFormatQuery implements Constants, GTExConst
 			req.response().write(result + "\n");
 		} else {
 			req.response()
-				.putHeader("content-type", "text/json")
+				.putHeader("content-type", "application/json")
 				.end(result + "\n");
 		}
 	}

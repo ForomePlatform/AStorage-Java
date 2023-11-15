@@ -3,7 +3,9 @@ package com.astorage.ingestion;
 import com.astorage.db.RocksDBRepository;
 import com.astorage.normalization.VariantNormalizer;
 import com.astorage.utils.Constants;
-import com.astorage.utils.gnomad.*;
+import com.astorage.utils.gnomad.GnomADConstants;
+import com.astorage.utils.gnomad.GnomADHelper;
+import com.astorage.utils.gnomad.Variant;
 import com.astorage.utils.universal_variant.UniversalVariantConstants;
 import com.astorage.utils.universal_variant.UniversalVariantHelper;
 import io.vertx.core.http.HttpServerRequest;
@@ -52,14 +54,7 @@ public class GnomADIngestor extends Ingestor implements Constants, GnomADConstan
 			if (sourceType.length() == 1 && SOURCE_TYPES.contains(sourceType.toLowerCase())) {
 				columnFamilyHandle = dbRep.createColumnFamily(sourceType);
 			} else {
-				JsonObject errorJson = new JsonObject();
-				errorJson.put(ERROR, INVALID_SOURCE_TYPE_ERROR);
-
-				Constants.errorResponse(
-					req,
-					HttpURLConnection.HTTP_BAD_REQUEST,
-					errorJson.toString()
-				);
+				Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_SOURCE_TYPE_ERROR);
 
 				return;
 			}

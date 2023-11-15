@@ -189,7 +189,7 @@ public class ClinVarIngestor extends Ingestor implements Constants, ClinVarConst
 		} catch (Exception e) {
 			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 		}
-    }
+	}
 
 	private void ingestQueryParams(Variant variant) throws Exception {
 		String chr = variant.variantColumnValues.get(CHROMOSOME_COLUMN_NAME);

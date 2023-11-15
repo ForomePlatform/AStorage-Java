@@ -41,7 +41,6 @@ public class GnomADQuery extends SingleFormatQuery implements Constants, GnomADC
 
 	protected void singleQueryHandler(String chr, String pos, String sourceType, boolean isBatched) throws IOException {
 		HttpServerRequest req = context.request();
-		JsonObject errorJson = new JsonObject();
 
 		try {
 			if (!LETTER_CHROMOSOMES.contains(chr.toUpperCase())) {
@@ -50,25 +49,13 @@ public class GnomADQuery extends SingleFormatQuery implements Constants, GnomADC
 
 			Long.parseLong(pos);
 		} catch (NumberFormatException e) {
-			errorJson.put(ERROR, INVALID_CHR_OR_POS_ERROR);
-
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_CHR_OR_POS_ERROR);
 
 			return;
 		}
 
 		if (!(sourceType.length() == 1 && SOURCE_TYPES.contains(sourceType.toLowerCase()))) {
-			errorJson.put(ERROR, INVALID_SOURCE_TYPE_ERROR);
-
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_SOURCE_TYPE_ERROR);
 
 			return;
 		}
@@ -80,35 +67,25 @@ public class GnomADQuery extends SingleFormatQuery implements Constants, GnomADC
 				req.response().write(result + "\n");
 			} else {
 				req.response()
-					.putHeader("content-type", "text/json")
+					.putHeader("content-type", "application/json")
 					.end(result + "\n");
 			}
 		} catch (Exception e) {
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				e.getMessage()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
 		}
 	}
 
 	public static JsonObject queryData(RocksDBRepository dbRep, String chr, String pos, String sourceType) throws Exception {
-		JsonObject errorJson = new JsonObject();
-
 		byte[] key = GnomADHelper.createKey(chr, pos);
 
 		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(sourceType);
 		if (columnFamilyHandle == null) {
-			errorJson.put(ERROR, COLUMN_FAMILY_NULL_ERROR);
-
-			throw new Exception(errorJson.toString());
+			throw new Exception(COLUMN_FAMILY_NULL_ERROR);
 		}
 
 		byte[] compressedVariant = dbRep.getBytes(key, columnFamilyHandle);
 		if (compressedVariant == null) {
-			errorJson.put(ERROR, VARIANT_NOT_FOUND_ERROR);
-
-			throw new Exception(errorJson.toString());
+			throw new Exception(VARIANT_NOT_FOUND_ERROR);
 		}
 
 		String decompressedVariant = Constants.decompressJson(compressedVariant);

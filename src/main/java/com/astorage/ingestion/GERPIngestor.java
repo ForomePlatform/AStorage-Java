@@ -70,11 +70,7 @@ public class GERPIngestor extends Ingestor implements Constants, GERPConstants {
 		int endIdx = filename.indexOf(FILENAME_CHROMOSOME_SUFFIX, startIdx);
 
 		if (startIdx == FILENAME_CHROMOSOME_PREFIX.length() - 1 || endIdx == -1) {
-			Constants.errorResponse(
-				context.request(),
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				CHROMOSOME_NOT_DETECTED_IN_FILENAME
-			);
+			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_BAD_REQUEST, CHROMOSOME_NOT_DETECTED_IN_FILENAME);
 
 			return false;
 		}

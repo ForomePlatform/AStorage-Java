@@ -64,7 +64,6 @@ public class UniversalVariantQuery implements Query, Constants, UniversalVariant
 		boolean isBatched
 	) throws IOException {
 		HttpServerRequest req = context.request();
-		JsonObject errorJson = new JsonObject();
 
 		try {
 			if (!LETTER_CHROMOSOMES.contains(chr.toUpperCase())) {
@@ -73,13 +72,7 @@ public class UniversalVariantQuery implements Query, Constants, UniversalVariant
 
 			Long.parseLong(pos);
 		} catch (NumberFormatException e) {
-			errorJson.put(ERROR, INVALID_CHR_OR_POS_ERROR);
-
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_CHR_OR_POS_ERROR);
 
 			return;
 		}
@@ -157,7 +150,7 @@ public class UniversalVariantQuery implements Query, Constants, UniversalVariant
 			req.response().write(result + "\n");
 		} else {
 			req.response()
-				.putHeader("content-type", "text/json")
+				.putHeader("content-type", "application/json")
 				.end(result + "\n");
 		}
 	}

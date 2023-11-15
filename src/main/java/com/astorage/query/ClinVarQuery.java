@@ -2,7 +2,10 @@ package com.astorage.query;
 
 import com.astorage.db.RocksDBRepository;
 import com.astorage.utils.Constants;
-import com.astorage.utils.clinvar.*;
+import com.astorage.utils.clinvar.ClinVarConstants;
+import com.astorage.utils.clinvar.Significance;
+import com.astorage.utils.clinvar.Submitter;
+import com.astorage.utils.clinvar.Variant;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -41,7 +44,6 @@ public class ClinVarQuery extends SingleFormatQuery implements Constants, ClinVa
 
 	protected void singleQueryHandler(String chr, String startPos, String endPos, boolean isBatched) throws IOException {
 		HttpServerRequest req = context.request();
-		JsonObject errorJson = new JsonObject();
 
 		try {
 			if (!LETTER_CHROMOSOMES.contains(chr.toUpperCase())) {
@@ -51,13 +53,7 @@ public class ClinVarQuery extends SingleFormatQuery implements Constants, ClinVa
 			Long.parseLong(startPos);
 			Long.parseLong(endPos);
 		} catch (NumberFormatException e) {
-			errorJson.put(ERROR, INVALID_CHR_OR_POS_ERROR);
-
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_CHR_OR_POS_ERROR);
 
 			return;
 		}
@@ -69,21 +65,15 @@ public class ClinVarQuery extends SingleFormatQuery implements Constants, ClinVa
 				req.response().write(result + "\n");
 			} else {
 				req.response()
-					.putHeader("content-type", "text/json")
+					.putHeader("content-type", "application/json")
 					.end(result + "\n");
 			}
 		} catch (Exception e) {
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				e.getMessage()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
 		}
 	}
 
 	public static JsonObject queryData(RocksDBRepository dbRep, String chr, String startPos, String endPos) throws Exception {
-		JsonObject errorJson = new JsonObject();
-
 		ColumnFamilyHandle variantColumnFamilyHandle = dbRep.getColumnFamilyHandle(VARIANT_SUMMARY_COLUMN_FAMILY_NAME);
 		ColumnFamilyHandle significanceColumnFamilyHandle = dbRep.getColumnFamilyHandle(SIGNIFICANCE_COLUMN_FAMILY_NAME);
 		ColumnFamilyHandle submitterColumnFamilyHandle = dbRep.getColumnFamilyHandle(SUBMITTER_COLUMN_FAMILY_NAME);
@@ -92,16 +82,12 @@ public class ClinVarQuery extends SingleFormatQuery implements Constants, ClinVa
 				|| significanceColumnFamilyHandle == null
 				|| submitterColumnFamilyHandle == null
 		) {
-			errorJson.put(ERROR, COLUMN_FAMILY_NULL_ERROR);
-
-			throw new Exception(errorJson.toString());
+			throw new Exception(COLUMN_FAMILY_NULL_ERROR);
 		}
 
 		byte[] compressedVariant = dbRep.getBytes(Variant.generateKey(chr, startPos, endPos), variantColumnFamilyHandle);
 		if (compressedVariant == null) {
-			errorJson.put(ERROR, RESULT_NOT_FOUND_ERROR);
-
-			throw new Exception(errorJson.toString());
+			throw new Exception(RESULT_NOT_FOUND_ERROR);
 		}
 
 		String decompressedVariant = Constants.decompressJson(compressedVariant);

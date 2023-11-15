@@ -15,9 +15,9 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import java.io.*;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
@@ -115,15 +115,18 @@ public interface Constants {
 	}
 
 	static void errorResponse(HttpServerRequest req, int errorCode, String errorMsg) {
+		JsonObject errorJson = new JsonObject();
+		errorJson.put(ERROR, errorMsg);
+
 		if (req.response().ended()) {
 			return;
 		}
 
 		if (req.response().headWritten()) {
 			if (req.response().isChunked()) {
-				req.response().write(errorMsg + "\n");
+				req.response().write(errorJson + "\n");
 			} else {
-				req.response().end(errorMsg + "\n");
+				req.response().end(errorJson + "\n");
 			}
 
 			return;
@@ -131,8 +134,8 @@ public interface Constants {
 
 		req.response()
 			.setStatusCode(errorCode)
-			.putHeader("content-type", "text/plain")
-			.end(errorMsg + "\n");
+			.putHeader("content-type", "application/json")
+			.end(errorJson + "\n");
 	}
 
 	static void downloadUsingStream(String urlStr, String filename) throws IOException, URISyntaxException {
