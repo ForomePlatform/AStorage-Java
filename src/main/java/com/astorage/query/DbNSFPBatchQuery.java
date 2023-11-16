@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
-public class DbNSFPBatchQuery extends DbNSFPQuery implements Query, Constants, DbNSFPConstants {
+public class DbNSFPBatchQuery extends DbNSFPQuery implements Constants, DbNSFPConstants {
 	public DbNSFPBatchQuery(RoutingContext context, RocksDBRepository dbRep) {
 		super(context, dbRep);
 	}
@@ -30,7 +30,7 @@ public class DbNSFPBatchQuery extends DbNSFPQuery implements Query, Constants, D
 				JsonArray queries = buffer.toJsonArray();
 
 				req.response().setChunked(true);
-				req.response().putHeader("content-type", "text/json");
+				req.response().putHeader("content-type", "application/json");
 
 				for (Object queryObject : queries) {
 					JsonObject query = (JsonObject) queryObject;

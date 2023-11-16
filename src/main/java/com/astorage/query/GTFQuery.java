@@ -11,13 +11,9 @@ import io.vertx.ext.web.RoutingContext;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 
-public class GTFQuery implements Query, Constants, GTFConstants {
-	protected final RoutingContext context;
-	protected final RocksDBRepository dbRep;
-
+public class GTFQuery extends SingleFormatQuery implements Constants, GTFConstants {
 	public GTFQuery(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+		super(context, dbRep);
 	}
 
 	public void queryHandler() throws IOException {
@@ -43,7 +39,6 @@ public class GTFQuery implements Query, Constants, GTFConstants {
 
 	protected void singleQueryHandler(String chr, String startPos, String endPos, boolean isBatched) throws IOException {
 		HttpServerRequest req = context.request();
-		JsonObject errorJson = new JsonObject();
 
 		try {
 			if (!LETTER_CHROMOSOMES.contains(chr.toUpperCase())) {
@@ -53,39 +48,34 @@ public class GTFQuery implements Query, Constants, GTFConstants {
 			Long.parseLong(startPos);
 			Long.parseLong(endPos);
 		} catch (NumberFormatException e) {
-			errorJson.put(ERROR, INVALID_CHR_OR_POS_ERROR);
-
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_CHR_OR_POS_ERROR);
 
 			return;
 		}
 
+		try {
+			JsonObject result = queryData(dbRep, chr, startPos, endPos);
+
+			if (isBatched) {
+				req.response().write(result + "\n");
+			} else {
+				req.response()
+					.putHeader("content-type", "application/json")
+					.end(result + "\n");
+			}
+		} catch (Exception e) {
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
+		}
+	}
+
+	public static JsonObject queryData(RocksDBRepository dbRep, String chr, String startPos, String endPos) throws Exception {
 		byte[] compressedVariant = dbRep.getBytes(Variant.generateKey(chr, startPos, endPos));
 		if (compressedVariant == null) {
-			errorJson.put(ERROR, VARIANT_NOT_FOUND_ERROR);
-
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
-
-			return;
+			throw new Exception(VARIANT_NOT_FOUND_ERROR);
 		}
 
 		String decompressedVariant = Constants.decompressJson(compressedVariant);
-		JsonObject result = new JsonObject(decompressedVariant);
 
-		if (isBatched) {
-			req.response().write(result + "\n");
-		} else {
-			req.response()
-				.putHeader("content-type", "text/json")
-				.end(result + "\n");
-		}
+		return new JsonObject(decompressedVariant);
 	}
 }

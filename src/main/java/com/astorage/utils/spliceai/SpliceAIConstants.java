@@ -18,10 +18,12 @@ public interface SpliceAIConstants {
 	String POS_PARAM = "pos";
 	String CHR_COLUMN_NAME = "CHROM";
 	String POS_COLUMN_NAME = "POS";
+	String REF_COLUMN_NAME = "REF";
+	String ALT_COLUMN_NAME = "ALT";
 	String INFO_COLUMN_NAME = "INFO";
 
 	// Success messages:
-	String INGESTION_FINISH_MSG = "All Data has been ingested.";
+	String INGESTION_FINISH_MSG = "All data has been ingested.";
 
 	// Error messages:
 	String INVALID_FILE_CONTENT = "Invalid file content...";

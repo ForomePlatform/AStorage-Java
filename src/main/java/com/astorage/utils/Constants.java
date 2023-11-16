@@ -15,9 +15,9 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import java.io.*;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +32,8 @@ public interface Constants {
 	String ASTORAGE_DIRECTORY_NAME = "/AStorage";
 	String DATA_DIRECTORY_PATH = System.getProperty("user.home") + "/AStorage";
 	String DATA_DIRECTORY_PATH_JSON_KEY = "dataDirectoryPath";
+
+	// Ordering should not be changed as the UniversalVariant DB is dependent on it
 	String[] FORMAT_NAMES = {
 		FastaConstants.FASTA_FORMAT_NAME,
 		DbNSFPConstants.DBNSFP_FORMAT_NAME,
@@ -50,6 +52,9 @@ public interface Constants {
 	// Variant related:
 	String NUCLEOTIDES = "AGTCU";
 	String LETTER_CHROMOSOMES = "XYM";
+
+	// Success messages:
+	String SUCCESS = "success";
 
 	// Error messages:
 	String ERROR = "error";
@@ -84,7 +89,7 @@ public interface Constants {
 			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 			GZIPOutputStream gzipOutputStream = new GZIPOutputStream(outputStream)
 		) {
-			gzipOutputStream.write(json.getBytes(StandardCharsets.UTF_8));
+			gzipOutputStream.write(json.getBytes());
 			gzipOutputStream.finish();
 
 			return outputStream.toByteArray();
@@ -112,16 +117,42 @@ public interface Constants {
 		}
 	}
 
-	static void errorResponse(HttpServerRequest req, int errorCode, String errorMsg) {
+	static void successResponse(HttpServerRequest req, String successMsg) {
+		JsonObject successJson = new JsonObject();
+		successJson.put(SUCCESS, successMsg);
+
 		if (req.response().ended()) {
 			return;
 		}
 
 		if (req.response().headWritten()) {
 			if (req.response().isChunked()) {
-				req.response().write(errorMsg + "\n");
+				req.response().write(successJson + "\n");
 			} else {
-				req.response().end(errorMsg + "\n");
+				req.response().end(successJson + "\n");
+			}
+
+			return;
+		}
+
+		req.response()
+			.putHeader("content-type", "application/json")
+			.end(successJson + "\n");
+	}
+
+	static void errorResponse(HttpServerRequest req, int errorCode, String errorMsg) {
+		JsonObject errorJson = new JsonObject();
+		errorJson.put(ERROR, errorMsg);
+
+		if (req.response().ended()) {
+			return;
+		}
+
+		if (req.response().headWritten()) {
+			if (req.response().isChunked()) {
+				req.response().write(errorJson + "\n");
+			} else {
+				req.response().end(errorJson + "\n");
 			}
 
 			return;
@@ -129,8 +160,8 @@ public interface Constants {
 
 		req.response()
 			.setStatusCode(errorCode)
-			.putHeader("content-type", "text/plain")
-			.end(errorMsg + "\n");
+			.putHeader("content-type", "application/json")
+			.end(errorJson + "\n");
 	}
 
 	static void downloadUsingStream(String urlStr, String filename) throws IOException, URISyntaxException {

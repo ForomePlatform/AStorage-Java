@@ -16,13 +16,14 @@ import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 @SuppressWarnings("unused")
-public class FastaIngestor implements Ingestor, Constants, FastaConstants {
-	private final RoutingContext context;
-	private final RocksDBRepository dbRep;
-
-	public FastaIngestor(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+public class FastaIngestor extends Ingestor implements Constants, FastaConstants {
+	public FastaIngestor(
+		RoutingContext context,
+		RocksDBRepository dbRep,
+		RocksDBRepository universalVariantDbRep,
+		RocksDBRepository fastaDbRep
+	) {
+		super(context, dbRep, universalVariantDbRep, fastaDbRep);
 	}
 
 	public void ingestionHandler() {
@@ -67,9 +68,7 @@ public class FastaIngestor implements Ingestor, Constants, FastaConstants {
 
 			int lineCount = storeData(refBuild, metadata, bufferedDataReader);
 
-			req.response()
-				.putHeader("content-type", "text/plain")
-				.end(lineCount + " lines have been ingested in " + dbRep.dbName + "!\n");
+			Constants.successResponse(req, lineCount + " lines have been ingested in " + dbRep.dbName + "!");
 		} catch (IOException e) {
 			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 		}

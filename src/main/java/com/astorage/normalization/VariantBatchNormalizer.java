@@ -10,7 +10,7 @@ import io.vertx.ext.web.RoutingContext;
 
 import java.net.HttpURLConnection;
 
-public class VariantBatchNormalizer extends VariantNormalizer implements Normalizer {
+public class VariantBatchNormalizer extends VariantNormalizer {
 	public VariantBatchNormalizer(RoutingContext context, RocksDBRepository dbRep) {
 		super(context, dbRep);
 	}
@@ -27,7 +27,7 @@ public class VariantBatchNormalizer extends VariantNormalizer implements Normali
 				JsonArray queries = buffer.toJsonArray();
 
 				req.response().setChunked(true);
-				req.response().putHeader("content-type", "text/json");
+				req.response().putHeader("content-type", "application/json");
 
 				for (Object queryObject : queries) {
 					JsonObject query = (JsonObject) queryObject;

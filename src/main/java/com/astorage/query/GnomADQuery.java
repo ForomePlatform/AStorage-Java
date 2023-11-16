@@ -13,13 +13,9 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
-public class GnomADQuery implements Query, Constants, GnomADConstants {
-	protected final RoutingContext context;
-	protected final RocksDBRepository dbRep;
-
+public class GnomADQuery extends SingleFormatQuery implements Constants, GnomADConstants {
 	public GnomADQuery(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+		super(context, dbRep);
 	}
 
 	public void queryHandler() throws IOException {
@@ -45,7 +41,6 @@ public class GnomADQuery implements Query, Constants, GnomADConstants {
 
 	protected void singleQueryHandler(String chr, String pos, String sourceType, boolean isBatched) throws IOException {
 		HttpServerRequest req = context.request();
-		JsonObject errorJson = new JsonObject();
 
 		try {
 			if (!LETTER_CHROMOSOMES.contains(chr.toUpperCase())) {
@@ -54,60 +49,49 @@ public class GnomADQuery implements Query, Constants, GnomADConstants {
 
 			Long.parseLong(pos);
 		} catch (NumberFormatException e) {
-			errorJson.put(ERROR, INVALID_CHR_OR_POS_ERROR);
-
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_CHR_OR_POS_ERROR);
 
 			return;
 		}
 
 		if (!(sourceType.length() == 1 && SOURCE_TYPES.contains(sourceType.toLowerCase()))) {
-			errorJson.put(ERROR, INVALID_SOURCE_TYPE_ERROR);
-
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_SOURCE_TYPE_ERROR);
 
 			return;
 		}
 
+		try {
+			JsonObject result = queryData(dbRep, chr, pos, sourceType);
+
+			if (isBatched) {
+				req.response().write(result + "\n");
+			} else {
+				req.response()
+					.putHeader("content-type", "application/json")
+					.end(result + "\n");
+			}
+		} catch (Exception e) {
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
+		}
+	}
+
+	public static JsonObject queryData(RocksDBRepository dbRep, String chr, String pos, String sourceType) throws Exception {
 		byte[] key = GnomADHelper.createKey(chr, pos);
 
 		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(sourceType);
 		if (columnFamilyHandle == null) {
-			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, COLUMN_FAMILY_NULL_ERROR);
-			return;
+			throw new Exception(COLUMN_FAMILY_NULL_ERROR);
 		}
 
 		byte[] compressedVariant = dbRep.getBytes(key, columnFamilyHandle);
 		if (compressedVariant == null) {
-			errorJson.put(ERROR, VARIANT_NOT_FOUND_ERROR);
-
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
-
-			return;
+			throw new Exception(VARIANT_NOT_FOUND_ERROR);
 		}
 
 		String decompressedVariant = Constants.decompressJson(compressedVariant);
 		JsonObject result = new JsonObject(decompressedVariant);
 		result.put(SOURCE_TYPE_FIELD_NAME, sourceType);
 
-		if (isBatched) {
-			req.response().write(result + "\n");
-		} else {
-			req.response()
-				.putHeader("content-type", "text/json")
-				.end(result + "\n");
-		}
+		return result;
 	}
 }

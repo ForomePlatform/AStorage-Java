@@ -5,7 +5,6 @@ import com.astorage.utils.Constants;
 import com.astorage.utils.pharmgkb.PharmGKBConstants;
 import com.astorage.utils.pharmgkb.Variant;
 import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import org.rocksdb.ColumnFamilyHandle;
 
@@ -14,13 +13,14 @@ import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 
 @SuppressWarnings("unused")
-public class PharmGKBIngestor implements Ingestor, PharmGKBConstants, Constants {
-	private final RoutingContext context;
-	private final RocksDBRepository dbRep;
-
-	public PharmGKBIngestor(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+public class PharmGKBIngestor extends Ingestor implements PharmGKBConstants, Constants {
+	public PharmGKBIngestor(
+		RoutingContext context,
+		RocksDBRepository dbRep,
+		RocksDBRepository universalVariantDbRep,
+		RocksDBRepository fastaDbRep
+	) {
+		super(context, dbRep, universalVariantDbRep, fastaDbRep);
 	}
 
 	public void ingestionHandler() {
@@ -44,14 +44,7 @@ public class PharmGKBIngestor implements Ingestor, PharmGKBConstants, Constants 
 			if (DATA_TYPES.contains(dataType)) {
 				columnFamilyHandle = dbRep.createColumnFamily(dataType);
 			} else {
-				JsonObject errorJson = new JsonObject();
-				errorJson.put(ERROR, INVALID_DATA_TYPE_ERROR);
-
-				Constants.errorResponse(
-					req,
-					HttpURLConnection.HTTP_BAD_REQUEST,
-					errorJson.toString()
-				);
+				Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_DATA_TYPE_ERROR);
 
 				return;
 			}
@@ -74,11 +67,7 @@ public class PharmGKBIngestor implements Ingestor, PharmGKBConstants, Constants 
 			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 		}
 
-		String response = INGESTION_FINISH_MSG + "\n";
-
-		req.response()
-			.putHeader("content-type", "text/plain")
-			.end(response);
+		Constants.successResponse(req, INGESTION_FINISH_MSG);
 	}
 
 	private void storeData(String dataType, BufferedReader reader, ColumnFamilyHandle columnFamilyHandle) throws IOException {

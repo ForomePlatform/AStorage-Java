@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
-public class GnomADBatchQuery extends GnomADQuery implements Query, Constants, GnomADConstants {
+public class GnomADBatchQuery extends GnomADQuery implements Constants, GnomADConstants {
 	public GnomADBatchQuery(RoutingContext context, RocksDBRepository dbRep) {
 		super(context, dbRep);
 	}
@@ -26,7 +26,7 @@ public class GnomADBatchQuery extends GnomADQuery implements Query, Constants, G
 				JsonArray queries = buffer.toJsonArray();
 
 				req.response().setChunked(true);
-				req.response().putHeader("content-type", "text/json");
+				req.response().putHeader("content-type", "application/json");
 
 				for (Object queryObject : queries) {
 					JsonObject query = (JsonObject) queryObject;

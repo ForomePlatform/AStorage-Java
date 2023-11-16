@@ -10,20 +10,24 @@ import io.vertx.ext.web.RoutingContext;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 /**
  * For dbNSFP v4.3a!
  */
 @SuppressWarnings("unused")
-public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
-	private final RoutingContext context;
-	private final RocksDBRepository dbRep;
-
-	public DbNSFPIngestor(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+public class DbNSFPIngestor extends Ingestor implements Constants, DbNSFPConstants {
+	public DbNSFPIngestor(
+		RoutingContext context,
+		RocksDBRepository dbRep,
+		RocksDBRepository universalVariantDbRep,
+		RocksDBRepository fastaDbRep
+	) {
+		super(context, dbRep, universalVariantDbRep, fastaDbRep);
 	}
 
 	public void ingestionHandler() {
@@ -80,9 +84,7 @@ public class DbNSFPIngestor implements Ingestor, Constants, DbNSFPConstants {
 				saveVariantsInDb(lastKey, lastVariants);
 			}
 
-			req.response()
-				.putHeader("content-type", "text/plain")
-				.end(lineCount + " lines have been ingested in " + dbRep.dbName + "!\n");
+			Constants.successResponse(req, lineCount + " lines have been ingested in " + dbRep.dbName + "!");
 		} catch (IOException e) {
 			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 		}

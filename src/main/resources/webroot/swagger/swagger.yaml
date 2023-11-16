@@ -1,0 +1,277 @@
+openapi: 3.0.0
+info:
+  title: AStorage API
+  description: API for ingesting, querying and normalizing genetic variants.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/
+    description: Local server
+paths:
+  /ingestion/fasta:
+    post:
+      tags: [
+        Ingestion
+      ]
+      summary: Ingests given Fasta data
+      parameters:
+        - name: refBuild
+          in: query
+          required: true
+          description: Reference build name
+          schema:
+            type: string
+            example: hg38
+        - name: dataPath
+          in: query
+          required: true
+          description: Path of the Fasta's data file
+          schema:
+            type: string
+            example: GCF_000001405.40_GRCh38.p14_genomic.fna.gz
+        - name: metadataPath
+          in: query
+          required: true
+          description: Path of the Fasta's assembly report file
+          schema:
+            type: string
+            example: GCF_000001405.40_GRCh38.p14_assembly_report.txt
+      responses:
+        '200':
+          description: Success message in JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+  /ingestion/dbnsfp:
+    post:
+      tags: [
+        Ingestion
+      ]
+      summary: Ingests given dbNSFP v4.3a data
+      parameters:
+        - name: dataPath
+          in: query
+          required: true
+          description: Path of the dbNSFP's single chromosome file
+          schema:
+            type: string
+            example: dbNSFP4.3a_variant.chr1.gz
+      responses:
+        '200':
+          description: Success message in JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+  /ingestion/gnomad:
+    post:
+      tags: [
+        Ingestion
+      ]
+      summary: Ingests given gnomAD v2.1.1 data
+      parameters:
+        - name: dataUrl
+          in: query
+          required: true
+          description: Path of the gnomAD data file
+          schema:
+            type: string
+            example: https://storage.googleapis.com/gcp-public-data--gnomad/release/2.1.1/vcf/exomes/gnomad.exomes.r2.1.1.sites.vcf.bgz
+        - name: sourceType
+          in: query
+          required: true
+          description: Source type of the given data, g for genome or e for exome
+          schema:
+            type: string
+            example: g
+      responses:
+        '200':
+          description: Success message in JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+  /ingestion/spliceai:
+    post:
+      tags: [
+        Ingestion
+      ]
+      summary: Ingests given SpliceAI v1.3 data
+      parameters:
+        - name: dataPath
+          in: query
+          required: true
+          description: Path of the SpliceAI's data file
+          schema:
+            type: string
+            example: spliceai_scores.masked.indel.hg38.vcf.gz
+      responses:
+        '200':
+          description: Success message in JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+  /ingestion/pharmgkb:
+    post:
+      tags: [
+        Ingestion
+      ]
+      summary: Ingests given PharmGKB data
+      parameters:
+        - name: dataType
+          in: query
+          required: true
+          description: Type of the given data
+          schema:
+            type: string
+            example: CAmeta2CA
+        - name: dataPath
+          in: query
+          required: true
+          description: Path of the PharmGKB's data file
+          schema:
+            type: string
+            example: clinical_ann_metadata.tsv
+      responses:
+        '200':
+          description: Success message in JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+  /ingestion/clinvar:
+    post:
+      tags: [
+        Ingestion
+      ]
+      summary: Ingests given ClinVar data
+      parameters:
+        - name: dataPath
+          in: query
+          required: true
+          description: Path of the ClinVar's data file
+          schema:
+            type: string
+            example: ClinVarFullRelease_00-latest.xml.gz
+        - name: dataSummaryPath
+          in: query
+          required: true
+          description: Path of the ClinVar's data summary file
+          schema:
+            type: string
+            example: variant_summary.txt.gz
+      responses:
+        '200':
+          description: Success message in JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+  /ingestion/gtex:
+    post:
+      tags: [
+        Ingestion
+      ]
+      summary: Ingests given GTEx v8 data
+      parameters:
+        - name: dataPath
+          in: query
+          required: true
+          description: Path of the GTEx's data file
+          schema:
+            type: string
+            example: GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_tpm.gct.gz
+      responses:
+        '200':
+          description: Success message in JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+  /ingestion/gtf:
+    post:
+      tags: [
+        Ingestion
+      ]
+      summary: Ingests given GTF data
+      parameters:
+        - name: dataPath
+          in: query
+          required: true
+          description: Path of the GTF's data file
+          schema:
+            type: string
+            example: Homo_sapiens.GRCh38.105.chr.gtf.gz
+      responses:
+        '200':
+          description: Success message in JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+  /ingestion/gerp:
+    post:
+      tags: [
+        Ingestion
+      ]
+      summary: Ingests given GERP data
+      parameters:
+        - name: dataPath
+          in: query
+          required: true
+          description: Path of the GERP's single chromosome file
+          schema:
+            type: string
+            example: chr11.maf.rates
+      responses:
+        '200':
+          description: Success message in JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+  /ingestion/dbsnp:
+    post:
+      tags: [
+        Ingestion
+      ]
+      summary: Ingests given dbSNP data
+      parameters:
+        - name: dataPath
+          in: query
+          required: true
+          description: Path of the dbSNP's single chromosome file
+          schema:
+            type: string
+            example: 00-All.vcf.gz
+      responses:
+        '200':
+          description: Success message in JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+
+  /stop:
+    get:
+      tags: [
+        Utils
+      ]
+      summary: Stops the AStorage service
+      responses:
+        '200':
+          description: Success message in JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+
+components:
+  schemas:
+    SuccessMessage:
+      type: object
+      properties:
+        success:
+          type: string
+          description: Success message

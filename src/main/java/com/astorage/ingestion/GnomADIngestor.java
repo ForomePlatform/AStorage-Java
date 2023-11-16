@@ -1,8 +1,13 @@
 package com.astorage.ingestion;
 
 import com.astorage.db.RocksDBRepository;
+import com.astorage.normalization.VariantNormalizer;
 import com.astorage.utils.Constants;
-import com.astorage.utils.gnomad.*;
+import com.astorage.utils.gnomad.GnomADConstants;
+import com.astorage.utils.gnomad.GnomADHelper;
+import com.astorage.utils.gnomad.Variant;
+import com.astorage.utils.universal_variant.UniversalVariantConstants;
+import com.astorage.utils.universal_variant.UniversalVariantHelper;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
@@ -10,7 +15,6 @@ import org.rocksdb.ColumnFamilyHandle;
 
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
@@ -19,13 +23,14 @@ import java.util.zip.GZIPInputStream;
  * For gnomAD v2.1.1!
  */
 @SuppressWarnings("unused")
-public class GnomADIngestor implements Ingestor, Constants, GnomADConstants {
-	private final RoutingContext context;
-	private final RocksDBRepository dbRep;
-
-	public GnomADIngestor(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+public class GnomADIngestor extends Ingestor implements Constants, GnomADConstants {
+	public GnomADIngestor(
+		RoutingContext context,
+		RocksDBRepository dbRep,
+		RocksDBRepository universalVariantDbRep,
+		RocksDBRepository fastaDbRep
+	) {
+		super(context, dbRep, universalVariantDbRep, fastaDbRep);
 	}
 
 	public void ingestionHandler() {
@@ -49,14 +54,7 @@ public class GnomADIngestor implements Ingestor, Constants, GnomADConstants {
 			if (sourceType.length() == 1 && SOURCE_TYPES.contains(sourceType.toLowerCase())) {
 				columnFamilyHandle = dbRep.createColumnFamily(sourceType);
 			} else {
-				JsonObject errorJson = new JsonObject();
-				errorJson.put(ERROR, INVALID_SOURCE_TYPE_ERROR);
-
-				Constants.errorResponse(
-					req,
-					HttpURLConnection.HTTP_BAD_REQUEST,
-					errorJson.toString()
-				);
+				Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_SOURCE_TYPE_ERROR);
 
 				return;
 			}
@@ -70,21 +68,21 @@ public class GnomADIngestor implements Ingestor, Constants, GnomADConstants {
 			Reader decoder = new InputStreamReader(gzipInputStream, StandardCharsets.UTF_8);
 			BufferedReader bufferedReader = new BufferedReader(decoder);
 
-			storeData(bufferedReader, columnFamilyHandle);
-		} catch (IOException | SecurityException | URISyntaxException e) {
+			storeData(bufferedReader, columnFamilyHandle, sourceType);
+		} catch (Exception e) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, DOWNLOADING_DATA_ERROR);
 
 			return;
 		}
 
-		String response = INGESTION_FINISH_MSG + "\n";
-
-		req.response()
-			.putHeader("content-type", "text/plain")
-			.end(response);
+		Constants.successResponse(req, INGESTION_FINISH_MSG);
 	}
 
-	private void storeData(BufferedReader reader, ColumnFamilyHandle columnFamilyHandle) throws IOException {
+	private void storeData(
+		BufferedReader reader,
+		ColumnFamilyHandle columnFamilyHandle,
+		String sourceType
+	) throws Exception {
 		String line;
 
 		do {
@@ -110,9 +108,42 @@ public class GnomADIngestor implements Ingestor, Constants, GnomADConstants {
 			byte[] key = GnomADHelper.createKey(chr, pos);
 			byte[] compressedVariant = Constants.compressJson(variant.toString());
 
+			ingestQueryParams(chr, pos, variant, sourceType);
+
 			dbRep.saveBytes(key, compressedVariant, columnFamilyHandle);
 		}
 
 		reader.close();
+	}
+
+	private void ingestQueryParams(String chr, String pos, Variant variant, String sourceType) throws Exception {
+		String ref = variant.variantColumnValues.get(REF_COLUMN_NAME);
+		String alt = variant.variantColumnValues.get(ALT_COLUMN_NAME);
+
+		JsonObject normalizedVariantJson = VariantNormalizer.normalizeVariant(
+			"hg38",
+			chr,
+			pos,
+			ref,
+			alt,
+			fastaDbRep
+		);
+
+		byte[] universalVariantKey = UniversalVariantHelper.generateKey(normalizedVariantJson);
+
+		// Param ordering should match query specification
+		String variantQuery = String.join(
+			UniversalVariantConstants.QUERY_PARAMS_DELIMITER,
+			chr,
+			pos,
+			sourceType
+		);
+
+		UniversalVariantHelper.ingestUniversalVariant(
+			universalVariantKey,
+			variantQuery,
+			GNOMAD_FORMAT_NAME,
+			universalVariantDbRep
+		);
 	}
 }

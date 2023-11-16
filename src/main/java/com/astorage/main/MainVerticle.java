@@ -5,9 +5,11 @@ import com.astorage.ingestion.Ingestor;
 import com.astorage.normalization.VariantBatchNormalizer;
 import com.astorage.normalization.VariantNormalizer;
 import com.astorage.query.Query;
+import com.astorage.query.UniversalVariantQuery;
 import com.astorage.utils.Constants;
 import com.astorage.utils.dbnsfp.DbNSFPConstants;
 import com.astorage.utils.fasta.FastaConstants;
+import com.astorage.utils.universal_variant.UniversalVariantConstants;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -17,6 +19,7 @@ import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.StaticHandler;
 import org.rocksdb.RocksDBException;
 
 import java.io.File;
@@ -50,6 +53,13 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 		}
 
 		try {
+			dbRepositories.put(
+				UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME,
+				new RocksDBRepository(
+					UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME.toLowerCase(), dataDirectoryPath)
+			);
+			this.setUniversalVariantQueryHandler(router);
+
 			for (String formatName : FORMAT_NAMES) {
 				dbRepositories.put(
 					formatName,
@@ -58,9 +68,10 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 				this.setIngestionHandler(formatName, router);
 				this.setQueryHandler(formatName, router);
 				this.setBatchQueryHandler(formatName, router);
-				this.setNormalizationHandler(router);
-				this.setBatchNormalizationHandler(router);
 			}
+
+			this.setNormalizationHandler(router);
+			this.setBatchNormalizationHandler(router);
 		} catch (IOException | RocksDBException e) {
 			startPromise.fail(ROCKS_DB_INIT_ERROR);
 
@@ -68,6 +79,7 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 		}
 
 		setStopHandler(router);
+		this.setSwaggerHandler(router);
 
 		server.requestHandler(router).listen(HTTP_SERVER_PORT, result -> {
 			if (result.succeeded()) {
@@ -111,9 +123,19 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 		router.post("/ingestion/" + formatName.toLowerCase()).handler((RoutingContext context) -> {
 			try {
 				Class<?> cls = Class.forName("com.astorage.ingestion." + formatName + "Ingestor");
-				Constructor<?> constructor = cls.getConstructor(RoutingContext.class, RocksDBRepository.class);
+				Constructor<?> constructor = cls.getConstructor(
+					RoutingContext.class,
+					RocksDBRepository.class,
+					RocksDBRepository.class,
+					RocksDBRepository.class
+				);
 
-				Ingestor ingestor = (Ingestor) constructor.newInstance(context, dbRepositories.get(formatName));
+				Ingestor ingestor = (Ingestor) constructor.newInstance(
+					context,
+					dbRepositories.get(formatName),
+					dbRepositories.get(UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME),
+					dbRepositories.get(FastaConstants.FASTA_FORMAT_NAME)
+				);
 				ingestor.ingestionHandler();
 			} catch (Exception e) {
 				Constants.errorResponse(context.request(), HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
@@ -149,6 +171,22 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 		});
 	}
 
+	private void setUniversalVariantQueryHandler(Router router) {
+		router.get("/query/" + UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME.toLowerCase())
+			.handler((RoutingContext context) -> {
+				try {
+					UniversalVariantQuery universalVariantQuery = new UniversalVariantQuery(
+						context,
+						dbRepositories
+					);
+
+					universalVariantQuery.queryHandler();
+				} catch (Exception e) {
+					Constants.errorResponse(context.request(), HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
+				}
+			});
+	}
+
 	private void setNormalizationHandler(Router router) {
 		router.get("/normalization").handler((RoutingContext context) -> {
 			try {
@@ -164,7 +202,7 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 		});
 	}
 
-	private void setBatchNormalizationHandler(	Router router) {
+	private void setBatchNormalizationHandler(Router router) {
 		router.post("/batch-normalization").handler((RoutingContext context) -> {
 			try {
 				VariantBatchNormalizer variantBatchNormalizer = new VariantBatchNormalizer(
@@ -183,12 +221,14 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 		router.get("/stop").handler((RoutingContext context) -> {
 			HttpServerRequest req = context.request();
 
-			req.response()
-				.putHeader("content-type", "text/plain")
-				.end(HTTP_SERVER_STOP + "\n");
+			Constants.successResponse(req, HTTP_SERVER_STOP);
 
 			vertx.close();
 		});
+	}
+
+	private void setSwaggerHandler(Router router) {
+		router.route("/*").handler(StaticHandler.create());
 	}
 
 	private boolean initializeDirectories(String dataDirectoryPath) {

@@ -15,14 +15,16 @@ import java.util.Arrays;
 import static com.astorage.utils.gerp.GERPHelper.createKey;
 
 @SuppressWarnings("unused")
-public class GERPIngestor implements Ingestor, Constants, GERPConstants {
-	private final RoutingContext context;
-	private final RocksDBRepository dbRep;
+public class GERPIngestor extends Ingestor implements Constants, GERPConstants {
 	private String chromosome;
 
-	public GERPIngestor(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+	public GERPIngestor(
+		RoutingContext context,
+		RocksDBRepository dbRep,
+		RocksDBRepository universalVariantDbRep,
+		RocksDBRepository fastaDbRep
+	) {
+		super(context, dbRep, universalVariantDbRep, fastaDbRep);
 	}
 
 	public void ingestionHandler() {
@@ -56,11 +58,7 @@ public class GERPIngestor implements Ingestor, Constants, GERPConstants {
 			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 		}
 
-		String response = INGESTION_FINISH_MSG + "\n";
-
-		req.response()
-			.putHeader("content-type", "text/plain")
-			.end(response);
+		Constants.successResponse(req, INGESTION_FINISH_MSG);
 	}
 
 	private boolean detectChromosomeFromFilename(String filename) {
@@ -68,11 +66,7 @@ public class GERPIngestor implements Ingestor, Constants, GERPConstants {
 		int endIdx = filename.indexOf(FILENAME_CHROMOSOME_SUFFIX, startIdx);
 
 		if (startIdx == FILENAME_CHROMOSOME_PREFIX.length() - 1 || endIdx == -1) {
-			Constants.errorResponse(
-				context.request(),
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				CHROMOSOME_NOT_DETECTED_IN_FILENAME
-			);
+			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_BAD_REQUEST, CHROMOSOME_NOT_DETECTED_IN_FILENAME);
 
 			return false;
 		}

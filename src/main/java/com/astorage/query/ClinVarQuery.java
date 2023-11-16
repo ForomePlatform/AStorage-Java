@@ -16,13 +16,9 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
-public class ClinVarQuery implements Query, Constants, ClinVarConstants {
-	protected final RoutingContext context;
-	protected final RocksDBRepository dbRep;
-
+public class ClinVarQuery extends SingleFormatQuery implements Constants, ClinVarConstants {
 	public ClinVarQuery(RoutingContext context, RocksDBRepository dbRep) {
-		this.context = context;
-		this.dbRep = dbRep;
+		super(context, dbRep);
 	}
 
 	public void queryHandler() throws IOException {
@@ -48,7 +44,6 @@ public class ClinVarQuery implements Query, Constants, ClinVarConstants {
 
 	protected void singleQueryHandler(String chr, String startPos, String endPos, boolean isBatched) throws IOException {
 		HttpServerRequest req = context.request();
-		JsonObject errorJson = new JsonObject();
 
 		try {
 			if (!LETTER_CHROMOSOMES.contains(chr.toUpperCase())) {
@@ -58,40 +53,41 @@ public class ClinVarQuery implements Query, Constants, ClinVarConstants {
 			Long.parseLong(startPos);
 			Long.parseLong(endPos);
 		} catch (NumberFormatException e) {
-			errorJson.put(ERROR, INVALID_CHR_OR_POS_ERROR);
-
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_CHR_OR_POS_ERROR);
 
 			return;
 		}
 
+		try {
+			JsonObject result = queryData(dbRep, chr, startPos, endPos);
+
+			if (isBatched) {
+				req.response().write(result + "\n");
+			} else {
+				req.response()
+					.putHeader("content-type", "application/json")
+					.end(result + "\n");
+			}
+		} catch (Exception e) {
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
+		}
+	}
+
+	public static JsonObject queryData(RocksDBRepository dbRep, String chr, String startPos, String endPos) throws Exception {
 		ColumnFamilyHandle variantColumnFamilyHandle = dbRep.getColumnFamilyHandle(VARIANT_SUMMARY_COLUMN_FAMILY_NAME);
 		ColumnFamilyHandle significanceColumnFamilyHandle = dbRep.getColumnFamilyHandle(SIGNIFICANCE_COLUMN_FAMILY_NAME);
 		ColumnFamilyHandle submitterColumnFamilyHandle = dbRep.getColumnFamilyHandle(SUBMITTER_COLUMN_FAMILY_NAME);
 		if (
 			variantColumnFamilyHandle == null
-			|| significanceColumnFamilyHandle == null
-			|| submitterColumnFamilyHandle == null
+				|| significanceColumnFamilyHandle == null
+				|| submitterColumnFamilyHandle == null
 		) {
-			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, COLUMN_FAMILY_NULL_ERROR);
-			return;
+			throw new Exception(COLUMN_FAMILY_NULL_ERROR);
 		}
 
 		byte[] compressedVariant = dbRep.getBytes(Variant.generateKey(chr, startPos, endPos), variantColumnFamilyHandle);
 		if (compressedVariant == null) {
-			errorJson.put(ERROR, RESULT_NOT_FOUND_ERROR);
-
-			Constants.errorResponse(
-				req,
-				HttpURLConnection.HTTP_BAD_REQUEST,
-				errorJson.toString()
-			);
-
-			return;
+			throw new Exception(RESULT_NOT_FOUND_ERROR);
 		}
 
 		String decompressedVariant = Constants.decompressJson(compressedVariant);
@@ -100,9 +96,7 @@ public class ClinVarQuery implements Query, Constants, ClinVarConstants {
 		JsonArray significancesJson = new JsonArray();
 
 		String[] rcvAccessions = result.getString(RCV_ACCESSION_COLUMN_NAME).split(RCV_ACCESSIONS_DELIMITER);
-		for (int i = 0; i < rcvAccessions.length; i++) {
-			String rcvAccession = rcvAccessions[i];
-
+		for (String rcvAccession : rcvAccessions) {
 			byte[] compressedSignificance = dbRep.getBytes(Significance.generateKey(rcvAccession), significanceColumnFamilyHandle);
 			if (compressedSignificance != null) {
 				String decompressedSignificance = Constants.decompressJson(compressedSignificance);
@@ -124,12 +118,6 @@ public class ClinVarQuery implements Query, Constants, ClinVarConstants {
 
 		result.put(SIGNIFICANCES_JSON_KEY, significancesJson);
 
-		if (isBatched) {
-			req.response().write(result + "\n");
-		} else {
-			req.response()
-				.putHeader("content-type", "text/json")
-				.end(result + "\n");
-		}
+		return result;
 	}
 }

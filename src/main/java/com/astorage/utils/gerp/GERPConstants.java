@@ -13,7 +13,7 @@ public interface GERPConstants {
 	String POS_PARAM = "pos";
 
 	// Success messages:
-	String INGESTION_FINISH_MSG = "All Data has been ingested.";
+	String INGESTION_FINISH_MSG = "All data has been ingested.";
 
 	// Error messages:
 	String CHROMOSOME_NOT_DETECTED_IN_FILENAME = "Chromosome couldn't be detected in the filename...";

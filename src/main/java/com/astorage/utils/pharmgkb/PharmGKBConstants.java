@@ -29,7 +29,7 @@ public interface PharmGKBConstants {
 	String COLUMNS_DELIMITER = "\t";
 
 	// Success messages:
-	String INGESTION_FINISH_MSG = "All Data has been ingested.";
+	String INGESTION_FINISH_MSG = "All data has been ingested.";
 
 	// Error messages:
 	String INVALID_DATA_TYPE_ERROR = "Invalid data type, should be either \"g\" or \"e\"...";

@@ -45,8 +45,8 @@ public class Variant implements GTFConstants {
 	private void saveChosenAttributes(String[] attributes) {
 		for (String attribute : attributes) {
 			String[] pair = attribute.strip().split(ATTRIBUTE_PAIR_DELIMITER);
+
 			if (pair.length >= 2 && CHOSEN_ATTRIBUTE_FIELDS.containsKey(pair[0])) {
-				System.out.println("HELLO?");
 				variantColumnValues.put(CHOSEN_ATTRIBUTE_FIELDS.get(pair[0]), pair[1].strip());
 			}
 		}

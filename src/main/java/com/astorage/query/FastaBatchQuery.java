@@ -12,7 +12,7 @@ import io.vertx.ext.web.RoutingContext;
 import java.net.HttpURLConnection;
 
 @SuppressWarnings("unused")
-public class FastaBatchQuery extends FastaQuery implements Query, Constants, FastaConstants {
+public class FastaBatchQuery extends FastaQuery implements Constants, FastaConstants {
 	public FastaBatchQuery(RoutingContext context, RocksDBRepository dbRep) {
 		super(context, dbRep);
 	}
@@ -25,7 +25,7 @@ public class FastaBatchQuery extends FastaQuery implements Query, Constants, Fas
 				JsonArray queries = buffer.toJsonArray();
 
 				req.response().setChunked(true);
-				req.response().putHeader("content-type", "text/json");
+				req.response().putHeader("content-type", "application/json");
 
 				for (Object queryObject : queries) {
 					JsonObject query = (JsonObject) queryObject;
