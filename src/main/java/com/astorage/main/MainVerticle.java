@@ -10,9 +10,7 @@ import com.astorage.utils.Constants;
 import com.astorage.utils.dbnsfp.DbNSFPConstants;
 import com.astorage.utils.fasta.FastaConstants;
 import com.astorage.utils.universal_variant.UniversalVariantConstants;
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
+import io.vertx.core.*;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.DecodeException;
@@ -31,6 +29,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 public class MainVerticle extends AbstractVerticle implements Constants, FastaConstants, DbNSFPConstants {
 	private final Map<String, RocksDBRepository> dbRepositories = new HashMap<>();
@@ -145,15 +145,35 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 
 	private void setQueryHandler(String formatName, Router router) {
 		router.get("/query/" + formatName.toLowerCase()).handler((RoutingContext context) -> {
-			try {
-				Class<?> cls = Class.forName("com.astorage.query." + formatName + "Query");
-				Constructor<?> constructor = cls.getConstructor(RoutingContext.class, RocksDBRepository.class);
+			WorkerExecutor executor = vertx.createSharedWorkerExecutor(
+				formatName + "-query-executor",
+				QUERY_EXECUTOR_POOL_SIZE_LIMIT,
+				QUERY_EXECUTOR_TIME_LIMIT_DAYS,
+				TimeUnit.DAYS
+			);
 
-				Query query = (Query) constructor.newInstance(context, dbRepositories.get(formatName));
-				query.queryHandler();
-			} catch (Exception e) {
-				Constants.errorResponse(context.request(), HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
-			}
+			Callable<Boolean> callable = () -> {
+				System.out.println(formatName + "-query-executor started working...");
+
+				try {
+					Class<?> cls = Class.forName("com.astorage.query." + formatName + "Query");
+					Constructor<?> constructor = cls.getConstructor(RoutingContext.class, RocksDBRepository.class);
+
+					Query query = (Query) constructor.newInstance(context, dbRepositories.get(formatName));
+					query.queryHandler();
+
+					return true;
+				} catch (Exception e) {
+					Constants.errorResponse(context.request(), HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
+
+					return false;
+				}
+			};
+
+			executor.executeBlocking(callable, false).onComplete(handler -> {
+				System.out.println(formatName + "-query-executor finished working!");
+				executor.close();
+			});
 		});
 	}
 

@@ -28,6 +28,8 @@ import java.util.zip.GZIPOutputStream;
 public interface Constants {
 	// General:
 	int HTTP_SERVER_PORT = 8080;
+	int QUERY_EXECUTOR_POOL_SIZE_LIMIT = 4;
+	int QUERY_EXECUTOR_TIME_LIMIT_DAYS = 1;
 	String USER_HOME = System.getProperty("user.home");
 	String ASTORAGE_DIRECTORY_NAME = "/AStorage";
 	String DATA_DIRECTORY_PATH = System.getProperty("user.home") + "/AStorage";
