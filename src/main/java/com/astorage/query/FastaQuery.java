@@ -102,7 +102,7 @@ public class FastaQuery extends SingleFormatQuery implements Constants, FastaCon
 
 		StringBuilder data = new StringBuilder();
 		for (long i = startPos; i <= endPos; i++) {
-			String retrievedData = dbRep.getString(FastaIngestor.generateKey("chr" + chr, i), columnFamilyHandle);
+			String retrievedData = dbRep.getString(FastaIngestor.generateKey(chr, i), columnFamilyHandle);
 
 			if (retrievedData == null) {
 				return null;
