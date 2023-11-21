@@ -20,7 +20,7 @@ paths:
           description: Reference build name
           schema:
             type: string
-            example: hg38
+            example: GRCh38
         - name: dataPath
           in: query
           required: true
@@ -84,6 +84,13 @@ paths:
           schema:
             type: string
             example: g
+        - name: refBuild
+          in: query
+          required: true
+          description: Reference build to be used during normalization
+          schema:
+            type: string
+            example: GRCh37
       responses:
         '200':
           description: Success message in JSON
@@ -105,6 +112,13 @@ paths:
           schema:
             type: string
             example: spliceai_scores.masked.indel.hg38.vcf.gz
+        - name: refBuild
+          in: query
+          required: true
+          description: Reference build to be used during normalization
+          schema:
+            type: string
+            example: GRCh38
       responses:
         '200':
           description: Success message in JSON
@@ -161,6 +175,13 @@ paths:
           schema:
             type: string
             example: variant_summary.txt.gz
+        - name: refBuild
+          in: query
+          required: true
+          description: Reference build to be used during normalization
+          schema:
+            type: string
+            example: GRCh37
       responses:
         '200':
           description: Success message in JSON

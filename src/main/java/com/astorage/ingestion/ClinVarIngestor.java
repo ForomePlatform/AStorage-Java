@@ -9,6 +9,7 @@ import com.astorage.utils.clinvar.Submitter;
 import com.astorage.utils.clinvar.Variant;
 import com.astorage.utils.universal_variant.UniversalVariantConstants;
 import com.astorage.utils.universal_variant.UniversalVariantHelper;
+import com.astorage.utils.variant_normalizer.VariantNormalizerConstants;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
@@ -39,6 +40,9 @@ public class ClinVarIngestor extends Ingestor implements Constants, ClinVarConst
 	private boolean isReferenceBlock = false;
 	private boolean isClinicalSignificanceDescriptionBlock = false;
 
+	// Reference build to be used during normalization
+	private String refBuild;
+
 	public ClinVarIngestor(
 		RoutingContext context,
 		RocksDBRepository dbRep,
@@ -56,9 +60,10 @@ public class ClinVarIngestor extends Ingestor implements Constants, ClinVarConst
 		HttpServerRequest req = context.request();
 
 		if (
-			req.params().size() != 2
+			req.params().size() != 3
 				|| !req.params().contains(DATA_PATH_PARAM)
 				|| !req.params().contains(DATA_SUMMARY_PATH_PARAM)
+				|| !req.params().contains(VariantNormalizerConstants.REF_BUILD_PARAM)
 		) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
 
@@ -67,6 +72,7 @@ public class ClinVarIngestor extends Ingestor implements Constants, ClinVarConst
 
 		String dataPath = req.getParam(DATA_PATH_PARAM);
 		String dataSummaryPath = req.getParam(DATA_SUMMARY_PATH_PARAM);
+		this.refBuild = req.getParam(VariantNormalizerConstants.REF_BUILD_PARAM);
 
 		storeXMLData(dataPath);
 		storeVariantSummeryData(dataSummaryPath);
@@ -188,6 +194,10 @@ public class ClinVarIngestor extends Ingestor implements Constants, ClinVarConst
 	}
 
 	private void ingestQueryParams(Variant variant) throws Exception {
+		if (this.refBuild.isEmpty()) {
+			return;
+		}
+
 		String chr = variant.variantColumnValues.get(CHROMOSOME_COLUMN_NAME);
 		String start_pos = variant.variantColumnValues.get(START_POSITION_COLUMN_NAME);
 		String end_pos = variant.variantColumnValues.get(END_POSITION_COLUMN_NAME);
@@ -195,7 +205,7 @@ public class ClinVarIngestor extends Ingestor implements Constants, ClinVarConst
 		String alt = variant.variantColumnValues.get(ALT_COLUMN_NAME);
 
 		JsonObject normalizedVariantJson = VariantNormalizer.normalizeVariant(
-			"hg38",
+			this.refBuild,
 			chr,
 			start_pos,
 			ref,
