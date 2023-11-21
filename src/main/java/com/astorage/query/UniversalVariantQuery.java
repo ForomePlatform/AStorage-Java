@@ -140,9 +140,10 @@ public class UniversalVariantQuery implements Query, Constants, UniversalVariant
 				JsonObject queryResult = (JsonObject) queryDataMethod.invoke(null, queryParamsWithDBRep.toArray());
 
 				result.put(FORMAT_NAMES[i], queryResult);
-			} catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException |
-                     IllegalAccessException e) {
+			} catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException e) {
 				throw new RuntimeException(e);
+			} catch (InvocationTargetException ignored) {
+				// Ignores exceptions that are thrown when a variant isn't found during queryData invocation
 			}
         }
 

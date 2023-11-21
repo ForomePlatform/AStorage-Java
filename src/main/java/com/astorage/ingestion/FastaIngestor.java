@@ -89,6 +89,11 @@ public class FastaIngestor extends Ingestor implements Constants, FastaConstants
 			if (line.startsWith(">")) {
 				String refSeq = line.substring(1).split(" ")[0];
 				chr = metadata.get(refSeq);
+
+				if (chr.contains("chr")) {
+					chr = chr.substring(3);
+				}
+
 				idx = 1;
 			} else if (chr != null) {
 				for (int i = 0; i < line.length(); i++) {

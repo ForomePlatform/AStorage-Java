@@ -8,6 +8,7 @@ import com.astorage.utils.gnomad.GnomADHelper;
 import com.astorage.utils.gnomad.Variant;
 import com.astorage.utils.universal_variant.UniversalVariantConstants;
 import com.astorage.utils.universal_variant.UniversalVariantHelper;
+import com.astorage.utils.variant_normalizer.VariantNormalizerConstants;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
@@ -24,6 +25,9 @@ import java.util.zip.GZIPInputStream;
  */
 @SuppressWarnings("unused")
 public class GnomADIngestor extends Ingestor implements Constants, GnomADConstants {
+	// Reference build to be used during normalization
+	private String refBuild;
+
 	public GnomADIngestor(
 		RoutingContext context,
 		RocksDBRepository dbRep,
@@ -37,9 +41,10 @@ public class GnomADIngestor extends Ingestor implements Constants, GnomADConstan
 		HttpServerRequest req = context.request();
 
 		if (
-			req.params().size() != 2
+			req.params().size() != 3
 				|| !req.params().contains(DATA_URL_PARAM)
 				|| !req.params().contains(SOURCE_TYPE_PARAM)
+				|| !req.params().contains(VariantNormalizerConstants.REF_BUILD_PARAM)
 		) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
 
@@ -48,6 +53,7 @@ public class GnomADIngestor extends Ingestor implements Constants, GnomADConstan
 
 		String dataURL = req.getParam(DATA_URL_PARAM);
 		String sourceType = req.getParam(SOURCE_TYPE_PARAM);
+		this.refBuild = req.getParam(VariantNormalizerConstants.REF_BUILD_PARAM);
 
 		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(sourceType);
 		if (columnFamilyHandle == null) {
@@ -117,11 +123,15 @@ public class GnomADIngestor extends Ingestor implements Constants, GnomADConstan
 	}
 
 	private void ingestQueryParams(String chr, String pos, Variant variant, String sourceType) throws Exception {
+		if (this.refBuild.isEmpty()) {
+			return;
+		}
+
 		String ref = variant.variantColumnValues.get(REF_COLUMN_NAME);
 		String alt = variant.variantColumnValues.get(ALT_COLUMN_NAME);
 
 		JsonObject normalizedVariantJson = VariantNormalizer.normalizeVariant(
-			"hg38",
+			this.refBuild,
 			chr,
 			pos,
 			ref,

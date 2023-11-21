@@ -10,9 +10,7 @@ import com.astorage.utils.Constants;
 import com.astorage.utils.dbnsfp.DbNSFPConstants;
 import com.astorage.utils.fasta.FastaConstants;
 import com.astorage.utils.universal_variant.UniversalVariantConstants;
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
+import io.vertx.core.*;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.DecodeException;
@@ -31,9 +29,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 public class MainVerticle extends AbstractVerticle implements Constants, FastaConstants, DbNSFPConstants {
 	private final Map<String, RocksDBRepository> dbRepositories = new HashMap<>();
+	private final Map<String, WorkerExecutor> workerExecutors = new HashMap<>();
 
 	@Override
 	public void start(Promise<Void> startPromise) {
@@ -55,9 +56,9 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 		try {
 			dbRepositories.put(
 				UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME,
-				new RocksDBRepository(
-					UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME.toLowerCase(), dataDirectoryPath)
+				new RocksDBRepository(UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME.toLowerCase(), dataDirectoryPath)
 			);
+
 			this.setUniversalVariantQueryHandler(router);
 
 			for (String formatName : FORMAT_NAMES) {
@@ -65,6 +66,9 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 					formatName,
 					new RocksDBRepository(formatName.toLowerCase(), dataDirectoryPath)
 				);
+
+				this.createAndStoreWorkerExecutors(formatName);
+
 				this.setIngestionHandler(formatName, router);
 				this.setQueryHandler(formatName, router);
 				this.setBatchQueryHandler(formatName, router);
@@ -105,6 +109,10 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 			rocksDBRepository.close();
 		}
 
+		for (WorkerExecutor workerExecutor : workerExecutors.values()) {
+			workerExecutor.close();
+		}
+
 		System.out.println(HTTP_SERVER_STOP);
 
 		stopPromise.complete();
@@ -119,41 +127,92 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 		System.setProperty("jdk.xml.totalEntitySizeLimit", "0");
 	}
 
+	private void createAndStoreWorkerExecutors(String formatName) {
+		String ingestionExecutorName = formatName + INGESTION_EXECUTOR_SUFFIX;
+		WorkerExecutor ingestionExecutor = vertx.createSharedWorkerExecutor(
+			ingestionExecutorName,
+			INGESTION_EXECUTOR_POOL_SIZE_LIMIT,
+			EXECUTOR_TIME_LIMIT_DAYS,
+			TimeUnit.DAYS
+		);
+
+		String queryExecutorName = formatName + QUERY_EXECUTOR_SUFFIX;
+		WorkerExecutor queryExecutor = vertx.createSharedWorkerExecutor(
+			formatName + QUERY_EXECUTOR_SUFFIX,
+			QUERY_EXECUTOR_POOL_SIZE_LIMIT,
+			EXECUTOR_TIME_LIMIT_DAYS,
+			TimeUnit.DAYS
+		);
+
+		workerExecutors.put(ingestionExecutorName, ingestionExecutor);
+		workerExecutors.put(queryExecutorName, queryExecutor);
+	}
+
 	private void setIngestionHandler(String formatName, Router router) {
 		router.post("/ingestion/" + formatName.toLowerCase()).handler((RoutingContext context) -> {
-			try {
-				Class<?> cls = Class.forName("com.astorage.ingestion." + formatName + "Ingestor");
-				Constructor<?> constructor = cls.getConstructor(
-					RoutingContext.class,
-					RocksDBRepository.class,
-					RocksDBRepository.class,
-					RocksDBRepository.class
-				);
+			String ingestionExecutorName = formatName + INGESTION_EXECUTOR_SUFFIX;
+			WorkerExecutor executor = workerExecutors.get(ingestionExecutorName);
 
-				Ingestor ingestor = (Ingestor) constructor.newInstance(
-					context,
-					dbRepositories.get(formatName),
-					dbRepositories.get(UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME),
-					dbRepositories.get(FastaConstants.FASTA_FORMAT_NAME)
-				);
-				ingestor.ingestionHandler();
-			} catch (Exception e) {
-				Constants.errorResponse(context.request(), HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
-			}
+			Callable<Boolean> callable = () -> {
+				System.out.println(ingestionExecutorName + " started working...");
+
+				try {
+					Class<?> cls = Class.forName("com.astorage.ingestion." + formatName + "Ingestor");
+					Constructor<?> constructor = cls.getConstructor(
+						RoutingContext.class,
+						RocksDBRepository.class,
+						RocksDBRepository.class,
+						RocksDBRepository.class
+					);
+
+					Ingestor ingestor = (Ingestor) constructor.newInstance(
+						context,
+						dbRepositories.get(formatName),
+						dbRepositories.get(UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME),
+						dbRepositories.get(FastaConstants.FASTA_FORMAT_NAME)
+					);
+					ingestor.ingestionHandler();
+
+					return true;
+				} catch (Exception e) {
+					Constants.errorResponse(context.request(), HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
+
+					return false;
+				}
+			};
+
+			executor.executeBlocking(callable, false).onComplete(handler -> {
+				System.out.println(ingestionExecutorName + " finished working!");
+			});
 		});
 	}
 
 	private void setQueryHandler(String formatName, Router router) {
 		router.get("/query/" + formatName.toLowerCase()).handler((RoutingContext context) -> {
-			try {
-				Class<?> cls = Class.forName("com.astorage.query." + formatName + "Query");
-				Constructor<?> constructor = cls.getConstructor(RoutingContext.class, RocksDBRepository.class);
+			String queryExecutorName = formatName + QUERY_EXECUTOR_SUFFIX;
+			WorkerExecutor executor = workerExecutors.get(queryExecutorName);
 
-				Query query = (Query) constructor.newInstance(context, dbRepositories.get(formatName));
-				query.queryHandler();
-			} catch (Exception e) {
-				Constants.errorResponse(context.request(), HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
-			}
+			Callable<Boolean> callable = () -> {
+				System.out.println(queryExecutorName + " started working...");
+
+				try {
+					Class<?> cls = Class.forName("com.astorage.query." + formatName + "Query");
+					Constructor<?> constructor = cls.getConstructor(RoutingContext.class, RocksDBRepository.class);
+
+					Query query = (Query) constructor.newInstance(context, dbRepositories.get(formatName));
+					query.queryHandler();
+
+					return true;
+				} catch (Exception e) {
+					Constants.errorResponse(context.request(), HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
+
+					return false;
+				}
+			};
+
+			executor.executeBlocking(callable, false).onComplete(handler -> {
+				System.out.println(queryExecutorName + " finished working!");
+			});
 		});
 	}
 

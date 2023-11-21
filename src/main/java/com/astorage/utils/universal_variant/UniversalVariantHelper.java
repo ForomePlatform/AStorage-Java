@@ -2,7 +2,6 @@ package com.astorage.utils.universal_variant;
 
 import com.astorage.db.RocksDBRepository;
 import com.astorage.utils.Constants;
-import com.astorage.utils.variant_normalizer.VariantNormalizerHelper;
 import io.vertx.core.json.JsonObject;
 
 import java.io.IOException;
