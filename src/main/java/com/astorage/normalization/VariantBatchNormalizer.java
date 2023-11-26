@@ -27,7 +27,7 @@ public class VariantBatchNormalizer extends VariantNormalizer {
 				JsonArray queries = buffer.toJsonArray();
 
 				req.response().setChunked(true);
-				req.response().putHeader("content-type", "application/json");
+				req.response().putHeader("content-type", "application/octet-stream");
 
 				for (Object queryObject : queries) {
 					JsonObject query = (JsonObject) queryObject;

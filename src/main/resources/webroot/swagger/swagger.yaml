@@ -623,7 +623,7 @@ paths:
       tags: [
         Batch Query
       ]
-      summary: Batch queries data using the provided query JSON file
+      summary: Batch-queries provided query JSON file
       parameters:
         - name: formatName
           in: path
@@ -642,11 +642,83 @@ paths:
                 - $ref: '#/components/schemas/BatchQueryRequestBody'
       responses:
         '200':
-          description: Query result in JSONL
+          description: Batch-query result in JSONL
           content:
-            application/jsonl:
+            application/octet-stream:
               schema:
                 $ref: '#/components/schemas/BatchQueryResult'
+
+  /normalization:
+    get:
+      tags: [
+        Normalization
+      ]
+      summary: Normalizes given variant
+      parameters:
+        - name: refBuild
+          in: query
+          required: true
+          description: Reference build name
+          schema:
+            type: string
+            example: GRCh38
+        - name: chr
+          in: query
+          required: true
+          description: Chromosome number/letter
+          schema:
+            type: string
+            example: 1
+        - name: pos
+          in: query
+          required: true
+          description: Variant position
+          schema:
+            type: string
+            example: 69091
+        - name: ref
+          in: query
+          required: true
+          description: Reference nucleotide sequence
+          schema:
+            type: string
+            example: ATGGT
+        - name: alt
+          in: query
+          required: true
+          description: Alternate nucleotide sequence
+          schema:
+            type: string
+            example: A
+      responses:
+        '200':
+          description: Normalization result in JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NormalizationResult'
+
+  /batch-normalization:
+    post:
+      tags: [
+        Batch Normalization
+      ]
+      summary: Batch-normalizes provided normalization query JSON file
+      requestBody:
+        description: JSON array containing objects of normalization query parameters
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/BatchNormalizationRequestBody'
+      responses:
+        '200':
+          description: Batch-normalization result in JSONL
+          content:
+            application/octet-stream:
+              schema:
+                $ref: '#/components/schemas/BatchNormalizationResult'
 
   /stop:
     get:
@@ -680,4 +752,49 @@ components:
         {"chr": 16, "pos": 62584, "alt": "T"}
       ]
     BatchQueryResult:
+      type: object
+    NormalizationResult:
+      type: object
+      properties:
+        refBuild:
+          type: string
+          description: Reference build name
+        chr:
+          type: string
+          description: Chromosome number/letter
+        pos:
+          type: string
+          description: Normalized variant position
+        alt:
+          type: string
+          description: Normalized reference nucleotide sequence
+        ref:
+          type: string
+          description: Normalized alternate nucleotide sequence
+    BatchNormalizationRequestBody:
+      type: array
+      items:
+        type: object
+        properties:
+          refBuild:
+            type: string
+            description: Reference build name
+          chr:
+            type: string
+            description: Chromosome number/letter
+          pos:
+            type: string
+            description: Variant position
+          alt:
+            type: string
+            description: Reference nucleotide sequence
+          ref:
+            type: string
+            description: Alternate nucleotide sequence
+      example: [
+        {"refBuild": "GRCh38", "chr": 1, "pos": 69091, "ref": "ATGGT", "alt": "A"},
+        {"refBuild": "GRCh38", "chr": 1, "pos": 69092, "ref": "T", "alt": "TC"},
+        {"refBuild": "GRCh38", "chr": 1, "pos": 69094, "ref": "GTGA", "alt": "G"}
+      ]
+    BatchNormalizationResult:
       type: object
