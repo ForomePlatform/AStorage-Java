@@ -143,17 +143,17 @@ paths:
         - name: dataType
           in: query
           required: true
-          description: Type of the given data
+          description: Type of the given data [CA, CAmeta, CAmeta2CA, SPA, VDA, VDA2SPA, VFA, VFA2SPA, VPA, VPA2SPA]
           schema:
             type: string
-            example: CAmeta2CA
+            example: VFA
         - name: dataPath
           in: query
           required: true
           description: Path of the PharmGKB's data file
           schema:
             type: string
-            example: clinical_ann_metadata.tsv
+            example: var_fa_ann.tsv
       responses:
         '200':
           description: Success message in JSON
@@ -281,6 +281,343 @@ paths:
               schema:
                 $ref: '#/components/schemas/SuccessMessage'
 
+  /query/fasta:
+    get:
+      tags: [
+        Query
+      ]
+      summary: Queries data from Fasta
+      parameters:
+        - name: refBuild
+          in: query
+          required: true
+          description: Reference build to query data from
+          schema:
+            type: string
+            example: GRCh38
+        - name: chr
+          in: query
+          required: true
+          description: Chromosome number/letter
+          schema:
+            type: string
+            example: 1
+        - name: startPos
+          in: query
+          required: true
+          description: Start position
+          schema:
+            type: string
+            example: 69091
+        - name: endPos
+          in: query
+          required: true
+          description: End position
+          schema:
+            type: string
+            example: 69095
+      responses:
+        '200':
+          description: Query result in JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResult'
+  /query/dbnsfp:
+    get:
+      tags: [
+        Query
+      ]
+      summary: Queries data from dbNSFP v4.3a
+      parameters:
+        - name: chr
+          in: query
+          required: true
+          description: Chromosome number/letter
+          schema:
+            type: string
+            example: 1
+        - name: pos
+          in: query
+          required: true
+          description: Variant position
+          schema:
+            type: string
+            example: 69091
+        - name: alt
+          in: query
+          required: false
+          description: Alternate allele
+          schema:
+            type: string
+            example: C
+      responses:
+        '200':
+          description: Query result in JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResult'
+  /query/gnomad:
+    get:
+      tags: [
+        Query
+      ]
+      summary: Queries data from gnomAD v2.1.1
+      parameters:
+        - name: chr
+          in: query
+          required: true
+          description: Chromosome number/letter
+          schema:
+            type: string
+            example: 1
+        - name: pos
+          in: query
+          required: true
+          description: Variant position
+          schema:
+            type: string
+            example: 69091
+        - name: sourceType
+          in: query
+          required: true
+          description: Variant source type, g for genome or e for exome
+          schema:
+            type: string
+            example: g
+      responses:
+        '200':
+          description: Query result in JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResult'
+  /query/spliceai:
+    get:
+      tags: [
+        Query
+      ]
+      summary: Queries data from SpliceAI v1.3
+      parameters:
+        - name: chr
+          in: query
+          required: true
+          description: Chromosome number/letter
+          schema:
+            type: string
+            example: 1
+        - name: pos
+          in: query
+          required: true
+          description: Variant position
+          schema:
+            type: string
+            example: 69091
+      responses:
+        '200':
+          description: Query result in JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResult'
+  /query/pharmgkb:
+    get:
+      tags: [
+        Query
+      ]
+      summary: Queries data from PharmGKB
+      parameters:
+        - name: dataType
+          in: query
+          required: true
+          description: Record data type [CA, CAmeta, CAmeta2CA, SPA, VDA, VDA2SPA, VFA, VFA2SPA, VPA, VPA2SPA]
+          schema:
+            type: string
+            example: VFA
+        - name: id
+          in: query
+          required: true
+          description: Record ID
+          schema:
+            type: string
+            example: 1447990384
+      responses:
+        '200':
+          description: Query result in JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResult'
+  /query/clinvar:
+    get:
+      tags: [
+        Query
+      ]
+      summary: Queries data from ClinVar
+      parameters:
+        - name: chr
+          in: query
+          required: true
+          description: Chromosome number/letter
+          schema:
+            type: string
+            example: 1
+        - name: startPos
+          in: query
+          required: true
+          description: Start position
+          schema:
+            type: string
+            example: 69091
+        - name: endPos
+          in: query
+          required: true
+          description: End position
+          schema:
+            type: string
+            example: 69095
+      responses:
+        '200':
+          description: Query result in JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResult'
+  /query/gtex:
+    get:
+      tags: [
+        Query
+      ]
+      summary: Queries data from GTEx v8
+      parameters:
+        - name: dataType
+          in: query
+          required: true
+          description: Record data type [gene, tissue, geneToTissue]
+          schema:
+            type: string
+            example: geneToTissue
+        - name: geneId
+          in: query
+          required: false
+          description: Gene ID. Required for gene or geneToTissue data types
+          schema:
+            type: string
+            example: ENSG00000227232
+        - name: subId
+          in: query
+          required: false
+          description: Sub ID. Required for gene or geneToTissue data types
+          schema:
+            type: string
+            example: 5
+        - name: tissueNo
+          in: query
+          required: false
+          description: Tissue number. Required for tissue or geneToTissue data types
+          schema:
+            type: string
+            example: 6
+      responses:
+        '200':
+          description: Query result in JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResult'
+  /query/gtf:
+    get:
+      tags: [
+        Query
+      ]
+      summary: Queries data from GTF
+      parameters:
+        - name: chr
+          in: query
+          required: true
+          description: Chromosome number/letter
+          schema:
+            type: string
+            example: 1
+        - name: startPos
+          in: query
+          required: true
+          description: Start position
+          schema:
+            type: string
+            example: 69091
+        - name: endPos
+          in: query
+          required: true
+          description: End position
+          schema:
+            type: string
+            example: 69095
+      responses:
+        '200':
+          description: Query result in JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResult'
+  /query/gerp:
+    get:
+      tags: [
+        Query
+      ]
+      summary: Queries data from GERP
+      parameters:
+        - name: chr
+          in: query
+          required: true
+          description: Chromosome number/letter
+          schema:
+            type: string
+            example: 1
+        - name: pos
+          in: query
+          required: true
+          description: Variant position
+          schema:
+            type: string
+            example: 69091
+      responses:
+        '200':
+          description: Query result in JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResult'
+  /query/dbsnp:
+    get:
+      tags: [
+        Query
+      ]
+      summary: Queries data from dbSNP
+      parameters:
+        - name: chr
+          in: query
+          required: true
+          description: Chromosome number/letter
+          schema:
+            type: string
+            example: 1
+        - name: pos
+          in: query
+          required: true
+          description: Variant position
+          schema:
+            type: string
+            example: 69091
+      responses:
+        '200':
+          description: Query result in JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResult'
+
   /stop:
     get:
       tags: [
@@ -303,3 +640,5 @@ components:
         success:
           type: string
           description: Success message
+    QueryResult:
+      type: object
