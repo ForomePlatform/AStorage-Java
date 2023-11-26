@@ -618,6 +618,36 @@ paths:
               schema:
                 $ref: '#/components/schemas/QueryResult'
 
+  /batch-query/{formatName}:
+    post:
+      tags: [
+        Batch Query
+      ]
+      summary: Batch queries data using the provided query JSON file
+      parameters:
+        - name: formatName
+          in: path
+          required: true
+          description: The format name to query data from
+          schema:
+            type: string
+            example: dbnsfp
+      requestBody:
+        description: JSON array containing objects of query parameters for the specified format
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/BatchQueryRequestBody'
+      responses:
+        '200':
+          description: Query result in JSONL
+          content:
+            application/jsonl:
+              schema:
+                $ref: '#/components/schemas/BatchQueryResult'
+
   /stop:
     get:
       tags: [
@@ -641,4 +671,13 @@ components:
           type: string
           description: Success message
     QueryResult:
+      type: object
+    BatchQueryRequestBody:
+      type: object
+      example: [
+        {"chr": 21, "pos": 5011799, "alt": "A"},
+        {"chr": 21, "pos": 5011800},
+        {"chr": 16, "pos": 62584, "alt": "T"}
+      ]
+    BatchQueryResult:
       type: object
