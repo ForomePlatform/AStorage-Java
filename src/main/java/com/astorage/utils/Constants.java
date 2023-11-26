@@ -30,7 +30,7 @@ public interface Constants {
 	int HTTP_SERVER_PORT = 8080;
 	int INGESTION_EXECUTOR_POOL_SIZE_LIMIT = 1;
 	int QUERY_EXECUTOR_POOL_SIZE_LIMIT = 4;
-	int EXECUTOR_TIME_LIMIT_DAYS = 1;
+	int EXECUTOR_TIME_LIMIT_DAYS = 7;
 	String INGESTION_EXECUTOR_SUFFIX = "-ingestion-executor";
 	String QUERY_EXECUTOR_SUFFIX = "-query-executor";
 	String USER_HOME = System.getProperty("user.home");
@@ -57,6 +57,8 @@ public interface Constants {
 	// Variant related:
 	String NUCLEOTIDES = "AGTCU";
 	String LETTER_CHROMOSOMES = "XYM";
+	String MITOCHONDRIAL_CHR = "M";
+	String MITOCHONDRIAL_CHR_ALT = "MT";
 
 	// Success messages:
 	String SUCCESS = "success";

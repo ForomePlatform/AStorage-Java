@@ -11,6 +11,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
 import java.net.HttpURLConnection;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Written according to GA4GH normalization technique.
@@ -101,11 +103,24 @@ public class VariantNormalizer implements Constants, VariantNormalizerConstants 
 		String alt,
 		RocksDBRepository dbRep
 	) throws Exception {
+		Pattern nucleotidePattern = Pattern.compile("^[" + NUCLEOTIDES + "]+$", Pattern.CASE_INSENSITIVE);
+		Matcher matcher = nucleotidePattern.matcher(alt);
+		boolean matchFound = matcher.find();
+
+		if (!matchFound) {
+			throw new Exception(GIVEN_ALT_NOT_SUPPORTED);
+		}
+
+		String modifiedChr = chr;
+		if (modifiedChr.equals(MITOCHONDRIAL_CHR_ALT)) {
+			modifiedChr = MITOCHONDRIAL_CHR;
+		}
+
 		try {
 			String refFromFasta = FastaQuery.queryData(
 				dbRep,
 				refBuild,
-				chr,
+				modifiedChr,
 				Long.parseLong(pos),
 				Long.parseLong(pos) + ref.length() - 1
 			);
@@ -120,7 +135,7 @@ public class VariantNormalizer implements Constants, VariantNormalizerConstants 
 		if (ref.equals(alt)) {
 			return VariantNormalizerHelper.createNormalizedVariantJson(
 				refBuild,
-				chr,
+				modifiedChr,
 				Long.parseLong(pos),
 				ref,
 				alt
@@ -141,31 +156,31 @@ public class VariantNormalizer implements Constants, VariantNormalizerConstants 
 			if (!trimmedRef.isEmpty() && !trimmedAlt.isEmpty()) {
 				return VariantNormalizerHelper.createNormalizedVariantJson(
 					refBuild,
-					chr,
+					modifiedChr,
 					newPos,
 					trimmedRef,
 					trimmedAlt
 				);
 			} else if (trimmedAlt.isEmpty()) {
-				String leftRollSequence = rollLeft(trimmedRef, newPos, refBuild, chr, dbRep);
-				String rightRollSequence = rollRight(trimmedRef, newPos + trimmedRef.length(), refBuild, chr, dbRep);
+				String leftRollSequence = rollLeft(trimmedRef, newPos, refBuild, modifiedChr, dbRep);
+				String rightRollSequence = rollRight(trimmedRef, newPos + trimmedRef.length(), refBuild, modifiedChr, dbRep);
 				newPos -= leftRollSequence.length();
 
 				return VariantNormalizerHelper.createNormalizedVariantJson(
 					refBuild,
-					chr,
+					modifiedChr,
 					newPos,
 					leftRollSequence + trimmedRef + rightRollSequence,
 					leftRollSequence + rightRollSequence
 				);
 			} else {
-				String leftRollSequence = rollLeft(trimmedAlt, newPos, refBuild, chr, dbRep);
-				String rightRollSequence = rollRight(trimmedAlt, newPos, refBuild, chr, dbRep);
+				String leftRollSequence = rollLeft(trimmedAlt, newPos, refBuild, modifiedChr, dbRep);
+				String rightRollSequence = rollRight(trimmedAlt, newPos, refBuild, modifiedChr, dbRep);
 				newPos -= leftRollSequence.length();
 
 				return VariantNormalizerHelper.createNormalizedVariantJson(
 					refBuild,
-					chr,
+					modifiedChr,
 					newPos,
 					leftRollSequence + rightRollSequence,
 					leftRollSequence + trimmedAlt + rightRollSequence

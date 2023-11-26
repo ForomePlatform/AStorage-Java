@@ -4,6 +4,7 @@ import com.astorage.db.RocksDBRepository;
 import com.astorage.utils.Constants;
 import com.astorage.utils.spliceai.SpliceAIConstants;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
@@ -70,13 +71,16 @@ public class SpliceAIQuery extends SingleFormatQuery implements Constants, Splic
 	public static JsonObject queryData(RocksDBRepository dbRep, String chr, String pos) throws Exception {
 		byte[] key = createKey(chr, pos);
 
-		byte[] compressedVariant = dbRep.getBytes(key);
-		if (compressedVariant == null) {
-			throw new Exception(VARIANT_NOT_FOUND_ERROR);
+		byte[] compressedVariants = dbRep.getBytes(key);
+		if (compressedVariants == null) {
+			throw new Exception(VARIANTS_NOT_FOUND_ERROR);
 		}
 
-		String decompressedVariant = Constants.decompressJson(compressedVariant);
+		String decompressedVariants = Constants.decompressJson(compressedVariants);
+		JsonArray variantsJsonArray = new JsonArray(decompressedVariants);
+		JsonObject variantsJsonObject = new JsonObject();
+		variantsJsonObject.put(QUERY_VARIANTS_KEY, variantsJsonArray);
 
-		return new JsonObject(decompressedVariant);
+		return variantsJsonObject;
 	}
 }

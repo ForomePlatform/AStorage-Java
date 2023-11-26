@@ -90,7 +90,7 @@ curl "localhost:8080/query/dbnsfp?chr=<chr_num>&pos=<pos>&alt=<alt_nucleotide>"
 To ingest data:
 [source]
 ----
-curl -X POST "localhost:8080/ingestion/gnomad?dataUrl=<data_url>&sourceType=<src_type>"
+curl -X POST "localhost:8080/ingestion/gnomad?dataUrl=<data_url>&sourceType=<src_type>&refBuild=<ref_build>"
 ----
 
 To query data:
@@ -106,7 +106,7 @@ curl "localhost:8080/query/gnomad?chr=<chr_num>&pos=<pos>&sourceType=<src_type>"
 To ingest data:
 [source]
 ----
-curl -X POST "localhost:8080/ingestion/spliceai?dataPath=<data_path>"
+curl -X POST "localhost:8080/ingestion/spliceai?dataPath=<data_path>&normalize=<normalize_boolean>&refBuild=<ref_build>"
 ----
 
 To query data:
@@ -138,7 +138,7 @@ curl "localhost:8080/query/pharmgkb?dataType=<data_type>&id=<id>"
 To ingest data:
 [source]
 ----
-curl -X POST "localhost:8080/ingestion/clinvar?dataPath=<data_path>&dataSummaryPath=<data_summary_path>"
+curl -X POST "localhost:8080/ingestion/clinvar?dataPath=<data_path>&dataSummaryPath=<data_summary_path>&refBuild=<ref_build>"
 ----
 
 To query data:

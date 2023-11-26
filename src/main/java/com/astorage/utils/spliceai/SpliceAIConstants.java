@@ -21,6 +21,7 @@ public interface SpliceAIConstants {
 	String REF_COLUMN_NAME = "REF";
 	String ALT_COLUMN_NAME = "ALT";
 	String INFO_COLUMN_NAME = "INFO";
+	String QUERY_VARIANTS_KEY = "variants";
 
 	// Success messages:
 	String INGESTION_FINISH_MSG = "All data has been ingested.";
@@ -28,5 +29,5 @@ public interface SpliceAIConstants {
 	// Error messages:
 	String INVALID_FILE_CONTENT = "Invalid file content...";
 	String INVALID_CHR_OR_POS_ERROR = "Invalid 'chr' or 'pos'...";
-	String VARIANT_NOT_FOUND_ERROR = "Variant doesn't exist for given 'chr' and 'pos'...";
+	String VARIANTS_NOT_FOUND_ERROR = "Variants don't exist for given 'chr' and 'pos'...";
 }

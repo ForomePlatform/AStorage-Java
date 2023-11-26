@@ -53,53 +53,63 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 			return;
 		}
 
-		try {
-			dbRepositories.put(
-				UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME,
-				new RocksDBRepository(UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME.toLowerCase(), dataDirectoryPath)
-			);
+		WorkerExecutor initExecutor = vertx.createSharedWorkerExecutor("init-executor", 1, 1, TimeUnit.DAYS);
 
-			this.setUniversalVariantQueryHandler(router);
-
-			for (String formatName : FORMAT_NAMES) {
+		Callable<Boolean> callable = () -> {
+			try {
 				dbRepositories.put(
-					formatName,
-					new RocksDBRepository(formatName.toLowerCase(), dataDirectoryPath)
+					UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME,
+					new RocksDBRepository(UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME.toLowerCase(), dataDirectoryPath)
 				);
 
-				this.createAndStoreWorkerExecutors(formatName);
+				this.setUniversalVariantQueryHandler(router);
 
-				this.setIngestionHandler(formatName, router);
-				this.setQueryHandler(formatName, router);
-				this.setBatchQueryHandler(formatName, router);
-			}
+				for (String formatName : FORMAT_NAMES) {
+					dbRepositories.put(
+						formatName,
+						new RocksDBRepository(formatName.toLowerCase(), dataDirectoryPath)
+					);
 
-			this.setNormalizationHandler(router);
-			this.setBatchNormalizationHandler(router);
-		} catch (IOException | RocksDBException e) {
-			startPromise.fail(ROCKS_DB_INIT_ERROR);
+					this.createAndStoreWorkerExecutors(formatName);
 
-			return;
-		}
-
-		setStopHandler(router);
-		this.setSwaggerHandler(router);
-
-		server.requestHandler(router).listen(HTTP_SERVER_PORT, result -> {
-			if (result.succeeded()) {
-				if (!initializeDirectories(dataDirectoryPath)) {
-					startPromise.fail(new IOException(INITIALIZING_DIRECTORY_ERROR));
-
-					return;
+					this.setIngestionHandler(formatName, router);
+					this.setQueryHandler(formatName, router);
+					this.setBatchQueryHandler(formatName, router);
 				}
 
-				System.out.println(HTTP_SERVER_START);
-				startPromise.complete();
-			} else {
-				System.err.println(HTTP_SERVER_FAIL);
-				result.cause().printStackTrace();
-				startPromise.fail(result.cause());
+				this.setNormalizationHandler(router);
+				this.setBatchNormalizationHandler(router);
+			} catch (IOException | RocksDBException e) {
+				startPromise.fail(ROCKS_DB_INIT_ERROR);
+
+				return false;
 			}
+
+			setStopHandler(router);
+			this.setSwaggerHandler(router);
+
+			return true;
+		};
+
+		initExecutor.executeBlocking(callable).onComplete(handler -> {
+			initExecutor.close();
+
+			server.requestHandler(router).listen(HTTP_SERVER_PORT, result -> {
+				if (result.succeeded()) {
+					if (!initializeDirectories(dataDirectoryPath)) {
+						startPromise.fail(new IOException(INITIALIZING_DIRECTORY_ERROR));
+
+						return;
+					}
+
+					System.out.println(HTTP_SERVER_START);
+					startPromise.complete();
+				} else {
+					System.err.println(HTTP_SERVER_FAIL);
+					result.cause().printStackTrace();
+					startPromise.fail(result.cause());
+				}
+			});
 		});
 	}
 
@@ -181,7 +191,7 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 				}
 			};
 
-			executor.executeBlocking(callable, false).onComplete(handler -> {
+			executor.executeBlocking(callable).onComplete(handler -> {
 				System.out.println(ingestionExecutorName + " finished working!");
 			});
 		});

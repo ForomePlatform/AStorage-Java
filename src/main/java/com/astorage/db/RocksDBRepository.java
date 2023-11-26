@@ -33,6 +33,7 @@ public class RocksDBRepository implements Constants {
 			// DBOptions config
 			dbOptions.setCreateIfMissing(true);
 			dbOptions.setCreateMissingColumnFamilies(true);
+			dbOptions.setMaxOpenFiles(16384);
 
 			File dbDir = new File(this.dbDirectoryPath, this.dbFormatName);
 			if (!dbDir.exists()) {

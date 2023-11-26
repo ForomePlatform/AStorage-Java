@@ -111,10 +111,17 @@ paths:
           description: Path of the SpliceAI's data file
           schema:
             type: string
-            example: spliceai_scores.masked.indel.hg38.vcf.gz
+            example: spliceai_scores.raw.indel.hg38.vcf.gz
+        - name: normalize
+          in: query
+          required: false
+          description: To also map normalized data alongside ingestion
+          schema:
+            type: string
+            example: true
         - name: refBuild
           in: query
-          required: true
+          required: false
           description: Reference build to be used during normalization
           schema:
             type: string
