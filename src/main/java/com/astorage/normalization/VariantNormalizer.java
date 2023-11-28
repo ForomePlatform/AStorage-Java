@@ -104,38 +104,47 @@ public class VariantNormalizer implements Constants, VariantNormalizerConstants 
 		RocksDBRepository dbRep
 	) throws Exception {
 		Pattern nucleotidePattern = Pattern.compile("^[" + NUCLEOTIDES + "]+$", Pattern.CASE_INSENSITIVE);
-		Matcher matcher = nucleotidePattern.matcher(alt);
-		boolean matchFound = matcher.find();
+		Matcher refMatcher = nucleotidePattern.matcher(ref);
+		Matcher altMatcher = nucleotidePattern.matcher(alt);
+		boolean refMatchFound = refMatcher.find();
+		boolean altMatchFound = altMatcher.find();
 
-		if (!matchFound) {
-			throw new Exception(GIVEN_ALT_NOT_SUPPORTED);
+
+		if (!refMatchFound || !altMatchFound) {
+			throw new Exception(GIVEN_REF_ALT_NOT_SUPPORTED);
 		}
 
-		String modifiedChr = chr;
-		if (modifiedChr.equals(MITOCHONDRIAL_CHR_ALT)) {
-			modifiedChr = MITOCHONDRIAL_CHR;
+		ref = ref.toUpperCase();
+		alt = alt.toUpperCase();
+
+		if (chr.equals(MITOCHONDRIAL_CHR_ALT)) {
+			chr = MITOCHONDRIAL_CHR;
 		}
 
 		try {
 			String refFromFasta = FastaQuery.queryData(
 				dbRep,
 				refBuild,
-				modifiedChr,
+				chr,
 				Long.parseLong(pos),
 				Long.parseLong(pos) + ref.length() - 1
 			);
 
-			if (refFromFasta == null || !refFromFasta.equals(ref)) {
+			if (refFromFasta == null) {
 				throw new Exception(REF_NOT_FOUND_ERROR);
+			}
+
+			if (!refFromFasta.equalsIgnoreCase(ref)) {
+				throw new Exception(REF_NOT_EQUAL_ERROR);
 			}
 		} catch (InternalError e) {
 			throw new Exception(e.getMessage());
 		}
 
-		if (ref.equals(alt)) {
+		if (ref.equalsIgnoreCase(alt)) {
 			return VariantNormalizerHelper.createNormalizedVariantJson(
 				refBuild,
-				modifiedChr,
+				chr,
 				Long.parseLong(pos),
 				ref,
 				alt
@@ -156,31 +165,31 @@ public class VariantNormalizer implements Constants, VariantNormalizerConstants 
 			if (!trimmedRef.isEmpty() && !trimmedAlt.isEmpty()) {
 				return VariantNormalizerHelper.createNormalizedVariantJson(
 					refBuild,
-					modifiedChr,
+					chr,
 					newPos,
 					trimmedRef,
 					trimmedAlt
 				);
 			} else if (trimmedAlt.isEmpty()) {
-				String leftRollSequence = rollLeft(trimmedRef, newPos, refBuild, modifiedChr, dbRep);
-				String rightRollSequence = rollRight(trimmedRef, newPos + trimmedRef.length(), refBuild, modifiedChr, dbRep);
+				String leftRollSequence = rollLeft(trimmedRef, newPos, refBuild, chr, dbRep);
+				String rightRollSequence = rollRight(trimmedRef, newPos + trimmedRef.length(), refBuild, chr, dbRep);
 				newPos -= leftRollSequence.length();
 
 				return VariantNormalizerHelper.createNormalizedVariantJson(
 					refBuild,
-					modifiedChr,
+					chr,
 					newPos,
 					leftRollSequence + trimmedRef + rightRollSequence,
 					leftRollSequence + rightRollSequence
 				);
 			} else {
-				String leftRollSequence = rollLeft(trimmedAlt, newPos, refBuild, modifiedChr, dbRep);
-				String rightRollSequence = rollRight(trimmedAlt, newPos, refBuild, modifiedChr, dbRep);
+				String leftRollSequence = rollLeft(trimmedAlt, newPos, refBuild, chr, dbRep);
+				String rightRollSequence = rollRight(trimmedAlt, newPos, refBuild, chr, dbRep);
 				newPos -= leftRollSequence.length();
 
 				return VariantNormalizerHelper.createNormalizedVariantJson(
 					refBuild,
-					modifiedChr,
+					chr,
 					newPos,
 					leftRollSequence + rightRollSequence,
 					leftRollSequence + trimmedAlt + rightRollSequence
@@ -229,8 +238,8 @@ public class VariantNormalizer implements Constants, VariantNormalizerConstants 
 		String referenceNucleotide = FastaQuery.queryData(dbRep, refBuild, chr, currPos);
 
 		int i = 0;
-		while (Character.toString(section.charAt(section.length() - 1 - i)).equals(referenceNucleotide)) {
-			result.append(referenceNucleotide);
+		while (Character.toString(section.charAt(section.length() - 1 - i)).equalsIgnoreCase(referenceNucleotide)) {
+			result.append(referenceNucleotide.toUpperCase());
 
 			i++;
 			i %= section.length();
@@ -255,8 +264,8 @@ public class VariantNormalizer implements Constants, VariantNormalizerConstants 
 		String referenceNucleotide = FastaQuery.queryData(dbRep, refBuild, chr, currPos);
 
 		int i = 0;
-		while (Character.toString(section.charAt(i)).equals(referenceNucleotide)) {
-			result.append(referenceNucleotide);
+		while (Character.toString(section.charAt(i)).equalsIgnoreCase(referenceNucleotide)) {
+			result.append(referenceNucleotide.toUpperCase());
 
 			i++;
 			i %= section.length();

@@ -100,7 +100,7 @@ public class DbSNPQuery extends SingleFormatQuery implements Constants, DbSNPCon
 				JsonObject variantJson = variantsJson.getJsonObject(i);
 				String nucleotide = variantJson.getString(Variant.VARIANT_ALT);
 
-				if (nucleotide.equals(alt)) {
+				if (nucleotide.equalsIgnoreCase(alt)) {
 					selectedVariantJson.add(variantJson);
 					result.put(VARIANTS_KEY, selectedVariantJson);
 					break;
