@@ -20,9 +20,7 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.StaticHandler;
 import org.rocksdb.RocksDBException;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Constructor;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
@@ -47,6 +45,11 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 		try {
 			dataDirectoryPath = getDataDirectoryPath();
 			System.out.println("Data directory path: " + dataDirectoryPath);
+
+			File logFile = new File(dataDirectoryPath, "output.log");
+			PrintStream printStream = new PrintStream(new FileOutputStream(logFile));
+
+			System.setOut(printStream);
 		} catch (Exception e) {
 			startPromise.fail(e.getMessage());
 
