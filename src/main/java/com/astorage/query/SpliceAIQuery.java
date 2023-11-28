@@ -69,6 +69,8 @@ public class SpliceAIQuery extends SingleFormatQuery implements Constants, Splic
 	}
 
 	public static JsonObject queryData(RocksDBRepository dbRep, String chr, String pos) throws Exception {
+		chr = chr.toUpperCase();
+
 		byte[] key = createKey(chr, pos);
 
 		byte[] compressedVariants = dbRep.getBytes(key);

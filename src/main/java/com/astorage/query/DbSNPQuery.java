@@ -34,7 +34,7 @@ public class DbSNPQuery extends SingleFormatQuery implements Constants, DbSNPCon
 
 		String chr = req.getParam(CHR_PARAM);
 		String pos = req.getParam(POS_PARAM);
-		String alt = req.params().contains(ALT_PARAM) ? req.getParam(ALT_PARAM).toUpperCase() : null;
+		String alt = req.params().contains(ALT_PARAM) ? req.getParam(ALT_PARAM) : null;
 
 		singleQueryHandler(chr, pos, alt, false);
 	}
@@ -54,7 +54,7 @@ public class DbSNPQuery extends SingleFormatQuery implements Constants, DbSNPCon
 			return;
 		}
 
-		if (alt != null && (alt.length() != 1 || !NUCLEOTIDES.contains(alt))) {
+		if (alt != null && (alt.length() != 1 || !NUCLEOTIDES.contains(alt.toUpperCase()))) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_ALT_ERROR);
 
 			return;
@@ -76,6 +76,8 @@ public class DbSNPQuery extends SingleFormatQuery implements Constants, DbSNPCon
 	}
 
 	public static JsonObject queryData(RocksDBRepository dbRep, String chr, String pos, String alt) throws Exception {
+		chr = chr.toUpperCase();
+
 		byte[] key = DbSNPHelper.createKey(chr, pos);
 		byte[] compressedVariants = dbRep.getBytes(key);
 
@@ -87,6 +89,7 @@ public class DbSNPQuery extends SingleFormatQuery implements Constants, DbSNPCon
 		result.put(CHR_PARAM, chr);
 		result.put(POS_PARAM, pos);
 		if (alt != null) {
+			alt = alt.toUpperCase();
 			result.put(ALT_PARAM, alt);
 		}
 

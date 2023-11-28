@@ -76,6 +76,8 @@ public class GnomADQuery extends SingleFormatQuery implements Constants, GnomADC
 	}
 
 	public static JsonObject queryData(RocksDBRepository dbRep, String chr, String pos, String sourceType) throws Exception {
+		chr = chr.toUpperCase();
+
 		byte[] key = GnomADHelper.createKey(chr, pos);
 
 		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(sourceType);

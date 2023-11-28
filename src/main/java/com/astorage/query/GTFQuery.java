@@ -69,6 +69,8 @@ public class GTFQuery extends SingleFormatQuery implements Constants, GTFConstan
 	}
 
 	public static JsonObject queryData(RocksDBRepository dbRep, String chr, String startPos, String endPos) throws Exception {
+		chr = chr.toUpperCase();
+
 		byte[] compressedVariant = dbRep.getBytes(Variant.generateKey(chr, startPos, endPos));
 		if (compressedVariant == null) {
 			throw new Exception(VARIANT_NOT_FOUND_ERROR);

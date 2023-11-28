@@ -94,6 +94,8 @@ public class FastaQuery extends SingleFormatQuery implements Constants, FastaCon
 		long startPos,
 		long endPos
 	) throws InternalError {
+		chr = chr.toUpperCase();
+
 		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(refBuild);
 
 		if (columnFamilyHandle == null) {

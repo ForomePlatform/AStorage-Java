@@ -37,7 +37,7 @@ public class DbNSFPBatchQuery extends DbNSFPQuery implements Constants, DbNSFPCo
 
 					String chr = query.getString(CHR_PARAM);
 					String pos = query.getString(POS_PARAM);
-					String alt = query.containsKey(ALT_PARAM) ? query.getString(ALT_PARAM).toUpperCase() : null;
+					String alt = query.containsKey(ALT_PARAM) ? query.getString(ALT_PARAM) : null;
 
 					singleQueryHandler(chr, pos, alt, true);
 				}

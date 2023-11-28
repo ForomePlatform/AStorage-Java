@@ -103,6 +103,10 @@ public class VariantNormalizer implements Constants, VariantNormalizerConstants 
 		String alt,
 		RocksDBRepository dbRep
 	) throws Exception {
+		chr = chr.toUpperCase();
+		ref = ref.toUpperCase();
+		alt = alt.toUpperCase();
+
 		Pattern nucleotidePattern = Pattern.compile("^[" + NUCLEOTIDES + "]+$", Pattern.CASE_INSENSITIVE);
 		Matcher refMatcher = nucleotidePattern.matcher(ref);
 		Matcher altMatcher = nucleotidePattern.matcher(alt);
@@ -113,9 +117,6 @@ public class VariantNormalizer implements Constants, VariantNormalizerConstants 
 		if (!refMatchFound || !altMatchFound) {
 			throw new Exception(GIVEN_REF_ALT_NOT_SUPPORTED);
 		}
-
-		ref = ref.toUpperCase();
-		alt = alt.toUpperCase();
 
 		if (chr.equals(MITOCHONDRIAL_CHR_ALT)) {
 			chr = MITOCHONDRIAL_CHR;

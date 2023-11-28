@@ -69,6 +69,8 @@ public class GERPQuery extends SingleFormatQuery implements Constants, GERPConst
 	}
 
 	public static JsonObject queryData(RocksDBRepository dbRep, String chr, String pos) throws Exception {
+		chr = chr.toUpperCase();
+
 		byte[] compressedVariant = dbRep.getBytes(createKey(chr, pos));
 		if (compressedVariant == null) {
 			throw new Exception(VARIANT_NOT_FOUND_ERROR);

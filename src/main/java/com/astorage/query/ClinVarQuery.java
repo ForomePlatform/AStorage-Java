@@ -74,6 +74,8 @@ public class ClinVarQuery extends SingleFormatQuery implements Constants, ClinVa
 	}
 
 	public static JsonObject queryData(RocksDBRepository dbRep, String chr, String startPos, String endPos) throws Exception {
+		chr = chr.toUpperCase();
+
 		ColumnFamilyHandle variantColumnFamilyHandle = dbRep.getColumnFamilyHandle(VARIANT_SUMMARY_COLUMN_FAMILY_NAME);
 		ColumnFamilyHandle significanceColumnFamilyHandle = dbRep.getColumnFamilyHandle(SIGNIFICANCE_COLUMN_FAMILY_NAME);
 		ColumnFamilyHandle submitterColumnFamilyHandle = dbRep.getColumnFamilyHandle(SUBMITTER_COLUMN_FAMILY_NAME);

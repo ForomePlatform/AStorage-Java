@@ -64,9 +64,12 @@ public class UniversalVariantQuery implements Query, Constants, UniversalVariant
 		boolean isBatched
 	) throws IOException {
 		HttpServerRequest req = context.request();
+		chr = chr.toUpperCase();
+		ref = ref.toUpperCase();
+		alt = alt.toUpperCase();
 
 		try {
-			if (!LETTER_CHROMOSOMES.contains(chr.toUpperCase())) {
+			if (!LETTER_CHROMOSOMES.contains(chr)) {
 				Integer.parseInt(chr);
 			}
 
