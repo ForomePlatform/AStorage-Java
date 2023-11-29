@@ -71,6 +71,7 @@ public class GTFIngestor extends Ingestor implements Constants, GTFConstants {
 			return false;
 		}
 
+		long lineCount = 0;
 		while ((line = reader.readLine()) != null) {
 			List<String> values = Arrays.stream(line.split(COLUMNS_DELIMITER)).map(String::strip).toList();
 			Variant variant = new Variant(values);
@@ -79,6 +80,10 @@ public class GTFIngestor extends Ingestor implements Constants, GTFConstants {
 			byte[] compressedVariant = Constants.compressJson(variant.toString());
 
 			dbRep.saveBytes(key, compressedVariant);
+
+			lineCount++;
+
+			Constants.logProgress(dbRep, lineCount, 100000);
 		}
 
 		reader.close();

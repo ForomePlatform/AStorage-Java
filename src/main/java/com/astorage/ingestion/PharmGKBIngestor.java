@@ -75,6 +75,7 @@ public class PharmGKBIngestor extends Ingestor implements PharmGKBConstants, Con
 		reader.readLine();
 		String line;
 
+		long lineCount = 0;
 		while ((line = reader.readLine()) != null) {
 			String[] values = line.strip().split(COLUMNS_DELIMITER);
 			Variant variant = new Variant(dataType, values);
@@ -85,6 +86,10 @@ public class PharmGKBIngestor extends Ingestor implements PharmGKBConstants, Con
 				compressedVariant,
 				columnFamilyHandle
 			);
+
+			lineCount++;
+
+			Constants.logProgress(dbRep, lineCount, 100000);
 		}
 
 		reader.close();

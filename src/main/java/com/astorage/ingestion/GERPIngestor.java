@@ -78,7 +78,7 @@ public class GERPIngestor extends Ingestor implements Constants, GERPConstants {
 	private void storeData(BufferedReader reader) throws IOException {
 		String line;
 
-		long position = 1;
+		long lineCount = 0;
 		while ((line = reader.readLine()) != null) {
 			JsonArray values = Arrays.stream(line.split(COLUMNS_DELIMITER)).reduce(
 				new JsonArray(),
@@ -86,11 +86,14 @@ public class GERPIngestor extends Ingestor implements Constants, GERPConstants {
 				(JsonArray arr1, JsonArray arr2) -> null
 			);
 
-			byte[] key = createKey(this.chromosome, String.valueOf(position));
+			byte[] key = createKey(this.chromosome, String.valueOf(lineCount + 1));
 			byte[] compressedVariant = Constants.compressJson(values.toString());
 
 			dbRep.saveBytes(key, compressedVariant);
-			position++;
+
+			lineCount++;
+
+			Constants.logProgress(dbRep, lineCount, 100000);
 		}
 
 		reader.close();

@@ -56,21 +56,23 @@ public class GTExIngestor extends Ingestor implements Constants, GTExConstants {
 			BufferedReader bufferedReader = new BufferedReader(decoder)
 		) {
 			String line;
-			int lineNumber = 0;
+			long lineCount = 0;
 
 			while ((line = bufferedReader.readLine()) != null) {
-				lineNumber++;
+				lineCount++;
 
 				// First two lines are ignored
-				if (lineNumber == 3) {
+				if (lineCount == 3) {
 					String[] fields = line.split(COLUMNS_DELIMITER);
 
 					ingestTissues(fields);
-				} else if (lineNumber > 3) {
+				} else if (lineCount > 3) {
 					String[] values = line.split(COLUMNS_DELIMITER);
 
 					processValues(values);
 				}
+
+				Constants.logProgress(dbRep, lineCount, 100000);
 			}
 		} catch (IOException e) {
 			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());

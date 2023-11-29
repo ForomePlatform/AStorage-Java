@@ -66,7 +66,7 @@ public class FastaIngestor extends Ingestor implements Constants, FastaConstants
 
 			System.out.println("Metadata read complete, starting ingestion...");
 
-			int lineCount = storeData(refBuild, metadata, bufferedDataReader);
+			long lineCount = storeData(refBuild, metadata, bufferedDataReader);
 
 			Constants.successResponse(req, lineCount + " lines have been ingested in " + dbRep.dbName + "!");
 		} catch (IOException e) {
@@ -74,11 +74,11 @@ public class FastaIngestor extends Ingestor implements Constants, FastaConstants
 		}
 	}
 
-	private int storeData(String refBuild, Map<String, String> metadata, BufferedReader reader) throws IOException {
+	private long storeData(String refBuild, Map<String, String> metadata, BufferedReader reader) throws IOException {
 		String line;
 		String chr = null;
 		long idx = 1;
-		int lineCount = 0;
+		long lineCount = 0;
 
 		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(refBuild);
 		if (columnFamilyHandle == null) {
@@ -104,9 +104,7 @@ public class FastaIngestor extends Ingestor implements Constants, FastaConstants
 
 			lineCount++;
 
-			if (lineCount % 10000 == 0) {
-				System.out.println(dbRep.dbName + " progress: " + lineCount + " lines have been ingested...");
-			}
+			Constants.logProgress(dbRep, lineCount, 100000);
 		}
 
 		return lineCount;

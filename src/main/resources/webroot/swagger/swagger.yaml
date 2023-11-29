@@ -84,9 +84,16 @@ paths:
           schema:
             type: string
             example: g
+        - name: normalize
+          in: query
+          required: false
+          description: To also map normalized data alongside ingestion
+          schema:
+            type: string
+            example: true
         - name: refBuild
           in: query
-          required: true
+          required: false
           description: Reference build to be used during normalization
           schema:
             type: string
@@ -182,9 +189,16 @@ paths:
           schema:
             type: string
             example: variant_summary.txt.gz
+        - name: normalize
+          in: query
+          required: false
+          description: To also map normalized data alongside ingestion
+          schema:
+            type: string
+            example: true
         - name: refBuild
           in: query
-          required: true
+          required: false
           description: Reference build to be used during normalization
           schema:
             type: string
@@ -647,6 +661,56 @@ paths:
             application/octet-stream:
               schema:
                 $ref: '#/components/schemas/BatchQueryResult'
+
+  /query/universalvariant:
+    get:
+      tags: [
+        Universal Variant Query
+      ]
+      summary: Queries the universal variant from the database
+      parameters:
+        - name: refBuild
+          in: query
+          required: true
+          description: Reference build name
+          schema:
+            type: string
+            example: GRCh38
+        - name: chr
+          in: query
+          required: true
+          description: Chromosome number/letter
+          schema:
+            type: string
+            example: 1
+        - name: pos
+          in: query
+          required: true
+          description: Variant position
+          schema:
+            type: string
+            example: 69093
+        - name: ref
+          in: query
+          required: true
+          description: Reference nucleotide sequence
+          schema:
+            type: string
+            example: G
+        - name: alt
+          in: query
+          required: true
+          description: Alternate nucleotide sequence
+          schema:
+            type: string
+            example: A
+      responses:
+        '200':
+          description: Query result in JSON containing all supported variant formats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResult'
 
   /normalization:
     get:

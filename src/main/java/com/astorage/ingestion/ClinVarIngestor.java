@@ -43,6 +43,10 @@ public class ClinVarIngestor extends Ingestor implements Constants, ClinVarConst
 	// Reference build to be used during normalization
 	private String refBuild;
 
+	// Used to keep track of the progress
+	private long lineCount = 0;
+	private long normalizationsCount = 0;
+
 	public ClinVarIngestor(
 		RoutingContext context,
 		RocksDBRepository dbRep,
@@ -59,12 +63,7 @@ public class ClinVarIngestor extends Ingestor implements Constants, ClinVarConst
 	public void ingestionHandler() {
 		HttpServerRequest req = context.request();
 
-		if (
-			req.params().size() != 3
-				|| !req.params().contains(DATA_PATH_PARAM)
-				|| !req.params().contains(DATA_SUMMARY_PATH_PARAM)
-				|| !req.params().contains(VariantNormalizerConstants.REF_BUILD_PARAM)
-		) {
+		if (!req.params().contains(DATA_PATH_PARAM) || !req.params().contains(DATA_SUMMARY_PATH_PARAM)) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
 
 			return;
@@ -72,10 +71,19 @@ public class ClinVarIngestor extends Ingestor implements Constants, ClinVarConst
 
 		String dataPath = req.getParam(DATA_PATH_PARAM);
 		String dataSummaryPath = req.getParam(DATA_SUMMARY_PATH_PARAM);
+		String normalizeParam = req.getParam(VariantNormalizerConstants.NORMALIZE_PARAM);
+		boolean normalize = "true".equals(normalizeParam);
+
+		if (normalize && !req.params().contains(VariantNormalizerConstants.REF_BUILD_PARAM)) {
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
+
+			return;
+		}
+
 		this.refBuild = req.getParam(VariantNormalizerConstants.REF_BUILD_PARAM);
 
 		storeXMLData(dataPath);
-		storeVariantSummeryData(dataSummaryPath);
+		storeVariantSummeryData(dataSummaryPath, normalize);
 
 		Constants.successResponse(req, INGESTION_FINISH_MSG);
 	}
@@ -158,7 +166,7 @@ public class ClinVarIngestor extends Ingestor implements Constants, ClinVarConst
 		}
 	}
 
-	private void storeVariantSummeryData(String dataSummaryPath) {
+	private void storeVariantSummeryData(String dataSummaryPath, boolean normalize) {
 		try (
 			InputStream fileInputStream = new FileInputStream(dataSummaryPath);
 			InputStream gzipInputStream = new GZIPInputStream(fileInputStream);
@@ -184,18 +192,27 @@ public class ClinVarIngestor extends Ingestor implements Constants, ClinVarConst
 				byte[] key = variant.getKey();
 				byte[] compressedVariant = Constants.compressJson(variant.toString());
 
-				ingestQueryParams(variant);
-
 				dbRep.saveBytes(key, compressedVariant, variatnsColumnFamilyHandle);
+
+				if (normalize) {
+					boolean queryParamsIngested = ingestQueryParams(variant);
+					if (queryParamsIngested) {
+						normalizationsCount++;
+					}
+				}
+
+				lineCount++;
+
+				Constants.logProgress(dbRep, lineCount, normalize, normalizationsCount, 100000);
 			}
 		} catch (Exception e) {
 			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 		}
 	}
 
-	private void ingestQueryParams(Variant variant) throws Exception {
+	private boolean ingestQueryParams(Variant variant) throws Exception {
 		if (this.refBuild.isEmpty()) {
-			return;
+			return false;
 		}
 
 		String chr = variant.variantColumnValues.get(CHROMOSOME_COLUMN_NAME);
@@ -204,14 +221,19 @@ public class ClinVarIngestor extends Ingestor implements Constants, ClinVarConst
 		String ref = variant.variantColumnValues.get(REF_COLUMN_NAME);
 		String alt = variant.variantColumnValues.get(ALT_COLUMN_NAME);
 
-		JsonObject normalizedVariantJson = VariantNormalizer.normalizeVariant(
-			this.refBuild,
-			chr,
-			start_pos,
-			ref,
-			alt,
-			fastaDbRep
-		);
+		JsonObject normalizedVariantJson;
+		try {
+			normalizedVariantJson = VariantNormalizer.normalizeVariant(
+				this.refBuild,
+				chr,
+				start_pos,
+				ref,
+				alt,
+				fastaDbRep
+			);
+		} catch (Exception e) {
+			return false;
+		}
 
 		byte[] universalVariantKey = UniversalVariantHelper.generateKey(normalizedVariantJson);
 
@@ -229,5 +251,7 @@ public class ClinVarIngestor extends Ingestor implements Constants, ClinVarConst
 			CLINVAR_FORMAT_NAME,
 			universalVariantDbRep
 		);
+
+		return true;
 	}
 }

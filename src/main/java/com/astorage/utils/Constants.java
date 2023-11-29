@@ -1,5 +1,6 @@
 package com.astorage.utils;
 
+import com.astorage.db.RocksDBRepository;
 import com.astorage.utils.clinvar.ClinVarConstants;
 import com.astorage.utils.dbnsfp.DbNSFPConstants;
 import com.astorage.utils.dbsnp.DbSNPConstants;
@@ -169,6 +170,28 @@ public interface Constants {
 			.setStatusCode(errorCode)
 			.putHeader("content-type", "application/json")
 			.end(errorJson + "\n");
+	}
+
+	static void logProgress(
+		RocksDBRepository dbRep,
+		long lineCount,
+		boolean normalize,
+		long normalizationsCount,
+		int interval
+	) {
+		if (lineCount % interval == 0) {
+			System.out.print(dbRep.dbName + ": " + lineCount + " lines have been processed");
+
+			if (normalize) {
+				System.out.print(" out of which " + normalizationsCount + " normalized");
+			}
+
+			System.out.println("...");
+		}
+	}
+
+	static void logProgress(RocksDBRepository dbRep, long lineCount, int interval) {
+		logProgress(dbRep, lineCount, false, 0, interval);
 	}
 
 	static void downloadUsingStream(String urlStr, String filename) throws IOException, URISyntaxException {

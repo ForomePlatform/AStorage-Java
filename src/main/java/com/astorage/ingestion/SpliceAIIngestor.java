@@ -122,6 +122,8 @@ public class SpliceAIIngestor extends Ingestor implements Constants, SpliceAICon
 		while ((line = reader.readLine()) != null) {
 			lastKey = processLine(line, columns, lastKey, lastVariants, normalize);
 			lineCount++;
+
+			Constants.logProgress(dbRep, lineCount, normalize, normalizationsCount, 100000);
 		}
 
 		if (!lastVariants.isEmpty()) {

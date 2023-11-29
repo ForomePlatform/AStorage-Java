@@ -28,6 +28,10 @@ public class GnomADIngestor extends Ingestor implements Constants, GnomADConstan
 	// Reference build to be used during normalization
 	private String refBuild;
 
+	// Used to keep track of the progress
+	private long lineCount = 0;
+	private long normalizationsCount = 0;
+
 	public GnomADIngestor(
 		RoutingContext context,
 		RocksDBRepository dbRep,
@@ -40,12 +44,7 @@ public class GnomADIngestor extends Ingestor implements Constants, GnomADConstan
 	public void ingestionHandler() {
 		HttpServerRequest req = context.request();
 
-		if (
-			req.params().size() != 3
-				|| !req.params().contains(DATA_URL_PARAM)
-				|| !req.params().contains(SOURCE_TYPE_PARAM)
-				|| !req.params().contains(VariantNormalizerConstants.REF_BUILD_PARAM)
-		) {
+		if (!req.params().contains(DATA_URL_PARAM) || !req.params().contains(SOURCE_TYPE_PARAM)) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
 
 			return;
@@ -53,6 +52,15 @@ public class GnomADIngestor extends Ingestor implements Constants, GnomADConstan
 
 		String dataURL = req.getParam(DATA_URL_PARAM);
 		String sourceType = req.getParam(SOURCE_TYPE_PARAM);
+		String normalizeParam = req.getParam(VariantNormalizerConstants.NORMALIZE_PARAM);
+		boolean normalize = "true".equals(normalizeParam);
+
+		if (normalize && !req.params().contains(VariantNormalizerConstants.REF_BUILD_PARAM)) {
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
+
+			return;
+		}
+
 		this.refBuild = req.getParam(VariantNormalizerConstants.REF_BUILD_PARAM);
 
 		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(sourceType);
@@ -74,7 +82,7 @@ public class GnomADIngestor extends Ingestor implements Constants, GnomADConstan
 			Reader decoder = new InputStreamReader(gzipInputStream, StandardCharsets.UTF_8);
 			BufferedReader bufferedReader = new BufferedReader(decoder);
 
-			storeData(bufferedReader, columnFamilyHandle, sourceType);
+			storeData(bufferedReader, columnFamilyHandle, sourceType, normalize);
 		} catch (Exception e) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, DOWNLOADING_DATA_ERROR);
 
@@ -87,7 +95,8 @@ public class GnomADIngestor extends Ingestor implements Constants, GnomADConstan
 	private void storeData(
 		BufferedReader reader,
 		ColumnFamilyHandle columnFamilyHandle,
-		String sourceType
+		String sourceType,
+		boolean normalize
 	) throws Exception {
 		String line;
 
@@ -114,30 +123,44 @@ public class GnomADIngestor extends Ingestor implements Constants, GnomADConstan
 			byte[] key = GnomADHelper.createKey(chr, pos);
 			byte[] compressedVariant = Constants.compressJson(variant.toString());
 
-			ingestQueryParams(chr, pos, variant, sourceType);
-
 			dbRep.saveBytes(key, compressedVariant, columnFamilyHandle);
+
+			if (normalize) {
+				boolean queryParamsIngested = ingestQueryParams(chr, pos, variant, sourceType);
+				if (queryParamsIngested) {
+					normalizationsCount++;
+				}
+			}
+
+			lineCount++;
+
+			Constants.logProgress(dbRep, lineCount, normalize, normalizationsCount, 100000);
 		}
 
 		reader.close();
 	}
 
-	private void ingestQueryParams(String chr, String pos, Variant variant, String sourceType) throws Exception {
+	private boolean ingestQueryParams(String chr, String pos, Variant variant, String sourceType) throws Exception {
 		if (this.refBuild.isEmpty()) {
-			return;
+			return false;
 		}
 
 		String ref = variant.variantColumnValues.get(REF_COLUMN_NAME);
 		String alt = variant.variantColumnValues.get(ALT_COLUMN_NAME);
 
-		JsonObject normalizedVariantJson = VariantNormalizer.normalizeVariant(
-			this.refBuild,
-			chr,
-			pos,
-			ref,
-			alt,
-			fastaDbRep
-		);
+		JsonObject normalizedVariantJson;
+		try {
+			normalizedVariantJson = VariantNormalizer.normalizeVariant(
+				this.refBuild,
+				chr,
+				pos,
+				ref,
+				alt,
+				fastaDbRep
+			);
+		} catch (Exception e) {
+			return false;
+		}
 
 		byte[] universalVariantKey = UniversalVariantHelper.generateKey(normalizedVariantJson);
 
@@ -155,5 +178,7 @@ public class GnomADIngestor extends Ingestor implements Constants, GnomADConstan
 			GNOMAD_FORMAT_NAME,
 			universalVariantDbRep
 		);
+
+		return true;
 	}
 }

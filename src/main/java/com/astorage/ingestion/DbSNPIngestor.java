@@ -72,7 +72,7 @@ public class DbSNPIngestor extends Ingestor implements Constants, DbSNPConstants
 				}
 			}
 
-			int lineCount = 0;
+			long lineCount = 0;
 			byte[] lastKey = null;
 			List<Variant> lastVariants = new ArrayList<>();
 
@@ -80,9 +80,7 @@ public class DbSNPIngestor extends Ingestor implements Constants, DbSNPConstants
 				lastKey = processLine(line, columns, lastKey, lastVariants);
 				lineCount++;
 
-				if (lineCount % 10000 == 0) {
-					System.out.println(dbRep.dbName + " progress: " + lineCount + " lines have been ingested...");
-				}
+				Constants.logProgress(dbRep, lineCount, 100000);
 			}
 
 			if (!lastVariants.isEmpty()) {
