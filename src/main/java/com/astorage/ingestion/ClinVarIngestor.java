@@ -40,9 +40,6 @@ public class ClinVarIngestor extends Ingestor implements Constants, ClinVarConst
 	private boolean isReferenceBlock = false;
 	private boolean isClinicalSignificanceDescriptionBlock = false;
 
-	// Reference build to be used during normalization
-	private String refBuild;
-
 	// Used to keep track of the progress
 	private long lineCount = 0;
 	private long normalizationsCount = 0;
@@ -73,14 +70,6 @@ public class ClinVarIngestor extends Ingestor implements Constants, ClinVarConst
 		String dataSummaryPath = req.getParam(DATA_SUMMARY_PATH_PARAM);
 		String normalizeParam = req.getParam(VariantNormalizerConstants.NORMALIZE_PARAM);
 		boolean normalize = "true".equals(normalizeParam);
-
-		if (normalize && !req.params().contains(VariantNormalizerConstants.REF_BUILD_PARAM)) {
-			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
-
-			return;
-		}
-
-		this.refBuild = req.getParam(VariantNormalizerConstants.REF_BUILD_PARAM);
 
 		storeXMLData(dataPath);
 		storeVariantSummeryData(dataSummaryPath, normalize);
@@ -211,10 +200,7 @@ public class ClinVarIngestor extends Ingestor implements Constants, ClinVarConst
 	}
 
 	private boolean ingestQueryParams(Variant variant) throws Exception {
-		if (this.refBuild.isEmpty()) {
-			return false;
-		}
-
+		String refBuild = variant.variantColumnValues.get(REF_BUILD_COLUMN_NAME);
 		String chr = variant.variantColumnValues.get(CHROMOSOME_COLUMN_NAME);
 		String start_pos = variant.variantColumnValues.get(START_POSITION_COLUMN_NAME);
 		String end_pos = variant.variantColumnValues.get(END_POSITION_COLUMN_NAME);
@@ -224,7 +210,7 @@ public class ClinVarIngestor extends Ingestor implements Constants, ClinVarConst
 		JsonObject normalizedVariantJson;
 		try {
 			normalizedVariantJson = VariantNormalizer.normalizeVariant(
-				this.refBuild,
+				refBuild,
 				chr,
 				start_pos,
 				ref,

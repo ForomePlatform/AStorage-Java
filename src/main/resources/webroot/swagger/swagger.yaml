@@ -196,13 +196,6 @@ paths:
           schema:
             type: string
             example: true
-        - name: refBuild
-          in: query
-          required: false
-          description: Reference build to be used during normalization
-          schema:
-            type: string
-            example: GRCh37
       responses:
         '200':
           description: Success message in JSON
