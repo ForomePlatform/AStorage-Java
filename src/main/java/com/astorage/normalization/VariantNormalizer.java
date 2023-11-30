@@ -25,7 +25,7 @@ public class VariantNormalizer implements Constants, VariantNormalizerConstants 
 	protected final RocksDBRepository dbRep;
 
 	public VariantNormalizer(RoutingContext context, RocksDBRepository dbRep) throws IllegalArgumentException {
-		if (dbRep.dbFormatName.equals(FastaConstants.FASTA_FORMAT_NAME.toLowerCase())) {
+		if (!dbRep.dbFormatName.equals(FastaConstants.FASTA_FORMAT_NAME.toLowerCase())) {
 			throw new IllegalArgumentException(INCORRECT_DB_FORMAT);
 		}
 
