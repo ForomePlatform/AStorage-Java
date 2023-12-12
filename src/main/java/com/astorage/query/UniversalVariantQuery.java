@@ -7,8 +7,10 @@ import com.astorage.utils.universal_variant.UniversalVariantHelper;
 import com.astorage.utils.variant_normalizer.VariantNormalizerConstants;
 import com.astorage.utils.variant_normalizer.VariantNormalizerHelper;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
+import org.rocksdb.ColumnFamilyHandle;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -89,66 +91,65 @@ public class UniversalVariantQuery implements Query, Constants, UniversalVariant
 		);
 		byte[] key = UniversalVariantHelper.generateKey(normalizedVariantJson);
 
-		byte[] compressedVariantQueries = dbRep.getBytes(key);
-		JsonObject variantQueries = null;
-
-		if (compressedVariantQueries != null) {
-			String decompressedVariantQueries = Constants.decompressJson(compressedVariantQueries);
-			variantQueries = new JsonObject(decompressedVariantQueries);
-		}
-
 		JsonObject result = new JsonObject();
-
-		for (int i = 0; i < FORMAT_NAMES.length; i++) {
+		for (String formatName : UNIVERSAL_QUERY_FORMAT_NAMES) {
 			try {
 				// Taking class
-				Class<?> queryClass = Class.forName("com.astorage.query." + FORMAT_NAMES[i] + "Query");
+				Class<?> queryClass = Class.forName("com.astorage.query." + formatName + "Query");
 				// Checking if it overrides normalizedParamsToParams
 				Class<?>[] methodParamTypes = new Class<?>[QUERY_PARAMS_COUNT];
 				Arrays.fill(methodParamTypes, String.class);
 				Method normalizedParamsToParams = queryClass.getMethod("normalizedParamsToParams", methodParamTypes);
 				String[] queryParams = (String[]) normalizedParamsToParams.invoke(null, refBuild, chr, pos, ref, alt);
 
+				List<String[]> queryParamsList = new ArrayList<>();
+
 				// If normalizedParamsToParams isn't overridden for a specific query class
 				if (queryParams == null) {
+					ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(formatName);
+					// No stored variant queries for this format
+					if (columnFamilyHandle == null) {
+						result.put(formatName, new JsonArray());
+						continue;
+					}
+
+					byte[] compressedVariantQueries = dbRep.getBytes(key, columnFamilyHandle);
 					// No stored variant queries for this normalized query
-					if (variantQueries == null) {
+					if (compressedVariantQueries == null) {
+						result.put(formatName, new JsonArray());
 						continue;
 					}
 
-					// WARNING: FORMAT_NAMES constant should NOT be MODIFIED!
-					String variantQuery = variantQueries.getString(Integer.toString(i));
+					String decompressedVariantQueries = Constants.decompressJson(compressedVariantQueries);
+					JsonArray variantQueries = new JsonArray(decompressedVariantQueries);
 
-					// If no query parameters are stored for this DB format ignore it
-					if (variantQuery == null) {
-						continue;
+					for (Object variantQueryObject : variantQueries) {
+						String variantQuery = (String) variantQueryObject;
+						// Store query params
+						queryParamsList.add(variantQuery.split(QUERY_PARAMS_DELIMITER));
 					}
-
-					// Store query params
-					queryParams = variantQuery.split(QUERY_PARAMS_DELIMITER);
+				} else {
+					queryParamsList.add(queryParams);
 				}
 
-				// Get query results from the specific query class
-				Class<?>[] queryParamTypes = new Class<?>[queryParams.length + 1];
-				queryParamTypes[0] = RocksDBRepository.class;
-				Arrays.fill(queryParamTypes, 1, queryParams.length + 1, String.class);
+				for (String[] currQueryParams : queryParamsList) {
+					// Get query results from the specific query class
+					JsonObject currQueryResult = queryFormatData(queryClass, formatName, currQueryParams);
 
-				RocksDBRepository dbRep = dbRepositories.get(FORMAT_NAMES[i]);
+					if (result.getJsonArray(formatName) == null) {
+						result.put(formatName, new JsonArray());
+					}
 
-				List<Object> queryParamsWithDBRep = new ArrayList<>();
-				queryParamsWithDBRep.add(dbRep);
-				queryParamsWithDBRep.addAll(Arrays.asList(queryParams));
-
-				Method queryDataMethod = queryClass.getDeclaredMethod("queryData", queryParamTypes);
-				JsonObject queryResult = (JsonObject) queryDataMethod.invoke(null, queryParamsWithDBRep.toArray());
-
-				result.put(FORMAT_NAMES[i], queryResult);
+					result.getJsonArray(formatName).add(currQueryResult);
+				}
 			} catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException e) {
 				throw new RuntimeException(e);
 			} catch (InvocationTargetException ignored) {
 				// Ignores exceptions that are thrown when a variant isn't found during queryData invocation
+				// inside the queryFormatData method
+				result.put(formatName, new JsonArray());
 			}
-        }
+		}
 
 		if (isBatched) {
 			req.response().write(result + "\n");
@@ -157,5 +158,25 @@ public class UniversalVariantQuery implements Query, Constants, UniversalVariant
 				.putHeader("content-type", "application/json")
 				.end(result + "\n");
 		}
+	}
+
+	private JsonObject queryFormatData(
+		Class<?> queryClass,
+		String formatName,
+		String[] queryParams
+	) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+		Class<?>[] queryParamTypes = new Class<?>[queryParams.length + 1];
+		queryParamTypes[0] = RocksDBRepository.class;
+		Arrays.fill(queryParamTypes, 1, queryParams.length + 1, String.class);
+
+		RocksDBRepository dbRep = dbRepositories.get(formatName);
+
+		List<Object> queryParamsWithDBRep = new ArrayList<>();
+		queryParamsWithDBRep.add(dbRep);
+		queryParamsWithDBRep.addAll(Arrays.asList(queryParams));
+
+		Method queryDataMethod = queryClass.getDeclaredMethod("queryData", queryParamTypes);
+
+		return (JsonObject) queryDataMethod.invoke(null, queryParamsWithDBRep.toArray());
 	}
 }

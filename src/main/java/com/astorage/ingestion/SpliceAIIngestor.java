@@ -89,7 +89,7 @@ public class SpliceAIIngestor extends Ingestor implements Constants, SpliceAICon
 					successMsg
 						.append(" out of which ")
 						.append(normalizationsCount)
-						.append(" have been normalized!");
+						.append(" have been normalized");
 				}
 				successMsg.append("!");
 

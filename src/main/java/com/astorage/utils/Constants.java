@@ -39,7 +39,6 @@ public interface Constants {
 	String DATA_DIRECTORY_PATH = System.getProperty("user.home") + "/AStorage";
 	String DATA_DIRECTORY_PATH_JSON_KEY = "dataDirectoryPath";
 
-	// Ordering should not be changed as the UniversalVariant DB is dependent on it
 	String[] FORMAT_NAMES = {
 		FastaConstants.FASTA_FORMAT_NAME,
 		DbNSFPConstants.DBNSFP_FORMAT_NAME,
@@ -49,6 +48,14 @@ public interface Constants {
 		ClinVarConstants.CLINVAR_FORMAT_NAME,
 		GTExConstants.GTEX_FORMAT_NAME,
 		GTFConstants.GTF_FORMAT_NAME,
+		GERPConstants.GERP_FORMAT_NAME,
+		DbSNPConstants.DBSNP_FORMAT_NAME
+	};
+	String[] UNIVERSAL_QUERY_FORMAT_NAMES = {
+		DbNSFPConstants.DBNSFP_FORMAT_NAME,
+		GnomADConstants.GNOMAD_FORMAT_NAME,
+		SpliceAIConstants.SPLICEAI_FORMAT_NAME,
+		ClinVarConstants.CLINVAR_FORMAT_NAME,
 		GERPConstants.GERP_FORMAT_NAME,
 		DbSNPConstants.DBSNP_FORMAT_NAME
 	};
