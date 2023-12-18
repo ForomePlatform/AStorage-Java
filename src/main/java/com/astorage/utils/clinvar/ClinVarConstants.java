@@ -24,8 +24,8 @@ public interface ClinVarConstants {
 	String RCV_ACCESSION_COLUMN_NAME = "RCVaccession";
 	String RCV_ACCESSIONS_DELIMITER = "\\|";
 	String REF_BUILD_COLUMN_NAME = "Assembly";
-	String REF_COLUMN_NAME = "ReferenceAllele";
-	String ALT_COLUMN_NAME = "AlternateAllele";
+	String REF_COLUMN_NAME = "ReferenceAlleleVCF";
+	String ALT_COLUMN_NAME = "AlternateAlleleVCF";
 	String SIGNIFICANCES_JSON_KEY = "Significances";
 	String SUBMITTER_JSON_KEY = "Submitter";
 

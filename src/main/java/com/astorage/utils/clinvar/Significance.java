@@ -9,8 +9,8 @@ import java.util.Map;
 
 public class Significance implements JsonConvertible, Constants, ClinVarConstants {
 	public static final String[] SIGNIFICANCE_COLUMNS = {
-		"SubmitterID",
-		"RCVaccession",
+		SUBMITTER_ID_COLUMN_NAME,
+		RCV_ACCESSION_COLUMN_NAME,
 		"ClinicalSignificance"
 	};
 	private final Map<String, String> significanceColumnValues = new HashMap<>();

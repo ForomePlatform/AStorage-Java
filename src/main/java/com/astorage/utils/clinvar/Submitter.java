@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class Submitter implements JsonConvertible, Constants, ClinVarConstants {
 	public static final String[] SUBMITTER_COLUMNS = {
-		"SubmitterID",
+		SUBMITTER_ID_COLUMN_NAME,
 		"SubmitterName"
 	};
 	private final Map<String, String> submitterColumnValues = new HashMap<>();
