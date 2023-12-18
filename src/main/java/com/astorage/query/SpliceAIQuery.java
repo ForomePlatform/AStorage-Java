@@ -3,6 +3,7 @@ package com.astorage.query;
 import com.astorage.db.RocksDBRepository;
 import com.astorage.utils.Constants;
 import com.astorage.utils.spliceai.SpliceAIConstants;
+import com.astorage.utils.spliceai.Variant;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -22,11 +23,7 @@ public class SpliceAIQuery extends SingleFormatQuery implements Constants, Splic
 	public void queryHandler() throws IOException {
 		HttpServerRequest req = context.request();
 
-		if (
-			req.params().size() != 2
-				|| !req.params().contains(CHR_PARAM)
-				|| !req.params().contains(POS_PARAM)
-		) {
+		if (!req.params().contains(CHR_PARAM) || !req.params().contains(POS_PARAM)) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
 
 			return;
@@ -34,11 +31,12 @@ public class SpliceAIQuery extends SingleFormatQuery implements Constants, Splic
 
 		String chr = req.getParam(CHR_PARAM);
 		String pos = req.getParam(POS_PARAM);
+		String alt = req.getParam(ALT_PARAM);
 
-		singleQueryHandler(chr, pos, false);
+		singleQueryHandler(chr, pos, alt, false);
 	}
 
-	protected void singleQueryHandler(String chr, String pos, boolean isBatched) throws IOException {
+	protected void singleQueryHandler(String chr, String pos, String alt, boolean isBatched) throws IOException {
 		HttpServerRequest req = context.request();
 
 		try {
@@ -54,7 +52,7 @@ public class SpliceAIQuery extends SingleFormatQuery implements Constants, Splic
 		}
 
 		try {
-			JsonObject result = queryData(dbRep, chr, pos);
+			JsonObject result = queryData(dbRep, chr, pos, alt);
 
 			if (isBatched) {
 				req.response().write(result + "\n");
@@ -68,21 +66,42 @@ public class SpliceAIQuery extends SingleFormatQuery implements Constants, Splic
 		}
 	}
 
-	public static JsonObject queryData(RocksDBRepository dbRep, String chr, String pos) throws Exception {
+	public static JsonObject queryData(RocksDBRepository dbRep, String chr, String pos, String alt) throws Exception {
 		chr = chr.toUpperCase();
 
 		byte[] key = createKey(chr, pos);
-
 		byte[] compressedVariants = dbRep.getBytes(key);
 		if (compressedVariants == null) {
 			throw new Exception(VARIANTS_NOT_FOUND_ERROR);
 		}
 
 		String decompressedVariants = Constants.decompressJson(compressedVariants);
-		JsonArray variantsJsonArray = new JsonArray(decompressedVariants);
-		JsonObject variantsJsonObject = new JsonObject();
-		variantsJsonObject.put(QUERY_VARIANTS_KEY, variantsJsonArray);
+		JsonArray variants = new JsonArray(decompressedVariants);
 
-		return variantsJsonObject;
+		JsonObject result = new JsonObject();
+		result.put(CHR_PARAM, chr);
+		result.put(POS_PARAM, pos);
+
+		if (alt != null) {
+			alt = alt.toUpperCase();
+			result.put(ALT_PARAM, alt);
+
+			JsonArray filteredVariants = new JsonArray();
+
+			for (Object variantObject : variants) {
+				JsonObject variant = (JsonObject) variantObject;
+				String variantAlt = variant.getString(Variant.ALT_COLUMN_NAME);
+
+				if (variantAlt.equalsIgnoreCase(alt)) {
+					filteredVariants.add(variant);
+				}
+			}
+
+			result.put(VARIANTS_KEY, filteredVariants);
+		} else {
+			result.put(VARIANTS_KEY, variants);
+		}
+
+		return result;
 	}
 }

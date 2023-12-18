@@ -16,12 +16,13 @@ public interface SpliceAIConstants {
 	String DATA_PATH_PARAM = "dataPath";
 	String CHR_PARAM = "chr";
 	String POS_PARAM = "pos";
+	String ALT_PARAM = "alt";
 	String CHR_COLUMN_NAME = "CHROM";
 	String POS_COLUMN_NAME = "POS";
 	String REF_COLUMN_NAME = "REF";
 	String ALT_COLUMN_NAME = "ALT";
 	String INFO_COLUMN_NAME = "INFO";
-	String QUERY_VARIANTS_KEY = "variants";
+	String VARIANTS_KEY = "variants";
 
 	// Success messages:
 	String INGESTION_FINISH_MSG = "All data has been ingested.";

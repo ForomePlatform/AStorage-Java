@@ -222,7 +222,8 @@ public class SpliceAIIngestor extends Ingestor implements Constants, SpliceAICon
 		String variantQuery = String.join(
 			UniversalVariantConstants.QUERY_PARAMS_DELIMITER,
 			chr,
-			pos
+			pos,
+			alt
 		);
 
 		UniversalVariantHelper.ingestUniversalVariant(
