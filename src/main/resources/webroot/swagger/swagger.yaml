@@ -421,6 +421,13 @@ paths:
           schema:
             type: string
             example: 69091
+        - name: alt
+          in: query
+          required: false
+          description: Alternate allele
+          schema:
+            type: string
+            example: G
       responses:
         '200':
           description: Query result in JSON
