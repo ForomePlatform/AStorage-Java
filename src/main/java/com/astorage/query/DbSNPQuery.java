@@ -80,37 +80,35 @@ public class DbSNPQuery extends SingleFormatQuery implements Constants, DbSNPCon
 
 		byte[] key = DbSNPHelper.createKey(chr, pos);
 		byte[] compressedVariants = dbRep.getBytes(key);
-
 		if (compressedVariants == null) {
 			throw new Exception(VARIANT_NOT_FOUND_ERROR);
 		}
 
+		String decompressedVariants = Constants.decompressJson(compressedVariants);
+		JsonArray variants = new JsonArray(decompressedVariants);
+
 		JsonObject result = new JsonObject();
 		result.put(CHR_PARAM, chr);
 		result.put(POS_PARAM, pos);
+
 		if (alt != null) {
 			alt = alt.toUpperCase();
 			result.put(ALT_PARAM, alt);
-		}
 
-		String variantsString = Constants.decompressJson(compressedVariants);
-		JsonArray variantsJson = new JsonArray(variantsString);
+			JsonArray filteredVariants = new JsonArray();
 
-		if (alt != null) {
-			JsonArray selectedVariantJson = new JsonArray();
+			for (Object variantObject : variants) {
+				JsonObject variant = (JsonObject) variantObject;
+				String variantAlt = variant.getString(Variant.VARIANT_ALT);
 
-			for (int i = 0; i < variantsJson.size(); i++) {
-				JsonObject variantJson = variantsJson.getJsonObject(i);
-				String nucleotide = variantJson.getString(Variant.VARIANT_ALT);
-
-				if (nucleotide.equalsIgnoreCase(alt)) {
-					selectedVariantJson.add(variantJson);
-					result.put(VARIANTS_KEY, selectedVariantJson);
-					break;
+				if (variantAlt.equalsIgnoreCase(alt)) {
+					filteredVariants.add(variant);
 				}
 			}
+
+			result.put(VARIANTS_KEY, filteredVariants);
 		} else {
-			result.put(VARIANTS_KEY, variantsJson);
+			result.put(VARIANTS_KEY, variants);
 		}
 
 		return result;
