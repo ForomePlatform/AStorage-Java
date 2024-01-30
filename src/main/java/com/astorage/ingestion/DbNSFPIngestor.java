@@ -83,12 +83,12 @@ public class DbNSFPIngestor extends Ingestor implements Constants, DbNSFPConstan
 			}
 
 			Constants.successResponse(req, lineCount + " lines have been ingested in " + dbRep.dbName + "!");
-		} catch (IOException e) {
-			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
+		} catch (Exception e) {
+			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 		}
 	}
 
-	private byte[] processLine(String line, Map<String, Integer> columns, byte[] lastKey, List<Variant> lastVariants) throws IOException {
+	private byte[] processLine(String line, Map<String, Integer> columns, byte[] lastKey, List<Variant> lastVariants) throws Exception {
 		String[] row = line.split(DATA_DELIMITER);
 
 		byte[] key = DbNSFPHelper.createKey(columns, row);

@@ -75,7 +75,7 @@ public class GTExIngestor extends Ingestor implements Constants, GTExConstants {
 				Constants.logProgress(dbRep, lineCount, 100000);
 			}
 		} catch (IOException e) {
-			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
+			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 
 			return;
 		}

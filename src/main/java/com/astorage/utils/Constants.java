@@ -16,10 +16,9 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import java.io.*;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +75,6 @@ public interface Constants {
 	String ROCKS_DB_INIT_ERROR = "RocksDB couldn't initialize...";
 	String INVALID_PARAMS_ERROR = "Invalid parameters...";
 	String HTTP_SERVER_FAIL = "Server failed to start...";
-	String DOWNLOADING_DATA_ERROR = "Download failed...";
 	String INITIALIZING_DIRECTORY_ERROR = "Couldn't initialize directories...";
 	String FILE_NOT_FOUND_ERROR = "File does not exist on given path...";
 	String CONFIG_JSON_DOESNT_EXIST_ERROR = "Given config file doesn't exist.";
@@ -187,7 +185,7 @@ public interface Constants {
 		int interval
 	) {
 		if (lineCount % interval == 0) {
-			System.out.print(dbRep.dbName + ": " + lineCount + " lines have been processed");
+			System.out.print(timeStamp() + dbRep.dbName + ": " + lineCount + " lines have been processed");
 
 			if (normalize) {
 				System.out.print(" out of which " + normalizationsCount + " normalized");
@@ -201,23 +199,6 @@ public interface Constants {
 		logProgress(dbRep, lineCount, false, 0, interval);
 	}
 
-	static void downloadUsingStream(String urlStr, String filename) throws IOException, URISyntaxException {
-		File file = new File(DATA_DIRECTORY_PATH, filename);
-		URI uri = new URI(urlStr);
-		URL url = uri.toURL();
-		BufferedInputStream bufferedInputStream = new BufferedInputStream(url.openStream());
-		FileOutputStream fileOutputStream = new FileOutputStream(file);
-		byte[] buffer = new byte[1024];
-		int count;
-
-		while ((count = bufferedInputStream.read(buffer, 0, 1024)) != -1) {
-			fileOutputStream.write(buffer, 0, count);
-		}
-
-		bufferedInputStream.close();
-		fileOutputStream.close();
-	}
-
 	static Map<String, Integer> mapColumns(String line, String dataDelimiter) {
 		String[] columns = line.split(dataDelimiter);
 		Map<String, Integer> mappedColumns = new HashMap<>();
@@ -227,5 +208,9 @@ public interface Constants {
 		}
 
 		return mappedColumns;
+	}
+
+	static String timeStamp() {
+		return new Timestamp(new Date().getTime()) + " > ";
 	}
 }

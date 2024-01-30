@@ -113,7 +113,6 @@ public class VariantNormalizer implements Constants, VariantNormalizerConstants 
 		boolean refMatchFound = refMatcher.find();
 		boolean altMatchFound = altMatcher.find();
 
-
 		if (!refMatchFound || !altMatchFound) {
 			throw new Exception(GIVEN_REF_ALT_NOT_SUPPORTED);
 		}

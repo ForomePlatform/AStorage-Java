@@ -32,13 +32,14 @@ public class Facet implements JsonConvertible {
 	public final Map<String, String> facetColumnValues = new HashMap<>();
 	public final List<Transcript> transcripts = new ArrayList<>();
 
-	public Facet(Map<String, Integer> columns, String[] row) {
+	public Facet(Map<String, Integer> columns, String[] row) throws Exception {
 		for (String columnName : FACET_COLUMNS) {
-			if (columns.get(columnName) == null) {
-				System.err.println(Constants.COLUMN_DOESNT_EXIST + columnName);
+			Integer columnIndex = columns.get(columnName);
+			if (columnIndex == null) {
+				throw new Exception(Constants.COLUMN_DOESNT_EXIST + columnName);
 			}
 
-			String columnValue = row[columns.get(columnName)];
+			String columnValue = row[columnIndex];
 
 			if (Objects.equals(columnValue, ".")) {
 				facetColumnValues.put(columnName, null);

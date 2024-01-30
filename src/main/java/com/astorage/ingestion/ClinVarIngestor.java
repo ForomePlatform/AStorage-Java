@@ -78,6 +78,8 @@ public class ClinVarIngestor extends Ingestor implements Constants, ClinVarConst
 	}
 
 	private void storeXMLData(String dataPath) {
+		HttpServerRequest req = context.request();
+
 		try {
 			InputStream fileInputStream = new FileInputStream(dataPath);
 			InputStream gzipInputStream = new GZIPInputStream(fileInputStream);
@@ -97,7 +99,7 @@ public class ClinVarIngestor extends Ingestor implements Constants, ClinVarConst
 				}
 			}
 		} catch (XMLStreamException | IOException e) {
-			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
+			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 		}
 	}
 
@@ -156,6 +158,8 @@ public class ClinVarIngestor extends Ingestor implements Constants, ClinVarConst
 	}
 
 	private void storeVariantSummeryData(String dataSummaryPath, boolean normalize) {
+		HttpServerRequest req = context.request();
+
 		try (
 			InputStream fileInputStream = new FileInputStream(dataSummaryPath);
 			InputStream gzipInputStream = new GZIPInputStream(fileInputStream);
@@ -166,7 +170,7 @@ public class ClinVarIngestor extends Ingestor implements Constants, ClinVarConst
 
 			Map<String, Integer> columns;
 			if (line == null || !line.startsWith(COLUMN_NAMES_LINE_PREFIX)) {
-				Constants.errorResponse(context.request(), HttpURLConnection.HTTP_BAD_REQUEST, INVALID_FILE_CONTENT);
+				Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_FILE_CONTENT);
 
 				return;
 			}
@@ -195,7 +199,7 @@ public class ClinVarIngestor extends Ingestor implements Constants, ClinVarConst
 				Constants.logProgress(dbRep, lineCount, normalize, normalizationsCount, 100000);
 			}
 		} catch (Exception e) {
-			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
+			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 		}
 	}
 

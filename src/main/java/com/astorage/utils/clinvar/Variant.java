@@ -43,13 +43,14 @@ public class Variant implements JsonConvertible, Constants, ClinVarConstants {
 	};
 	public final Map<String, String> variantColumnValues = new HashMap<>();
 
-	public Variant(Map<String, Integer> columns, String[] row) {
+	public Variant(Map<String, Integer> columns, String[] row) throws Exception {
 		for (String columnName : VARIANT_COLUMNS) {
-			if (columns.get(columnName) == null) {
-				System.err.println(COLUMN_DOESNT_EXIST + columnName);
-			} else {
-				variantColumnValues.put(columnName, row[columns.get(columnName)]);
+			Integer columnIndex = columns.get(columnName);
+			if (columnIndex == null) {
+				throw new Exception(COLUMN_DOESNT_EXIST + columnName);
 			}
+
+			variantColumnValues.put(columnName, row[columns.get(columnName)]);
 		}
 	}
 

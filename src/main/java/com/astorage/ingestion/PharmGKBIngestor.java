@@ -64,7 +64,7 @@ public class PharmGKBIngestor extends Ingestor implements PharmGKBConstants, Con
 
 			storeData(dataType, bufferedReader, columnFamilyHandle);
 		} catch (IOException e) {
-			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
+			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 		}
 
 		Constants.successResponse(req, INGESTION_FINISH_MSG);

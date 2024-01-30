@@ -55,18 +55,20 @@ public class GERPIngestor extends Ingestor implements Constants, GERPConstants {
 		) {
 			storeData(bufferedReader);
 		} catch (IOException e) {
-			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
+			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 		}
 
 		Constants.successResponse(req, INGESTION_FINISH_MSG);
 	}
 
 	private boolean detectChromosomeFromFilename(String filename) {
+		HttpServerRequest req = context.request();
+
 		int startIdx = filename.indexOf(FILENAME_CHROMOSOME_PREFIX) + FILENAME_CHROMOSOME_PREFIX.length();
 		int endIdx = filename.indexOf(FILENAME_CHROMOSOME_SUFFIX, startIdx);
 
 		if (startIdx == FILENAME_CHROMOSOME_PREFIX.length() - 1 || endIdx == -1) {
-			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_BAD_REQUEST, CHROMOSOME_NOT_DETECTED_IN_FILENAME);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, CHROMOSOME_NOT_DETECTED_IN_FILENAME);
 
 			return false;
 		}

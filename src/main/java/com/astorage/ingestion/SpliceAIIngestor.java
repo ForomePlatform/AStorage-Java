@@ -96,11 +96,12 @@ public class SpliceAIIngestor extends Ingestor implements Constants, SpliceAICon
 				Constants.successResponse(req, successMsg.toString());
 			}
 		} catch (Exception e) {
-			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
+			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 		}
 	}
 
 	private boolean storeData(BufferedReader reader, boolean normalize) throws Exception {
+		HttpServerRequest req = context.request();
 		String line;
 
 		while ((line = reader.readLine()) != null && line.startsWith(COMMENT_LINE_PREFIX)) {
@@ -110,7 +111,7 @@ public class SpliceAIIngestor extends Ingestor implements Constants, SpliceAICon
 		}
 
 		if (line == null || !line.startsWith(COLUMN_NAMES_LINE_PREFIX)) {
-			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_BAD_REQUEST, INVALID_FILE_CONTENT);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_FILE_CONTENT);
 
 			return false;
 		}

@@ -54,11 +54,12 @@ public class GTFIngestor extends Ingestor implements Constants, GTFConstants {
 				Constants.successResponse(req, INGESTION_FINISH_MSG);
 			}
 		} catch (IOException e) {
-			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
+			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
 		}
 	}
 
 	private boolean storeData(BufferedReader reader) throws IOException {
+		HttpServerRequest req = context.request();
 		String line;
 
 		do {
@@ -66,7 +67,7 @@ public class GTFIngestor extends Ingestor implements Constants, GTFConstants {
 		} while (line != null && line.startsWith(COMMENT_LINE_PREFIX));
 
 		if (line == null) {
-			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_BAD_REQUEST, INVALID_FILE_CONTENT);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_FILE_CONTENT);
 
 			return false;
 		}

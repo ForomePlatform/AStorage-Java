@@ -31,13 +31,14 @@ public class Variant implements JsonConvertible {
 	public final Map<String, String> variantColumnValues = new HashMap<>();
 	public final List<Facet> facets = new ArrayList<>();
 
-	public Variant(Map<String, Integer> columns, String[] row) {
+	public Variant(Map<String, Integer> columns, String[] row) throws Exception {
 		for (String columnName : VARIANT_COLUMNS) {
-			if (columns.get(columnName) == null) {
-				System.err.println(Constants.COLUMN_DOESNT_EXIST + columnName);
+			Integer columnIndex = columns.get(columnName);
+			if (columnIndex == null) {
+				throw new Exception(Constants.COLUMN_DOESNT_EXIST + columnName);
 			}
 
-			String columnValue = row[columns.get(columnName)];
+			String columnValue = row[columnIndex];
 
 			if (Objects.equals(columnValue, ".")) {
 				variantColumnValues.put(columnName, null);

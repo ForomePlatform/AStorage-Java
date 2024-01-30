@@ -36,15 +36,16 @@ public class Transcript implements JsonConvertible {
 
 	public final Map<String, String> transcriptColumnValues = new HashMap<>();
 
-	public static List<Transcript> parseTranscripts(Map<String, Integer> columns, String[] row) {
+	public static List<Transcript> parseTranscripts(Map<String, Integer> columns, String[] row) throws Exception {
 		List<Transcript> transcripts = new ArrayList<>();
 
 		for (String columnName : Transcript.TRANSCRIPT_COLUMNS) {
-			if (columns.get(columnName) == null) {
-				System.err.println(Constants.COLUMN_DOESNT_EXIST + columnName);
+			Integer columnIndex = columns.get(columnName);
+			if (columnIndex == null) {
+				throw new Exception(Constants.COLUMN_DOESNT_EXIST + columnName);
 			}
 
-			String columnValues = row[columns.get(columnName)];
+			String columnValues = row[columnIndex];
 			String[] splitColumnValues = columnValues.split(";");
 
 			for (int i = 0; i < splitColumnValues.length; i++) {

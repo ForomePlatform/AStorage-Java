@@ -15,13 +15,15 @@ public class Variant implements SpliceAIConstants {
 	public final Map<String, String> variantColumnValues = new HashMap<>();
 	private final Info info;
 
-	public Variant(Map<String, Integer> columns, String[] values, Map<String, Integer> infoFieldNamesToIndices) {
+	public Variant(Map<String, Integer> columns, String[] values, Map<String, Integer> infoFieldNamesToIndices) throws Exception {
 		for (String columnName : VARIANT_COLUMNS) {
-			if (columns.get(columnName) == null) {
-				System.err.println(Constants.COLUMN_DOESNT_EXIST + columnName);
+			Integer columnIndex = columns.get(columnName);
+			if (columnIndex == null) {
+				throw new Exception(Constants.COLUMN_DOESNT_EXIST + columnName);
 			}
 
-			variantColumnValues.put(columnName, values[columns.get(columnName)]);
+			String columnValue = values[columnIndex];
+			variantColumnValues.put(columnName, columnValue);
 		}
 
 		String infoData = values[columns.get(INFO_COLUMN_NAME)];

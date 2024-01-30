@@ -45,7 +45,7 @@ public class Info implements SpliceAIConstants {
 		}
 	}
 
-	void addInfoToJsonObject(JsonObject jsonObject) {
+	protected void addInfoToJsonObject(JsonObject jsonObject) {
 		for (String fieldName : INFO_FIELDS) {
 			jsonObject.put(
 				fieldName,
