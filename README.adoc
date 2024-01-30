@@ -5,7 +5,7 @@ image:https://img.shields.io/badge/vert.x-4.4.6-white.svg[link="https://vertx.io
 .Already supported formats (See usage examples below):
 * Fasta
 * dbNSFP v4.3a
-* gnomAD v2.1.1
+* gnomAD v4
 * SpliceAI v1.3
 * PharmGKB
 * ClinVar
@@ -16,7 +16,7 @@ image:https://img.shields.io/badge/vert.x-4.4.6-white.svg[link="https://vertx.io
 
 .Formats mapped in the universal variant query:
 * dbNSFP v4.3a
-* gnomAD v2.1.1
+* gnomAD v4
 * SpliceAI v1.3
 * ClinVar
 * GERP
