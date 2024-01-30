@@ -4,14 +4,15 @@ public interface GnomADConstants {
 	// General:
 	String GNOMAD_FORMAT_NAME = "GnomAD";
 	String COLUMNS_DELIMITER = "\t";
-	String INFO_FIELDS_DELIMITER = ";";
-	String INFO_FIELD_KEY_VALUE_DELIMITER = "=";
+	String INFO_DELIMITER = ";";
+	String INFO_PAIR_KEY_VALUE_DELIMITER = "=";
 	String SOURCE_TYPES = "ge"; // g - genome, e - exome
 	String COMMENT_LINE_PREFIX = "##";
 	String COLUMN_NAMES_LINE_PREFIX = "#";
+	String CHR_PREFIX = "chr";
 
 	// Ingestion/query request params:
-	String DATA_URL_PARAM = "dataURL";
+	String DATA_PATH_PARAM = "dataPath";
 	String SOURCE_TYPE_PARAM = "sourceType";
 	String SOURCE_TYPE_FIELD_NAME = "SOURCE";
 	String CHR_PARAM = "chr";
@@ -21,9 +22,6 @@ public interface GnomADConstants {
 	String REF_COLUMN_NAME = "REF";
 	String ALT_COLUMN_NAME = "ALT";
 	String INFO_COLUMN_NAME = "INFO";
-
-	// Other:
-	String COMPRESSED_DATA_FILENAME = "data.gz";
 
 	// Success messages:
 	String INGESTION_FINISH_MSG = "All data has been ingested.";

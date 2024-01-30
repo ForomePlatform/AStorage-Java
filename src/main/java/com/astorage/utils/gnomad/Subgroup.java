@@ -6,38 +6,45 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Subgroup {
-	public static final String[] GROUPS = {
+	public static final String[] SUBGROUPS = {
 		"afr",
+		"ami",
 		"amr",
 		"asj",
 		"eas",
 		"fin",
+		"mid",
 		"nfe",
 		"sas",
-		"oth",
+		"remaining",
 		"raw",
-		"male",
-		"female"
+		"XY",
+		"XX"
 	};
+
 	public static final String[] SUBGROUP_FIELDS = {
 		"AC",
 		"AN",
 		"AF"
 	};
 
-	public final Map<String, String> subgroupFieldValues = new HashMap<>();
-	private String subgroupName = null;
+	private final String subgroupName;
+	private final Map<String, String> subgroupValues = new HashMap<>();
 
 	public Subgroup(String subgroupName) {
 		this.subgroupName = subgroupName;
 	}
 
+	public void putValue(String valueKey, String value) {
+		subgroupValues.put(valueKey, value);
+	}
+
 	public JsonObject toJson() {
-		io.vertx.core.json.JsonObject subgroupJson = new JsonObject();
+		JsonObject subgroupJson = new JsonObject();
 
 		for (String field : SUBGROUP_FIELDS) {
-			String fieldName = this.subgroupName + "_" + field;
-			subgroupJson.put(fieldName, subgroupFieldValues.get(fieldName)); // ToDo: NULL
+			String valueKey = field + "_" + this.subgroupName;
+			subgroupJson.put(valueKey, subgroupValues.get(valueKey));
 		}
 
 		return subgroupJson;

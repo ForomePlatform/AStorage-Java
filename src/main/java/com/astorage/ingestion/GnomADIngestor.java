@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 /**
- * For gnomAD v2.1.1!
+ * For gnomAD v4!
  */
 @SuppressWarnings("unused")
 public class GnomADIngestor extends Ingestor implements Constants, GnomADConstants {
@@ -44,13 +44,13 @@ public class GnomADIngestor extends Ingestor implements Constants, GnomADConstan
 	public void ingestionHandler() {
 		HttpServerRequest req = context.request();
 
-		if (!req.params().contains(DATA_URL_PARAM) || !req.params().contains(SOURCE_TYPE_PARAM)) {
+		if (!req.params().contains(DATA_PATH_PARAM) || !req.params().contains(SOURCE_TYPE_PARAM)) {
 			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_PARAMS_ERROR);
 
 			return;
 		}
 
-		String dataURL = req.getParam(DATA_URL_PARAM);
+		String dataPath = req.getParam(DATA_PATH_PARAM);
 		String sourceType = req.getParam(SOURCE_TYPE_PARAM);
 		String normalizeParam = req.getParam(VariantNormalizerConstants.NORMALIZE_PARAM);
 		boolean normalize = "true".equals(normalizeParam);
@@ -63,41 +63,51 @@ public class GnomADIngestor extends Ingestor implements Constants, GnomADConstan
 
 		this.refBuild = req.getParam(VariantNormalizerConstants.REF_BUILD_PARAM);
 
-		ColumnFamilyHandle columnFamilyHandle = dbRep.getColumnFamilyHandle(sourceType);
-		if (columnFamilyHandle == null) {
-			if (sourceType.length() == 1 && SOURCE_TYPES.contains(sourceType.toLowerCase())) {
-				columnFamilyHandle = dbRep.createColumnFamily(sourceType);
-			} else {
-				Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_SOURCE_TYPE_ERROR);
-
-				return;
-			}
-		}
-
-		try {
-			Constants.downloadUsingStream(dataURL, COMPRESSED_DATA_FILENAME);
-			File file = new File(DATA_DIRECTORY_PATH, COMPRESSED_DATA_FILENAME);
-			InputStream fileInputStream = new FileInputStream(file);
-			InputStream gzipInputStream = new GZIPInputStream(fileInputStream);
-			Reader decoder = new InputStreamReader(gzipInputStream, StandardCharsets.UTF_8);
-			BufferedReader bufferedReader = new BufferedReader(decoder);
-
-			storeData(bufferedReader, columnFamilyHandle, sourceType, normalize);
-		} catch (Exception e) {
-			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, DOWNLOADING_DATA_ERROR);
+		File file = new File(dataPath);
+		if (!file.exists()) {
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, FILE_NOT_FOUND_ERROR);
 
 			return;
 		}
 
-		Constants.successResponse(req, INGESTION_FINISH_MSG);
+		if (sourceType.length() != 1 || !SOURCE_TYPES.contains(sourceType.toLowerCase())) {
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_SOURCE_TYPE_ERROR);
+
+			return;
+		}
+
+		try (
+			InputStream fileInputStream = new FileInputStream(file);
+			InputStream gzipInputStream = new GZIPInputStream(fileInputStream);
+			Reader decoder = new InputStreamReader(gzipInputStream, StandardCharsets.UTF_8);
+			BufferedReader bufferedReader = new BufferedReader(decoder)
+		) {
+			boolean success = storeData(bufferedReader, sourceType, normalize);
+
+			if (success) {
+				StringBuilder successMsg = new StringBuilder();
+				successMsg
+					.append(lineCount)
+					.append(" lines have been ingested in ")
+					.append(dbRep.dbName);
+				if (normalize) {
+					successMsg
+						.append(" out of which ")
+						.append(normalizationsCount)
+						.append(" have been normalized");
+				}
+				successMsg.append("!");
+
+				Constants.successResponse(req, successMsg.toString());
+			}
+		} catch (Exception e) {
+			Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
+		}
 	}
 
-	private void storeData(
-		BufferedReader reader,
-		ColumnFamilyHandle columnFamilyHandle,
-		String sourceType,
-		boolean normalize
-	) throws Exception {
+	private boolean storeData(BufferedReader reader, String sourceType, boolean normalize) throws Exception {
+		HttpServerRequest req = context.request();
+		ColumnFamilyHandle columnFamilyHandle = dbRep.getOrCreateColumnFamily(sourceType);
 		String line;
 
 		do {
@@ -107,9 +117,9 @@ public class GnomADIngestor extends Ingestor implements Constants, GnomADConstan
 		Map<String, Integer> columns;
 
 		if (line == null || !line.startsWith(COLUMN_NAMES_LINE_PREFIX)) {
-			Constants.errorResponse(context.request(), HttpURLConnection.HTTP_BAD_REQUEST, INVALID_FILE_CONTENT);
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, INVALID_FILE_CONTENT);
 
-			return;
+			return false;
 		}
 
 		columns = Constants.mapColumns(line.substring(1), COLUMNS_DELIMITER);
@@ -119,6 +129,10 @@ public class GnomADIngestor extends Ingestor implements Constants, GnomADConstan
 			Variant variant = new Variant(columns, values);
 
 			String chr = values[columns.get(CHR_COLUMN_NAME)];
+			if (chr.contains(CHR_PREFIX)) {
+				chr = chr.substring(CHR_PREFIX.length());
+			}
+
 			String pos = values[columns.get(POS_COLUMN_NAME)];
 			byte[] key = GnomADHelper.createKey(chr, pos);
 			byte[] compressedVariant = Constants.compressJson(variant.toString());
@@ -137,7 +151,7 @@ public class GnomADIngestor extends Ingestor implements Constants, GnomADConstan
 			Constants.logProgress(dbRep, lineCount, normalize, normalizationsCount, 100000);
 		}
 
-		reader.close();
+		return true;
 	}
 
 	private boolean ingestQueryParams(String chr, String pos, Variant variant, String sourceType) throws Exception {

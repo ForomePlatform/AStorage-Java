@@ -35,7 +35,6 @@ public interface Constants {
 	String QUERY_EXECUTOR_SUFFIX = "-query-executor";
 	String USER_HOME = System.getProperty("user.home");
 	String ASTORAGE_DIRECTORY_NAME = "/AStorage";
-	String DATA_DIRECTORY_PATH = System.getProperty("user.home") + "/AStorage";
 	String DATA_DIRECTORY_PATH_JSON_KEY = "dataDirectoryPath";
 
 	String[] FORMAT_NAMES = {

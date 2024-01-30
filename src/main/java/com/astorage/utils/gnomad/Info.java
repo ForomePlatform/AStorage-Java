@@ -13,58 +13,50 @@ public class Info implements GnomADConstants {
 		"nhomalt",
 		"faf95",
 		"faf99",
-		"nhomalt_male",
+		"nhomalt_XY",
 	};
-
-	public static Map<String, String> INFO_FIELD_ALTERNATIVE_NAMES = new HashMap<>() {{
-		put("nhomalt_male", "hem");
-	}};
 
 	public final Map<String, String> infoFieldValues = new HashMap<>();
 	public final Map<String, Subgroup> subgroups = new HashMap<>();
 
 	public Info(String info) {
-		String[] delimitedInfo = info.split(INFO_FIELDS_DELIMITER);
+		String[] delimitedInfo = info.split(INFO_DELIMITER);
+
 		for (String infoPairString : delimitedInfo) {
-			String[] infoPair = infoPairString.split(INFO_FIELD_KEY_VALUE_DELIMITER);
+			String[] infoPair = infoPairString.split(INFO_PAIR_KEY_VALUE_DELIMITER);
 			if (infoPair.length != 2) {
 				continue;
 			}
 
-			String key = infoPair[0];
-			String value = infoPair[1];
-
-			infoFieldValues.put(key, value);
+			infoFieldValues.put(infoPair[0], infoPair[1]);
 		}
 
 		this.generateSubgroups();
 	}
 
 	private void generateSubgroups() {
-		for (String subgroupName : Subgroup.GROUPS) {
-			for (String subgroupFieldName : Subgroup.SUBGROUP_FIELDS) {
-				String subgroupFieldValue = infoFieldValues.get(subgroupName + "_" + subgroupFieldName);
-				if (subgroupFieldValue == null) {
+		for (String subgroupFieldName : Subgroup.SUBGROUP_FIELDS) {
+			for (String subgroupName : Subgroup.SUBGROUPS) {
+				String subgroupValueKey = subgroupFieldName + "_" + subgroupName;
+				String subgroupValue = infoFieldValues.get(subgroupValueKey);
+				if (subgroupValue == null) {
 					continue;
 				}
 
-				Subgroup subgroup = this.subgroups.get(subgroupName);
+				Subgroup subgroup = subgroups.get(subgroupName);
 				if (subgroup == null) {
-					subgroup = this.subgroups.put(subgroupName, new Subgroup(subgroupName));
+					Subgroup newSubgroup = new Subgroup(subgroupName);
+					subgroups.put(subgroupName, newSubgroup);
+					subgroup = newSubgroup;
 				}
-
-				assert subgroup != null;
-				subgroup.subgroupFieldValues.put(subgroupFieldName, subgroupFieldValue);
+				subgroup.putValue(subgroupValueKey, subgroupValue);
 			}
 		}
 	}
 
-	void addInfoToJsonObject(JsonObject jsonObject) {
+	protected void addInfoToJsonObject(JsonObject jsonObject) {
 		for (String fieldName : INFO_FIELDS) {
-			jsonObject.put(
-				INFO_FIELD_ALTERNATIVE_NAMES.getOrDefault(fieldName, fieldName),
-				infoFieldValues.get(fieldName)
-			);
+			jsonObject.put(fieldName, infoFieldValues.get(fieldName));
 		}
 
 		for (String subgroupName : this.subgroups.keySet()) {

@@ -169,6 +169,19 @@ public class RocksDBRepository implements Constants {
 		return null;
 	}
 
+	public synchronized void dropColumnFamily(ColumnFamilyHandle columnFamilyHandle) {
+		try {
+			db.dropColumnFamily(columnFamilyHandle);
+		} catch (RocksDBException e) {
+			System.err.printf(
+				"Error dropping column family in RocksDB<%s>, cause: %s, message: %s%n",
+				dbFormatName,
+				e.getCause(),
+				e.getMessage()
+			);
+		}
+	}
+
 	public ColumnFamilyHandle getColumnFamilyHandle(String name) {
 		return columnFamilyHandleMap.get(name);
 	}

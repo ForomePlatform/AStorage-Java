@@ -68,15 +68,15 @@ paths:
       tags: [
         Ingestion
       ]
-      summary: Ingests given gnomAD v2.1.1 data
+      summary: Ingests given gnomAD v4 data
       parameters:
-        - name: dataUrl
+        - name: dataPath
           in: query
           required: true
           description: Path of the gnomAD data file
           schema:
             type: string
-            example: https://storage.googleapis.com/gcp-public-data--gnomad/release/2.1.1/vcf/exomes/gnomad.exomes.r2.1.1.sites.vcf.bgz
+            example: gnomad.exomes.v4.0.sites.chr1.vcf.bgz
         - name: sourceType
           in: query
           required: true
@@ -97,7 +97,7 @@ paths:
           description: Reference build to be used during normalization
           schema:
             type: string
-            example: GRCh37
+            example: GRCh38
       responses:
         '200':
           description: Success message in JSON
@@ -370,7 +370,7 @@ paths:
       tags: [
         Query
       ]
-      summary: Queries data from gnomAD v2.1.1
+      summary: Queries data from gnomAD v4
       parameters:
         - name: chr
           in: query
