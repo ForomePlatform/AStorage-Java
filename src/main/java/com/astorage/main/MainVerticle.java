@@ -27,6 +27,7 @@ import java.io.*;
 import java.lang.reflect.Constructor;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,8 +51,12 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 			System.out.println("Data directory path: " + dataDirectoryPath);
 
 			File logFile = new File(dataDirectoryPath, "output.log");
-			PrintStream printStream = new PrintStream(new FileOutputStream(logFile));
+			if (!logFile.exists()) {
+				Files.createDirectories(logFile.getParentFile().toPath());
+				Files.createDirectory(logFile.getAbsoluteFile().toPath());
+			}
 
+			PrintStream printStream = new PrintStream(new FileOutputStream(logFile));
 			System.setOut(printStream);
 		} catch (Exception e) {
 			startPromise.fail(e.getMessage());
