@@ -56,44 +56,114 @@ For detailed API specification access the Swagger UI via: http://localhost:8080/
 
 == Setup: Ingestion
 === Fasta:
-Download the reference genome: link:https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.fna.gz[GRCh38.p14_genomic] and its assembly report: link:https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_assembly_report.txt[GRCh38.p14_assembly_report] and run ingestion from: link:http://localhost:8080/swagger/#/Ingestion/post_ingestion_fasta[Swagger Fasta Ingestion].
+Download the reference genome: link:https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.fna.gz[GRCh38.p14_genomic] and its assembly report: link:https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_assembly_report.txt[GRCh38.p14_assembly_report] and run ingestion:
+
+[source,bash]
+----
+curl -X POST "http://localhost:8080/ingestion/fasta?refBuild=GRCh38&dataPath={dataPath}&metadataPath={assemblyReportPath}"
+----
+
+API reference: link:http://localhost:8080/swagger/#/Ingestion/post_ingestion_fasta[Swagger Fasta Ingestion].
 
 === dbNSFP:
-Download the entire dbNSFP database: link:https://dbnsfp.s3.amazonaws.com/dbNSFP4.3a.zip[dbNSFP4.3a], extract the downloaded content and run ingestion for each chromosome variant one by one from:
-link:http://localhost:8080/swagger/#/Ingestion/post_ingestion_dbnsfp[Swagger dbNSFP Ingestion].
+Download the entire dbNSFP database: link:https://dbnsfp.s3.amazonaws.com/dbNSFP4.3a.zip[dbNSFP4.3a], extract the downloaded content and run ingestion for each chromosome variant one by one:
+
+[source,bash]
+----
+curl -X POST "http://localhost:8080/ingestion/dbnsfp?dataPath={chrDataPath}"
+----
+
+API reference: link:http://localhost:8080/swagger/#/Ingestion/post_ingestion_dbnsfp[Swagger dbNSFP Ingestion].
 
 === gnomAD:
-Download available exomes and genomes from: link:https://gnomad.broadinstitute.org/downloads#v4[gnomAD v4] and ingest the downloaded files from: link:http://localhost:8080/swagger/#/Ingestion/post_ingestion_gnomad[Swagger gnomAD Ingestion].
+Download available exomes and genomes from: link:https://gnomad.broadinstitute.org/downloads#v4[gnomAD v4] and ingest the downloaded files:
 
 NOTE: If you set the *normalize* parameter to *true* for ingestion Fasta GRCh38 should already be ingested into the AStorage.
+
+[source,bash]
+----
+curl -X POST "http://localhost:8080/ingestion/gnomad?dataPath={dataPath}&sourceType={sourceType}&normalize=true&refBuild=GRCh38"
+----
+
+API reference: link:http://localhost:8080/swagger/#/Ingestion/post_ingestion_gnomad[Swagger gnomAD Ingestion].
 
 === SpliceAI:
 Access the SpliceAI annotations here: link:https://basespace.illumina.com/s/otSPW8hnhaZR[SpliceAI v1.3] for which you'll need an account of Illumina.
 
 From the Illumina Sequence Hub Projects tab open the added project: *Predicting splicing from primary sequence*, then open *genome_scores_v1.3*, click on *FILES* and download *spliceai_scores.raw.indel.hg38.vcf.gz* and *spliceai_scores.raw.snv.hg38.vcf.gz*.
 
-Run the ingestion for each data file from: link:http://localhost:8080/swagger/#/Ingestion/post_ingestion_spliceai[Swagger SpliceAI Ingestion].
+Run the ingestion for each data file:
 
 NOTE: If you set the *normalize* parameter to *true* for ingestion Fasta GRCh38 should already be ingested into the AStorage.
 
+[source,bash]
+----
+curl -X POST "http://localhost:8080/ingestion/spliceai?dataPath={dataPath}&normalize=true&refBuild=GRCh38"
+----
+
+API reference: link:http://localhost:8080/swagger/#/Ingestion/post_ingestion_spliceai[Swagger SpliceAI Ingestion].
+
 === PharmGKB:
-Download the appropriate data files from: link:https://www.pharmgkb.org/downloads[PharmGKB Downloads] and ingest the downloaded files from: link:http://localhost:8080/swagger/#/Ingestion/post_ingestion_pharmgkb[Swagger PhramGKB Ingestion].
+Download the appropriate data files from: link:https://www.pharmgkb.org/downloads[PharmGKB Downloads] and ingest the downloaded files:
+
+[source,bash]
+----
+curl -X POST "http://localhost:8080/ingestion/pharmgkb?dataType={dataType}&dataPath={dataPath}"
+----
+
+API reference: link:http://localhost:8080/swagger/#/Ingestion/post_ingestion_pharmgkb[Swagger PhramGKB Ingestion].
 
 === ClinVar:
-Download the latest ClinVar release: link:https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/ClinVarVCVRelease_00-latest.xml.gz[ClinVarVCVRelease_00-latest] and its variant summary: link:https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/variant_summary.txt.gz[variant_summary] and ingest the downloaded files from: link:http://localhost:8080/swagger/#/Ingestion/post_ingestion_clinvar[Swagger ClinVar Ingestion].
+Download the latest ClinVar release: link:https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/ClinVarVCVRelease_00-latest.xml.gz[ClinVarVCVRelease_00-latest] and its variant summary: link:https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/variant_summary.txt.gz[variant_summary] and ingest the downloaded files:
 
 NOTE: If you set the *normalize* parameter to *true* for ingestion required Fasta reference genomes should already be ingested into the AStorage.
 
+[source,bash]
+----
+curl -X POST "http://localhost:8080/ingestion/clinvar?dataPath={dataPath}&dataSummaryPath={dataSummaryPath}&normalize=true"
+----
+
+API reference: link:http://localhost:8080/swagger/#/Ingestion/post_ingestion_clinvar[Swagger ClinVar Ingestion].
+
 === GTEx:
-Download the GTEx v8 bulk tissue expression data: link:https://storage.googleapis.com/adult-gtex/bulk-gex/v8/rna-seq/GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_tpm.gct.gz[GTEx_Analysis_2017-06-05_v8] and ingest the downloaded file from: link:http://localhost:8080/swagger/#/Ingestion/post_ingestion_gtex[Swagger GTEx Ingestion].
+Download the GTEx v8 bulk tissue expression data: link:https://storage.googleapis.com/adult-gtex/bulk-gex/v8/rna-seq/GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_tpm.gct.gz[GTEx_Analysis_2017-06-05_v8] and ingest the downloaded file:
+
+[source,bash]
+----
+curl -X POST "http://localhost:8080/ingestion/gtex?dataPath={dataPath}"
+----
+
+API reference: link:http://localhost:8080/swagger/#/Ingestion/post_ingestion_gtex[Swagger GTEx Ingestion].
 
 === GTF:
-Download the GRCh38 GTF data file: link:https://ftp.ensembl.org/pub/release-111/gtf/homo_sapiens/Homo_sapiens.GRCh38.111.chr.gtf.gz[Homo_sapiens.GRCh38.111.chr] and ingest the downloaded file from: link:http://localhost:8080/swagger/#/Ingestion/post_ingestion_gtf[Swagger GTF Ingestion].
+Download the GRCh38 GTF data file: link:https://ftp.ensembl.org/pub/release-111/gtf/homo_sapiens/Homo_sapiens.GRCh38.111.chr.gtf.gz[Homo_sapiens.GRCh38.111.chr] and ingest the downloaded file:
 
-=== GERP: TBD
+[source,bash]
+----
+curl -X POST "http://localhost:8080/ingestion/gtf?dataPath={dataPath}"
+----
+
+API reference: link:http://localhost:8080/swagger/#/Ingestion/post_ingestion_gtf[Swagger GTF Ingestion].
+
+=== GERP:
+Retrieve the necessary GERP rates files for each chromosome and ingest the downloaded files one by one:
+
+[source,bash]
+----
+curl -X POST "http://localhost:8080/ingestion/gerp?dataPath={dataPath}"
+----
+
+API reference: link:http://localhost:8080/swagger/#/Ingestion/post_ingestion_gerp[Swagger GERP Ingestion].
 
 === dbSNP:
-Download the complete dbSNP data: link:https://ftp.ncbi.nih.gov/snp/organisms/human_9606/VCF/00-All.vcf.gz[00-All] and ingest the downloaded file from: link:http://localhost:8080/swagger/#/Ingestion/post_ingestion_dbsnp[Swagger dbSNP Ingestion].
+Download the complete dbSNP data: link:https://ftp.ncbi.nih.gov/snp/organisms/human_9606/VCF/00-All.vcf.gz[00-All] and ingest the downloaded file:
+
+[source,bash]
+----
+curl -X POST "http://localhost:8080/ingestion/dbsnp?dataPath={dataPath}"
+----
+
+API reference: link:http://localhost:8080/swagger/#/Ingestion/post_ingestion_dbsnp[Swagger dbSNP Ingestion].
 
 == Additional Notes
 
