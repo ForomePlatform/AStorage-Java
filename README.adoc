@@ -48,7 +48,7 @@ To start the application run:
 java -jar astorage-java-1.0.0.jar [config_json_path]
 ----
 
-NOTE: AStorage logs(e.g. ingestion progress) are being written in <dataDirectoryPath>/output.log file.
+NOTE: AStorage logs(e.g. ingestion progress) are being written in <dataDirectoryPath>/output_<currentTimeMillis>.log file.
 
 The service is only running on *localhost:8080* for now.
 
@@ -170,4 +170,4 @@ API reference: link:http://localhost:8080/swagger/#/Ingestion/post_ingestion_dbs
 * Batch-query parameters match single-query parameters for every format.
 * To use the normalization service appropriate genome reference builds(e.g. *GRCh38* and *GRCh37*) should be ingested into *Fasta* first.
 * To batch-normalize the data same approach is used as in the batch-query.
-* For now the AStorage logs are being written in <dataDirectoryPath>/output.log file.
+* For now the AStorage logs are being written in <dataDirectoryPath>/output_<currentTimeMillis>.log file.
