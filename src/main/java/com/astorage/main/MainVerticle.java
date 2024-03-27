@@ -50,10 +50,10 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 			dataDirectoryPath = getDataDirectoryPath();
 			System.out.println("Data directory path: " + dataDirectoryPath);
 
-			File logFile = new File(dataDirectoryPath, "output.log");
+			File logFile = new File(dataDirectoryPath, "output_" + System.currentTimeMillis() + ".log");
 			if (!logFile.exists()) {
 				Files.createDirectories(logFile.getParentFile().toPath());
-				Files.createDirectory(logFile.getAbsoluteFile().toPath());
+				Files.createFile(logFile.getAbsoluteFile().toPath());
 			}
 
 			PrintStream printStream = new PrintStream(new FileOutputStream(logFile));
