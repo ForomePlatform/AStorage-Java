@@ -159,14 +159,23 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 
 		String queryExecutorName = formatName + QUERY_EXECUTOR_SUFFIX;
 		WorkerExecutor queryExecutor = vertx.createSharedWorkerExecutor(
-			formatName + QUERY_EXECUTOR_SUFFIX,
+			queryExecutorName,
 			QUERY_EXECUTOR_POOL_SIZE_LIMIT,
+			EXECUTOR_TIME_LIMIT_DAYS,
+			TimeUnit.DAYS
+		);
+
+		String batchQueryExecutorName = formatName + BATCH_QUERY_EXECUTOR_SUFFIX;
+		WorkerExecutor batchQueryExecutor = vertx.createSharedWorkerExecutor(
+			batchQueryExecutorName,
+			BATCH_QUERY_EXECUTOR_POOL_SIZE_LIMIT,
 			EXECUTOR_TIME_LIMIT_DAYS,
 			TimeUnit.DAYS
 		);
 
 		workerExecutors.put(ingestionExecutorName, ingestionExecutor);
 		workerExecutors.put(queryExecutorName, queryExecutor);
+		workerExecutors.put(batchQueryExecutorName, batchQueryExecutor);
 	}
 
 	private void setIngestionHandler(String formatName, Router router) {
@@ -203,9 +212,7 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 				}
 			};
 
-			executor.executeBlocking(callable).onComplete(handler -> {
-				System.out.println(ingestionExecutorName + " finished working!");
-			});
+			executor.executeBlocking(callable).onComplete(handler -> System.out.println(ingestionExecutorName + " finished working!"));
 		});
 	}
 
@@ -233,29 +240,41 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 				}
 			};
 
-			executor.executeBlocking(callable, false).onComplete(handler -> {
-				System.out.println(queryExecutorName + " finished working!");
-			});
+			executor.executeBlocking(callable, false).onComplete(handler -> System.out.println(queryExecutorName + " finished working!"));
 		});
 	}
 
 	private void setBatchQueryHandler(String formatName, Router router) {
 		router.post("/batch-query/" + formatName.toLowerCase()).handler((RoutingContext context) -> {
 			HttpServerRequest req = context.request();
+			String batchQueryExecutorName = formatName + BATCH_QUERY_EXECUTOR_SUFFIX;
+			WorkerExecutor executor = workerExecutors.get(batchQueryExecutorName);
 
-			try {
-				Class<?> cls = Class.forName("com.astorage.query." + formatName + "BatchQuery");
-				Constructor<?> constructor = cls.getConstructor(RoutingContext.class, RocksDBRepository.class);
+			Callable<Boolean> callable = () -> {
+				System.out.println(batchQueryExecutorName + " started working...");
 
-				Query query = (Query) constructor.newInstance(context, dbRepositories.get(formatName));
-				query.queryHandler();
-			} catch (Exception e) {
-				Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
-			}
+				try {
+					Class<?> cls = Class.forName("com.astorage.query." + formatName + "BatchQuery");
+					Constructor<?> constructor = cls.getConstructor(RoutingContext.class, RocksDBRepository.class);
+
+					Query query = (Query) constructor.newInstance(context, dbRepositories.get(formatName));
+					query.queryHandler();
+
+					return true;
+				} catch (Exception e) {
+					Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
+
+					return false;
+				}
+			};
+
+			executor.executeBlocking(callable, false).onComplete(handler -> System.out.println(batchQueryExecutorName + " finished working!"));
 		});
 	}
 
 	private void setUniversalVariantQueryHandler(Router router) {
+		// TODO: Implement executor
+
 		router.get("/query/" + UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME.toLowerCase())
 			.handler((RoutingContext context) -> {
 				HttpServerRequest req = context.request();
@@ -274,6 +293,8 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 	}
 
 	private void setNormalizationHandler(Router router) {
+		// TODO: Implement executor
+
 		router.get("/normalization").handler((RoutingContext context) -> {
 			HttpServerRequest req = context.request();
 
@@ -291,6 +312,8 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 	}
 
 	private void setBatchNormalizationHandler(Router router) {
+		// TODO: Implement executor
+
 		router.post("/batch-normalization").handler((RoutingContext context) -> {
 			HttpServerRequest req = context.request();
 

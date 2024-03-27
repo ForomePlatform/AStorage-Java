@@ -30,9 +30,11 @@ public interface Constants {
 	int HTTP_SERVER_PORT = 8080;
 	int INGESTION_EXECUTOR_POOL_SIZE_LIMIT = 1;
 	int QUERY_EXECUTOR_POOL_SIZE_LIMIT = 4;
+	int BATCH_QUERY_EXECUTOR_POOL_SIZE_LIMIT = 4;
 	int EXECUTOR_TIME_LIMIT_DAYS = 7;
 	String INGESTION_EXECUTOR_SUFFIX = "-ingestion-executor";
 	String QUERY_EXECUTOR_SUFFIX = "-query-executor";
+	String BATCH_QUERY_EXECUTOR_SUFFIX = "-batch-query-executor";
 	String USER_HOME = System.getProperty("user.home");
 	String ASTORAGE_DIRECTORY_NAME = "/AStorage";
 	String DATA_DIRECTORY_PATH_JSON_KEY = "dataDirectoryPath";
