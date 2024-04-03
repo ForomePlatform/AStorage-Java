@@ -114,7 +114,7 @@ curl -X POST "http://localhost:8080/ingestion/pharmgkb?dataType={dataType}&dataP
 API reference: link:http://localhost:8080/swagger/#/Ingestion/post_ingestion_pharmgkb[Swagger PhramGKB Ingestion].
 
 === ClinVar:
-Download the latest ClinVar release: link:https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/ClinVarVCVRelease_00-latest.xml.gz[ClinVarVCVRelease_00-latest] and its variant summary: link:https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/variant_summary.txt.gz[variant_summary] and ingest the downloaded files:
+Download the latest ClinVar release: link:https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/RCV_xml_old_format/ClinVarFullRelease_00-latest.xml.gz[ClinVarFullRelease_00-latest] and its variant summary: link:https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/variant_summary.txt.gz[variant_summary] and ingest the downloaded files:
 
 NOTE: If you set the *normalize* parameter to *true* for ingestion required Fasta reference genomes should already be ingested into the AStorage.
 
