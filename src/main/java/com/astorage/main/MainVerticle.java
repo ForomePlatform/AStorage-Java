@@ -73,7 +73,7 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 					new RocksDBRepository(UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME.toLowerCase(), dataDirectoryPath)
 				);
 
-				this.setUniversalVariantQueryHandler(router);
+				setUniversalVariantQueryHandler(router);
 
 				for (String formatName : FORMAT_NAMES) {
 					dbRepositories.put(
@@ -81,15 +81,15 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 						new RocksDBRepository(formatName.toLowerCase(), dataDirectoryPath)
 					);
 
-					this.createAndStoreWorkerExecutors(formatName);
+					createAndStoreWorkerExecutors(formatName);
 
-					this.setIngestionHandler(formatName, router);
-					this.setQueryHandler(formatName, router);
-					this.setBatchQueryHandler(formatName, router);
+					setIngestionHandler(formatName, router);
+					setQueryHandler(formatName, router);
+					setBatchQueryHandler(formatName, router);
 				}
 
-				this.setNormalizationHandler(router);
-				this.setBatchNormalizationHandler(router);
+				setNormalizationHandler(router);
+				setBatchNormalizationHandler(router);
 			} catch (IOException | RocksDBException e) {
 				startPromise.fail(ROCKS_DB_INIT_ERROR);
 
@@ -97,7 +97,7 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 			}
 
 			setStopHandler(router);
-			this.setSwaggerHandler(router);
+			setSwaggerHandler(router);
 
 			return true;
 		};

@@ -22,7 +22,7 @@ image:https://img.shields.io/badge/vert.x-4.4.6-white.svg[link="https://vertx.io
 * GERP
 * dbSNP
 
-== Setup: Building and Running [Linux]
+== Setup: Building and Running [Linux/MacOS]
 
 Clone the master branch and package the application as a JAR file:
 [source,bash]
