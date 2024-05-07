@@ -45,6 +45,7 @@ On the first run the application creates a data folder in the user's home direct
 To start the application run:
 [source,bash]
 ----
+cd target
 java -jar astorage-java-1.0.0.jar [config_json_path]
 ----
 
