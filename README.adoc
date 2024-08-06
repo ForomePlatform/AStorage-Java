@@ -171,4 +171,3 @@ API reference: link:http://localhost:8080/swagger/#/Ingestion/post_ingestion_dbs
 * Batch-query parameters match single-query parameters for every format.
 * To use the normalization service appropriate genome reference builds(e.g. *GRCh38* and *GRCh37*) should be ingested into *Fasta* first.
 * To batch-normalize the data same approach is used as in the batch-query.
-* For now the AStorage logs are being written in <dataDirectoryPath>/output_<currentTimeMillis>.log file.
