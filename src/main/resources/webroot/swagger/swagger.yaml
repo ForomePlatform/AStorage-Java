@@ -806,6 +806,47 @@ paths:
               schema:
                 $ref: '#/components/schemas/BatchQueryResult'
 
+  /drop-repository:
+    get:
+      tags: [
+        Utils
+      ]
+      summary: Drop a repository deleting all related data, including format-related data from UniversalVariant repository
+      description: This endpoint allows you to drop a repository by providing a format name. A confirmation step is required to proceed with the drop
+      parameters:
+        - name: formatName
+          in: query
+          description: The name of the format to drop
+          required: true
+          schema:
+            type: string
+            enum:
+              - 'Fasta'
+              - 'DbNSFP'
+              - 'GnomAD'
+              - 'SpliceAI'
+              - 'PharmGKB'
+              - 'ClinVar'
+              - 'GTEx'
+              - 'GTF'
+              - 'GERP'
+              - 'DbSNP'
+        - name: confirm
+          in: query
+          description: Confirmation parameter to proceed with the drop operation. Should be 'yes' to confirm. First request should be sent without this parameter
+          required: false
+          schema:
+            type: string
+            enum:
+              - 'yes'
+      responses:
+        '200':
+          description: Success message in JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+
   /stop:
     get:
       tags: [

@@ -30,6 +30,7 @@ import java.lang.reflect.Constructor;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ import java.util.concurrent.TimeUnit;
 public class MainVerticle extends AbstractVerticle implements Constants, FastaConstants, DbNSFPConstants {
 	private final Map<String, RocksDBRepository> dbRepositories = new HashMap<>();
 	private final Map<String, WorkerExecutor> workerExecutors = new HashMap<>();
+	private String pendingDropRepoRequest = "";
 
 	@Override
 	public void start(Promise<Void> startPromise) {
@@ -144,6 +146,7 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 				return false;
 			}
 
+			setDropRepositoryHandler(router);
 			setStopHandler(router);
 			setSwaggerHandler(router);
 
@@ -232,7 +235,7 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 	private void setIngestionHandler(String formatName, Router router) {
 		router.post(INGESTION_URL_PATH + formatName.toLowerCase()).handler((RoutingContext context) -> {
 			HttpServerRequest req = context.request();
-			String ingestionExecutorName = Constants.getIngestionExecutorName(formatName);;
+			String ingestionExecutorName = Constants.getIngestionExecutorName(formatName);
 			WorkerExecutor executor = workerExecutors.get(ingestionExecutorName);
 
 			Callable<Boolean> callable = () -> {
@@ -270,7 +273,7 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 	private void setQueryHandler(String formatName, Router router) {
 		router.get(QUERY_URL_PATH + formatName.toLowerCase()).handler((RoutingContext context) -> {
 			HttpServerRequest req = context.request();
-			String queryExecutorName = Constants.getQueryExecutorName(formatName);;
+			String queryExecutorName = Constants.getQueryExecutorName(formatName);
 			WorkerExecutor executor = workerExecutors.get(queryExecutorName);
 
 			Callable<Boolean> callable = () -> {
@@ -298,7 +301,7 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 	private void setBatchQueryHandler(String formatName, Router router) {
 		router.post(BATCH_QUERY_URL_PATH + formatName.toLowerCase()).handler((RoutingContext context) -> {
 			HttpServerRequest req = context.request();
-			String batchQueryExecutorName = Constants.getBatchQueryExecutorName(formatName);;
+			String batchQueryExecutorName = Constants.getBatchQueryExecutorName(formatName);
 			WorkerExecutor executor = workerExecutors.get(batchQueryExecutorName);
 
 			Callable<Boolean> callable = () -> {
@@ -438,6 +441,57 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
             };
 
             executor.executeBlocking(callable, false).onComplete(handler -> System.out.println(queryExecutorName + " finished working!"));
+		});
+	}
+
+	private void setDropRepositoryHandler(Router router) {
+		router.get(DROP_REPOSITORY_URL_PATH).handler((RoutingContext context) -> {
+			HttpServerRequest req = context.request();
+
+			if ("".equals(pendingDropRepoRequest) && req.params().size() > 1) {
+				Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, DROP_REPO_TOO_MANY_PARAMS);
+				return;
+			}
+
+			if (req.params().contains(DROP_REPO_FORMAT_NAME_PARAM)) {
+				String formatName = req.getParam(DROP_REPO_FORMAT_NAME_PARAM);
+
+				if (!dbRepositories.containsKey(formatName)) {
+					pendingDropRepoRequest = "";
+					Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, DROP_REPO_NOT_FOUND);
+					return;
+				} else {
+					if (!formatName.equals(pendingDropRepoRequest)) {
+						pendingDropRepoRequest = formatName;
+						Constants.infoResponse(req, String.format(DROP_REPO_CONFIRM_NOTE, formatName));
+						return;
+					} else if (DROP_REPO_CONFIRM_VALUE.equals(req.getParam(DROP_REPO_CONFIRM_PARAM))) {
+						pendingDropRepoRequest = "";
+						RocksDBRepository dbRepository = dbRepositories.get(formatName);
+
+						try {
+							if (Arrays.asList(UNIVERSAL_QUERY_FORMAT_NAMES).contains(formatName)) {
+								RocksDBRepository universalVariantDbRep = dbRepositories.get(UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME);
+								universalVariantDbRep.dropColumnFamily(universalVariantDbRep.getColumnFamilyHandle(formatName));
+							}
+							dbRepository.dropRepository();
+
+							Constants.successResponse(req, String.format(DROP_REPO_SUCCESS, formatName));
+							return;
+						} catch (RocksDBException e) {
+							Constants.errorResponse(req, HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
+							return;
+						}
+					} else {
+						pendingDropRepoRequest = "";
+						Constants.infoResponse(req, DROP_REPO_NO_CONFIRM);
+						return;
+					}
+				}
+			}
+
+			pendingDropRepoRequest = "";
+			Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, DROP_REPO_FORMAT_PARAM_MISSING);
 		});
 	}
 

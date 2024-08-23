@@ -169,16 +169,36 @@ public class RocksDBRepository implements Constants {
 		return null;
 	}
 
-	public synchronized void dropColumnFamily(ColumnFamilyHandle columnFamilyHandle) {
+	public synchronized void dropColumnFamily(ColumnFamilyHandle columnFamilyHandle) throws RocksDBException {
 		try {
 			db.dropColumnFamily(columnFamilyHandle);
+			db.compactRange();
 		} catch (RocksDBException e) {
-			System.err.printf(
+			throw new RocksDBException(String.format(
 				"Error dropping column family in RocksDB<%s>, cause: %s, message: %s%n",
 				dbFormatName,
 				e.getCause(),
 				e.getMessage()
-			);
+			));
+		}
+	}
+
+	public synchronized void dropRepository() throws RocksDBException {
+		try {
+			RocksDB.LiveFiles liveFiles = db.getLiveFiles(true);
+
+			for (String file : liveFiles.files) {
+				db.deleteFile(file);
+			}
+
+			db.compactRange();
+		} catch (RocksDBException e) {
+			throw new RocksDBException(String.format(
+				"Error dropping repository in RocksDB<%s>, cause: %s, message: %s%n",
+				dbFormatName,
+				e.getCause(),
+				e.getMessage()
+			));
 		}
 	}
 

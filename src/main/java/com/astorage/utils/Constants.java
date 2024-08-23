@@ -62,6 +62,7 @@ public interface Constants {
 	String BATCH_QUERY_URL_PATH = "/batch-query/";
 	String NORMALIZATION_URL_PATH = "/normalization";
 	String BATCH_NORMALIZATION_URL_PATH = "/batch-normalization";
+	String DROP_REPOSITORY_URL_PATH = "/drop-repository";
 	String STOP_URL_PATH = "/stop";
 
 	// Format related:
@@ -92,8 +93,19 @@ public interface Constants {
 	String MITOCHONDRIAL_CHR = "M";
 	String MITOCHONDRIAL_CHR_ALT = "MT";
 
+	// drop-repository request related:
+	String DROP_REPO_FORMAT_NAME_PARAM = "formatName";
+	String DROP_REPO_CONFIRM_PARAM = "confirm";
+	String DROP_REPO_CONFIRM_VALUE = "yes";
+
 	// Success messages:
 	String SUCCESS = "success";
+	String DROP_REPO_SUCCESS = "%s repository dropped successfully!";
+
+	// Info messages:
+	String INFO = "info";
+	String DROP_REPO_CONFIRM_NOTE = "Send another request with confirm=yes parameter to drop %s...";
+	String DROP_REPO_NO_CONFIRM = "Confirmation not received. Action invalidated.";
 
 	// Error messages:
 	String ERROR = "error";
@@ -109,6 +121,9 @@ public interface Constants {
 	String COMPRESSION_ERROR = "Error while compressing JSON string...";
 	String DECOMPRESSION_ERROR = "Error while decompressing JSON string...";
 	String COLUMN_DOESNT_EXIST = "Column does not exist: ";
+	String DROP_REPO_TOO_MANY_PARAMS = "Too many parameters...";
+	String DROP_REPO_NOT_FOUND = "Repository not found...";
+	String DROP_REPO_FORMAT_PARAM_MISSING = "The formatName parameter is missing.";
 
 	// Helper functions:
 	static JsonArray listToJson(List<? extends JsonConvertible> list) {
@@ -155,51 +170,46 @@ public interface Constants {
 		}
 	}
 
-	static void successResponse(HttpServerRequest req, String successMsg) {
-		JsonObject successJson = new JsonObject();
-		successJson.put(SUCCESS, successMsg);
-
+	static void response(HttpServerRequest req, JsonObject response, int statusCode) {
 		if (req.response().ended()) {
 			return;
 		}
 
 		if (req.response().headWritten()) {
 			if (req.response().isChunked()) {
-				req.response().write(successJson + "\n");
+				req.response().write(response + "\n");
 			} else {
-				req.response().end(successJson + "\n");
+				req.response().end(response + "\n");
 			}
 
 			return;
 		}
 
 		req.response()
-			.putHeader("content-type", "application/json")
-			.end(successJson + "\n");
+				.setStatusCode(statusCode)
+				.putHeader("content-type", "application/json")
+				.end(response + "\n");
+	}
+
+	static void infoResponse(HttpServerRequest req, String successMsg) {
+		JsonObject infoJson = new JsonObject();
+		infoJson.put(INFO, successMsg);
+
+		response(req, infoJson, 200);
+	}
+
+	static void successResponse(HttpServerRequest req, String successMsg) {
+		JsonObject successJson = new JsonObject();
+		successJson.put(SUCCESS, successMsg);
+
+		response(req, successJson, 200);
 	}
 
 	static void errorResponse(HttpServerRequest req, int errorCode, String errorMsg) {
 		JsonObject errorJson = new JsonObject();
 		errorJson.put(ERROR, errorMsg);
 
-		if (req.response().ended()) {
-			return;
-		}
-
-		if (req.response().headWritten()) {
-			if (req.response().isChunked()) {
-				req.response().write(errorJson + "\n");
-			} else {
-				req.response().end(errorJson + "\n");
-			}
-
-			return;
-		}
-
-		req.response()
-			.setStatusCode(errorCode)
-			.putHeader("content-type", "application/json")
-			.end(errorJson + "\n");
+		response(req, errorJson, errorCode);
 	}
 
 	static void logProgress(
