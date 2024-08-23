@@ -27,18 +27,27 @@ import java.util.zip.GZIPOutputStream;
 
 public interface Constants {
 	// General:
-	int HTTP_SERVER_PORT = 8080;
+	int DEFAULT_HTTP_SERVER_PORT = 8080;
+	String USER_HOME = System.getProperty("user.home");
+	String ASTORAGE_DIRECTORY_NAME = "/AStorage";
+	String HTTP_SERVER_START = "HTTP server started on port: %d!";
+	String HTTP_SERVER_STOP = "HTTP server stopped.";
+
+	// Config related:
+	String DATA_DIRECTORY_PATH_CONFIG_KEY = "dataDirectoryPath";
+	String HTTP_SERVER_PORT_CONFIG_KEY = "serverPort";
+
+	// Executors related:
 	int INGESTION_EXECUTOR_POOL_SIZE_LIMIT = 1;
 	int QUERY_EXECUTOR_POOL_SIZE_LIMIT = 4;
 	int BATCH_QUERY_EXECUTOR_POOL_SIZE_LIMIT = 4;
 	int EXECUTOR_TIME_LIMIT_DAYS = 7;
+
 	String INGESTION_EXECUTOR_SUFFIX = "-ingestion-executor";
 	String QUERY_EXECUTOR_SUFFIX = "-query-executor";
 	String BATCH_QUERY_EXECUTOR_SUFFIX = "-batch-query-executor";
-	String USER_HOME = System.getProperty("user.home");
-	String ASTORAGE_DIRECTORY_NAME = "/AStorage";
-	String DATA_DIRECTORY_PATH_JSON_KEY = "dataDirectoryPath";
 
+	// Format related:
 	String[] FORMAT_NAMES = {
 		FastaConstants.FASTA_FORMAT_NAME,
 		DbNSFPConstants.DBNSFP_FORMAT_NAME,
@@ -59,8 +68,6 @@ public interface Constants {
 		GERPConstants.GERP_FORMAT_NAME,
 		DbSNPConstants.DBSNP_FORMAT_NAME
 	};
-	String HTTP_SERVER_START = "HTTP server started on port: " + HTTP_SERVER_PORT + "!";
-	String HTTP_SERVER_STOP = "HTTP server stopped.";
 
 	// Variant related:
 	String NUCLEOTIDES = "AGTCU";

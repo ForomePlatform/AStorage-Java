@@ -45,19 +45,20 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 		HttpServer server = vertx.createHttpServer();
 		Router router = Router.router(vertx);
 
+		JsonObject configJson;
 		String dataDirectoryPath;
+		Integer serverPort = DEFAULT_HTTP_SERVER_PORT;
 		try {
-			dataDirectoryPath = getDataDirectoryPath();
+			configJson = getConfigJson();
+
+			dataDirectoryPath = getDataDirectoryPath(configJson.getString(DATA_DIRECTORY_PATH_CONFIG_KEY));
 			System.out.println("Data directory path: " + dataDirectoryPath);
 
-			File logFile = new File(dataDirectoryPath, "output_" + System.currentTimeMillis() + ".log");
-			if (!logFile.exists()) {
-				Files.createDirectories(logFile.getParentFile().toPath());
-				Files.createFile(logFile.getAbsoluteFile().toPath());
-			}
+			createLogFile(dataDirectoryPath);
 
-			PrintStream printStream = new PrintStream(new FileOutputStream(logFile));
-			System.setOut(printStream);
+			if (configJson.containsKey(HTTP_SERVER_PORT_CONFIG_KEY)) {
+				serverPort = configJson.getInteger(HTTP_SERVER_PORT_CONFIG_KEY);
+			}
 		} catch (Exception e) {
 			startPromise.fail(e.getMessage());
 
@@ -102,10 +103,11 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 			return true;
 		};
 
+		Integer finalServerPort = serverPort;
 		initExecutor.executeBlocking(callable).onComplete(handler -> {
 			initExecutor.close();
 
-			server.requestHandler(router).listen(HTTP_SERVER_PORT, result -> {
+			server.requestHandler(router).listen(finalServerPort, result -> {
 				if (result.succeeded()) {
 					if (!initializeDirectories(dataDirectoryPath)) {
 						startPromise.fail(new IOException(INITIALIZING_DIRECTORY_ERROR));
@@ -113,7 +115,7 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 						return;
 					}
 
-					System.out.println(HTTP_SERVER_START);
+					System.out.printf((HTTP_SERVER_START) + "%n", finalServerPort);
 					startPromise.complete();
 				} else {
 					System.err.println(HTTP_SERVER_FAIL);
@@ -357,9 +359,27 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 		return true;
 	}
 
-	private String getDataDirectoryPath() throws Exception {
+	private String getDataDirectoryPath(String dataDirectoryPathFromConfig) {
+		if (dataDirectoryPathFromConfig != null) {
+			return dataDirectoryPathFromConfig;
+		}
+
+		return USER_HOME + ASTORAGE_DIRECTORY_NAME;
+	}
+
+	private void createLogFile(String dataDirectoryPath) throws Exception {
+		File logFile = new File(dataDirectoryPath, "output_" + System.currentTimeMillis() + ".log");
+		if (!logFile.exists()) {
+			Files.createDirectories(logFile.getParentFile().toPath());
+			Files.createFile(logFile.getAbsoluteFile().toPath());
+		}
+
+		PrintStream printStream = new PrintStream(new FileOutputStream(logFile));
+		System.setOut(printStream);
+	}
+
+	private JsonObject getConfigJson() throws Exception {
 		List<String> args = Vertx.currentContext().processArgs();
-		String dataDirectoryPath = USER_HOME + ASTORAGE_DIRECTORY_NAME;
 
 		if (args != null && !args.isEmpty()) {
 			String configPath = args.get(0);
@@ -384,12 +404,9 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 				throw new Exception(CONFIG_JSON_DECODE_ERROR);
 			}
 
-			String dataDirectoryPathFromConfig = configAsJson.getString(DATA_DIRECTORY_PATH_JSON_KEY);
-			if (dataDirectoryPathFromConfig != null) {
-				dataDirectoryPath = dataDirectoryPathFromConfig;
-			}
+			return configAsJson;
 		}
 
-		return dataDirectoryPath;
+		return new JsonObject();
 	}
 }

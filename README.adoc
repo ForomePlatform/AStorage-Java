@@ -42,6 +42,14 @@ On the first run the application creates a data folder in the user's home direct
 }
 ----
 
+The service is running on port *8080* by default and can be adjusted using a *config.json* file:
+[source,json]
+----
+{
+	"serverPort": 3000
+}
+----
+
 To start the application run:
 [source,bash]
 ----
@@ -50,8 +58,6 @@ java -jar astorage-java-1.0.0.jar [config_json_path]
 ----
 
 NOTE: AStorage logs(e.g. ingestion progress) are being written in <dataDirectoryPath>/output_<currentTimeMillis>.log file.
-
-The service is only running on *localhost:8080* for now.
 
 For detailed API specification access the Swagger UI via: http://localhost:8080/swagger.
 
