@@ -5,11 +5,13 @@ import com.astorage.ingestion.Ingestor;
 import com.astorage.normalization.VariantBatchNormalizer;
 import com.astorage.normalization.VariantNormalizer;
 import com.astorage.query.Query;
+import com.astorage.query.UniversalVariantBatchQuery;
 import com.astorage.query.UniversalVariantQuery;
 import com.astorage.utils.Constants;
 import com.astorage.utils.dbnsfp.DbNSFPConstants;
 import com.astorage.utils.fasta.FastaConstants;
 import com.astorage.utils.universal_variant.UniversalVariantConstants;
+import com.astorage.utils.variant_normalizer.VariantNormalizerConstants;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -65,46 +67,16 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 			return;
 		}
 
-		WorkerExecutor initExecutor = vertx.createSharedWorkerExecutor("init-executor", 1, 1, TimeUnit.DAYS);
-
-		Callable<Boolean> callable = () -> {
-			try {
-				dbRepositories.put(
-					UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME,
-					new RocksDBRepository(UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME.toLowerCase(), dataDirectoryPath)
-				);
-
-				setUniversalVariantQueryHandler(router);
-
-				for (String formatName : FORMAT_NAMES) {
-					dbRepositories.put(
-						formatName,
-						new RocksDBRepository(formatName.toLowerCase(), dataDirectoryPath)
-					);
-
-					createAndStoreWorkerExecutors(formatName);
-
-					setIngestionHandler(formatName, router);
-					setQueryHandler(formatName, router);
-					setBatchQueryHandler(formatName, router);
-				}
-
-				setNormalizationHandler(router);
-				setBatchNormalizationHandler(router);
-			} catch (IOException | RocksDBException e) {
-				startPromise.fail(ROCKS_DB_INIT_ERROR);
-
-				return false;
-			}
-
-			setStopHandler(router);
-			setSwaggerHandler(router);
-
-			return true;
-		};
+		WorkerExecutor initExecutor = vertx.createSharedWorkerExecutor(
+				"init-executor",
+				1,
+				1,
+				TimeUnit.DAYS
+		);
+		Callable<Boolean> callableInit = init(router, startPromise, dataDirectoryPath);
 
 		Integer finalServerPort = serverPort;
-		initExecutor.executeBlocking(callable).onComplete(handler -> {
+		initExecutor.executeBlocking(callableInit).onComplete(handler -> {
 			initExecutor.close();
 
 			server.requestHandler(router).listen(finalServerPort, result -> {
@@ -141,6 +113,44 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 		stopPromise.complete();
 	}
 
+	private Callable<Boolean> init(Router router, Promise<Void> startPromise, String dataDirectoryPath) {
+		return () -> {
+			try {
+				for (String formatName : FORMAT_NAMES) {
+					dbRepositories.put(
+							formatName,
+							new RocksDBRepository(formatName.toLowerCase(), dataDirectoryPath)
+					);
+
+                    createAndStoreFormatWorkerExecutors(formatName);
+					setIngestionHandler(formatName, router);
+					setQueryHandler(formatName, router);
+					setBatchQueryHandler(formatName, router);
+				}
+
+				dbRepositories.put(
+						UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME,
+						new RocksDBRepository(UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME.toLowerCase(), dataDirectoryPath)
+				);
+
+                createAndStoreGeneralWorkerExecutors();
+				setUniversalVariantQueryHandler(router);
+                setUniversalVariantBatchQueryHandler(router);
+				setNormalizationHandler(router);
+				setBatchNormalizationHandler(router);
+			} catch (IOException | RocksDBException e) {
+				startPromise.fail(ROCKS_DB_INIT_ERROR);
+
+				return false;
+			}
+
+			setStopHandler(router);
+			setSwaggerHandler(router);
+
+			return true;
+		};
+	}
+
 	/**
 	 * For XML...
 	 */
@@ -150,8 +160,8 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 		System.setProperty("jdk.xml.totalEntitySizeLimit", "0");
 	}
 
-	private void createAndStoreWorkerExecutors(String formatName) {
-		String ingestionExecutorName = formatName + INGESTION_EXECUTOR_SUFFIX;
+	private void createAndStoreFormatWorkerExecutors(String formatName) {
+		String ingestionExecutorName = Constants.getIngestionExecutorName(formatName);
 		WorkerExecutor ingestionExecutor = vertx.createSharedWorkerExecutor(
 			ingestionExecutorName,
 			INGESTION_EXECUTOR_POOL_SIZE_LIMIT,
@@ -159,7 +169,7 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 			TimeUnit.DAYS
 		);
 
-		String queryExecutorName = formatName + QUERY_EXECUTOR_SUFFIX;
+		String queryExecutorName = Constants.getQueryExecutorName(formatName);
 		WorkerExecutor queryExecutor = vertx.createSharedWorkerExecutor(
 			queryExecutorName,
 			QUERY_EXECUTOR_POOL_SIZE_LIMIT,
@@ -167,10 +177,10 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 			TimeUnit.DAYS
 		);
 
-		String batchQueryExecutorName = formatName + BATCH_QUERY_EXECUTOR_SUFFIX;
+		String batchQueryExecutorName = Constants.getBatchQueryExecutorName(formatName);
 		WorkerExecutor batchQueryExecutor = vertx.createSharedWorkerExecutor(
 			batchQueryExecutorName,
-			BATCH_QUERY_EXECUTOR_POOL_SIZE_LIMIT,
+			QUERY_EXECUTOR_POOL_SIZE_LIMIT,
 			EXECUTOR_TIME_LIMIT_DAYS,
 			TimeUnit.DAYS
 		);
@@ -180,10 +190,49 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 		workerExecutors.put(batchQueryExecutorName, batchQueryExecutor);
 	}
 
+    private void createAndStoreGeneralWorkerExecutors() {
+        String universalQueryExecutorName = Constants.getQueryExecutorName(UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME);
+        WorkerExecutor univeresalQueryExecutor = vertx.createSharedWorkerExecutor(
+                universalQueryExecutorName,
+                QUERY_EXECUTOR_POOL_SIZE_LIMIT,
+                EXECUTOR_TIME_LIMIT_DAYS,
+                TimeUnit.DAYS
+        );
+
+        String universalBatchQueryExecutorName = Constants.getBatchQueryExecutorName(UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME);
+        WorkerExecutor univeresalBatchQueryExecutor = vertx.createSharedWorkerExecutor(
+                universalBatchQueryExecutorName,
+                QUERY_EXECUTOR_POOL_SIZE_LIMIT,
+                EXECUTOR_TIME_LIMIT_DAYS,
+                TimeUnit.DAYS
+        );
+
+        String normalizationExecutorName = Constants.getQueryExecutorName(VariantNormalizerConstants.VARIANT_NORMALIZER_FORMAT_NAME);
+        WorkerExecutor normalizationQueryExecutor = vertx.createSharedWorkerExecutor(
+                normalizationExecutorName,
+                QUERY_EXECUTOR_POOL_SIZE_LIMIT,
+                EXECUTOR_TIME_LIMIT_DAYS,
+                TimeUnit.DAYS
+        );
+
+        String batchNormalizationExecutorName = Constants.getBatchQueryExecutorName(VariantNormalizerConstants.VARIANT_NORMALIZER_FORMAT_NAME);
+        WorkerExecutor batchNormalizationQueryExecutor = vertx.createSharedWorkerExecutor(
+                batchNormalizationExecutorName,
+                QUERY_EXECUTOR_POOL_SIZE_LIMIT,
+                EXECUTOR_TIME_LIMIT_DAYS,
+                TimeUnit.DAYS
+        );
+
+        workerExecutors.put(universalQueryExecutorName, univeresalQueryExecutor);
+        workerExecutors.put(universalBatchQueryExecutorName, univeresalBatchQueryExecutor);
+        workerExecutors.put(normalizationExecutorName, normalizationQueryExecutor);
+        workerExecutors.put(batchNormalizationExecutorName, batchNormalizationQueryExecutor);
+    }
+
 	private void setIngestionHandler(String formatName, Router router) {
-		router.post("/ingestion/" + formatName.toLowerCase()).handler((RoutingContext context) -> {
+		router.post(INGESTION_URL_PATH + formatName.toLowerCase()).handler((RoutingContext context) -> {
 			HttpServerRequest req = context.request();
-			String ingestionExecutorName = formatName + INGESTION_EXECUTOR_SUFFIX;
+			String ingestionExecutorName = Constants.getIngestionExecutorName(formatName);;
 			WorkerExecutor executor = workerExecutors.get(ingestionExecutorName);
 
 			Callable<Boolean> callable = () -> {
@@ -219,9 +268,9 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 	}
 
 	private void setQueryHandler(String formatName, Router router) {
-		router.get("/query/" + formatName.toLowerCase()).handler((RoutingContext context) -> {
+		router.get(QUERY_URL_PATH + formatName.toLowerCase()).handler((RoutingContext context) -> {
 			HttpServerRequest req = context.request();
-			String queryExecutorName = formatName + QUERY_EXECUTOR_SUFFIX;
+			String queryExecutorName = Constants.getQueryExecutorName(formatName);;
 			WorkerExecutor executor = workerExecutors.get(queryExecutorName);
 
 			Callable<Boolean> callable = () -> {
@@ -247,9 +296,9 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 	}
 
 	private void setBatchQueryHandler(String formatName, Router router) {
-		router.post("/batch-query/" + formatName.toLowerCase()).handler((RoutingContext context) -> {
+		router.post(BATCH_QUERY_URL_PATH + formatName.toLowerCase()).handler((RoutingContext context) -> {
 			HttpServerRequest req = context.request();
-			String batchQueryExecutorName = formatName + BATCH_QUERY_EXECUTOR_SUFFIX;
+			String batchQueryExecutorName = Constants.getBatchQueryExecutorName(formatName);;
 			WorkerExecutor executor = workerExecutors.get(batchQueryExecutorName);
 
 			Callable<Boolean> callable = () -> {
@@ -275,65 +324,125 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 	}
 
 	private void setUniversalVariantQueryHandler(Router router) {
-		// TODO: Implement executor
-
-		router.get("/query/" + UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME.toLowerCase())
+		router.get(QUERY_URL_PATH + UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME.toLowerCase())
 			.handler((RoutingContext context) -> {
 				HttpServerRequest req = context.request();
+				String queryExecutorName = Constants.getQueryExecutorName(UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME);
+				WorkerExecutor executor = workerExecutors.get(queryExecutorName);
 
-				try {
-					UniversalVariantQuery universalVariantQuery = new UniversalVariantQuery(
-						context,
-						dbRepositories
-					);
+                Callable<Boolean> callable = () -> {
+                    System.out.println(queryExecutorName + " started working...");
 
-					universalVariantQuery.queryHandler();
-				} catch (Exception e) {
-					Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
-				}
+                    try {
+                        UniversalVariantQuery universalVariantQuery = new UniversalVariantQuery(
+                                context,
+                                dbRepositories
+                        );
+
+                        universalVariantQuery.queryHandler();
+
+                        return true;
+                    } catch (Exception e) {
+                        Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
+
+                        return false;
+                    }
+                };
+
+                executor.executeBlocking(callable, false).onComplete(handler -> System.out.println(queryExecutorName + " finished working!"));
 			});
 	}
 
+    private void setUniversalVariantBatchQueryHandler(Router router) {
+        router.post(BATCH_QUERY_URL_PATH + UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME.toLowerCase())
+                .handler((RoutingContext context) -> {
+                    HttpServerRequest req = context.request();
+                    String queryExecutorName = Constants.getBatchQueryExecutorName(UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME);
+                    WorkerExecutor executor = workerExecutors.get(queryExecutorName);
+
+                    Callable<Boolean> callable = () -> {
+                        System.out.println(queryExecutorName + " started working...");
+
+                        try {
+                            UniversalVariantBatchQuery universalVariantBatchQuery = new UniversalVariantBatchQuery(
+                                    context,
+                                    dbRepositories
+                            );
+
+                            universalVariantBatchQuery.queryHandler();
+
+                            return true;
+                        } catch (Exception e) {
+                            Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
+
+                            return false;
+                        }
+                    };
+
+                    executor.executeBlocking(callable, false).onComplete(handler -> System.out.println(queryExecutorName + " finished working!"));
+                });
+    }
+
 	private void setNormalizationHandler(Router router) {
-		// TODO: Implement executor
-
-		router.get("/normalization").handler((RoutingContext context) -> {
+		router.get(NORMALIZATION_URL_PATH).handler((RoutingContext context) -> {
 			HttpServerRequest req = context.request();
+            String queryExecutorName = Constants.getQueryExecutorName(VariantNormalizerConstants.VARIANT_NORMALIZER_FORMAT_NAME);
+            WorkerExecutor executor = workerExecutors.get(queryExecutorName);
 
-			try {
-				VariantNormalizer variantNormalizer = new VariantNormalizer(
-					context,
-					dbRepositories.get(FASTA_FORMAT_NAME)
-				);
+            Callable<Boolean> callable = () -> {
+                System.out.println(queryExecutorName + " started working...");
 
-				variantNormalizer.normalizationHandler();
-			} catch (Exception e) {
-				Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
-			}
+                try {
+                    VariantNormalizer variantNormalizer = new VariantNormalizer(
+                            context,
+                            dbRepositories.get(FASTA_FORMAT_NAME)
+                    );
+
+                    variantNormalizer.normalizationHandler();
+
+                    return true;
+                } catch (Exception e) {
+                    Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
+
+                    return false;
+                }
+            };
+
+            executor.executeBlocking(callable, false).onComplete(handler -> System.out.println(queryExecutorName + " finished working!"));
 		});
 	}
 
 	private void setBatchNormalizationHandler(Router router) {
-		// TODO: Implement executor
-
-		router.post("/batch-normalization").handler((RoutingContext context) -> {
+		router.post(BATCH_NORMALIZATION_URL_PATH).handler((RoutingContext context) -> {
 			HttpServerRequest req = context.request();
+            String queryExecutorName = Constants.getBatchQueryExecutorName(VariantNormalizerConstants.VARIANT_NORMALIZER_FORMAT_NAME);
+            WorkerExecutor executor = workerExecutors.get(queryExecutorName);
 
-			try {
-				VariantBatchNormalizer variantBatchNormalizer = new VariantBatchNormalizer(
-					context,
-					dbRepositories.get(FASTA_FORMAT_NAME)
-				);
+            Callable<Boolean> callable = () -> {
+                System.out.println(queryExecutorName + " started working...");
 
-				variantBatchNormalizer.normalizationHandler();
-			} catch (Exception e) {
-				Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
-			}
+                try {
+                    VariantBatchNormalizer variantBatchNormalizer = new VariantBatchNormalizer(
+                            context,
+                            dbRepositories.get(FASTA_FORMAT_NAME)
+                    );
+
+                    variantBatchNormalizer.normalizationHandler();
+
+                    return true;
+                } catch (Exception e) {
+                    Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
+
+                    return false;
+                }
+            };
+
+            executor.executeBlocking(callable, false).onComplete(handler -> System.out.println(queryExecutorName + " finished working!"));
 		});
 	}
 
 	private void setStopHandler(Router router) {
-		router.get("/stop").handler((RoutingContext context) -> {
+		router.get(STOP_URL_PATH).handler((RoutingContext context) -> {
 			HttpServerRequest req = context.request();
 
 			Constants.successResponse(req, HTTP_SERVER_STOP);

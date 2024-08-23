@@ -1,6 +1,9 @@
 package com.astorage.utils.variant_normalizer;
 
 public interface VariantNormalizerConstants {
+	// General:
+	String VARIANT_NORMALIZER_FORMAT_NAME = "VariantNormalizer";
+
 	// Normalization request params:
 	String REF_BUILD_PARAM = "refBuild";
 	String NORMALIZE_PARAM = "normalize";

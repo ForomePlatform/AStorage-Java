@@ -57,7 +57,7 @@ public class UniversalVariantQuery implements Query, Constants, UniversalVariant
 		singleQueryHandler(refBuild, chr, pos, ref, alt, false);
 	}
 
-	private void singleQueryHandler(
+	protected void singleQueryHandler(
 		String refBuild,
 		String chr,
 		String pos,

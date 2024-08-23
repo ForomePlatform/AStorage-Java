@@ -712,6 +712,28 @@ paths:
               schema:
                 $ref: '#/components/schemas/QueryResult'
 
+  /batch-query/universalvariant:
+    post:
+      tags: [
+        Universal Variant Query
+      ]
+      summary: Batch-queries provided universal variant query JSON file
+      requestBody:
+        description: JSON array containing objects of universal variant query parameters
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/UniversalVariantBatchQueryRequestBody'
+      responses:
+        '200':
+          description: Batch-query result in JSONL
+          content:
+            application/octet-stream:
+              schema:
+                $ref: '#/components/schemas/UniversalVariantBatchQueryResult'
+
   /normalization:
     get:
       tags: [
@@ -765,7 +787,7 @@ paths:
   /batch-normalization:
     post:
       tags: [
-        Batch Normalization
+        Normalization
       ]
       summary: Batch-normalizes provided normalization query JSON file
       requestBody:
@@ -782,7 +804,7 @@ paths:
           content:
             application/octet-stream:
               schema:
-                $ref: '#/components/schemas/BatchNormalizationResult'
+                $ref: '#/components/schemas/BatchQueryResult'
 
   /stop:
     get:
@@ -816,6 +838,14 @@ components:
         {"chr": 16, "pos": 62584, "alt": "T"}
       ]
     BatchQueryResult:
+      type: object
+    UniversalVariantBatchQueryRequestBody:
+      type: object
+      example: [
+        { "refBuild": "GRCh38", "chr": 21, "pos": 9544151, "ref": "C", "alt": "G" },
+        { "refBuild": "GRCh38", "chr": 21, "pos": 9545136, "ref": "T", "alt": "C" }
+      ]
+    UniversalVariantBatchQueryResult:
       type: object
     NormalizationResult:
       type: object

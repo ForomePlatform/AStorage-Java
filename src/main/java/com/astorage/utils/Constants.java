@@ -15,7 +15,9 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.Date;
@@ -40,12 +42,27 @@ public interface Constants {
 	// Executors related:
 	int INGESTION_EXECUTOR_POOL_SIZE_LIMIT = 1;
 	int QUERY_EXECUTOR_POOL_SIZE_LIMIT = 4;
-	int BATCH_QUERY_EXECUTOR_POOL_SIZE_LIMIT = 4;
 	int EXECUTOR_TIME_LIMIT_DAYS = 7;
 
-	String INGESTION_EXECUTOR_SUFFIX = "-ingestion-executor";
-	String QUERY_EXECUTOR_SUFFIX = "-query-executor";
-	String BATCH_QUERY_EXECUTOR_SUFFIX = "-batch-query-executor";
+	static String getIngestionExecutorName(String name) {
+		return name.toLowerCase() + "-ingestion-executor";
+	}
+
+	static String getQueryExecutorName(String name) {
+		return name.toLowerCase() + "-query-executor";
+	}
+
+	static String getBatchQueryExecutorName(String name) {
+		return name.toLowerCase() + "-batch-query-executor";
+	}
+
+	// URL paths:
+	String INGESTION_URL_PATH = "/ingestion/";
+	String QUERY_URL_PATH = "/query/";
+	String BATCH_QUERY_URL_PATH = "/batch-query/";
+	String NORMALIZATION_URL_PATH = "/normalization";
+	String BATCH_NORMALIZATION_URL_PATH = "/batch-normalization";
+	String STOP_URL_PATH = "/stop";
 
 	// Format related:
 	String[] FORMAT_NAMES = {
