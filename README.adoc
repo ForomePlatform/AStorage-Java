@@ -43,7 +43,7 @@ NOTE: These properties can be adjusted using a *config.json* file.
 [source,json]
 ----
 {
-	"dataDirectoryPath": "/home/user/ExampleStorage",
+    "dataDirectoryPath": "/home/user/ExampleStorage",
     "serverPort": 3000
 }
 ----
