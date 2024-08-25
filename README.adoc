@@ -34,19 +34,17 @@ cd AStorage-Java
 
 The JAR file will be generated inside the *target* directory as *astorage-java-1.0.0.jar*.
 
-On the first run the application creates a data folder in the user's home directory by default with the name *AStorage* if not specified otherwise. Data directory can be adjusted using a *config.json* file:
-[source,json]
-----
-{
-	"dataDirectoryPath": "/home/user/ExampleStorage"
-}
-----
+- On the first run the application creates a data folder in the user's home directory with the name *AStorage* by default if not specified otherwise.
+- The service is running on port *8080* by default if not specified otherwise.
 
-The service is running on port *8080* by default and can be adjusted using a *config.json* file:
+NOTE: These properties can be adjusted using a *config.json* file.
+
+*config.json* example:
 [source,json]
 ----
 {
-	"serverPort": 3000
+	"dataDirectoryPath": "/home/user/ExampleStorage",
+    "serverPort": 3000
 }
 ----
 
@@ -68,7 +66,7 @@ To avoid issues such as overlaps, duplicates, or data inconsistencies, it is cru
 
 Always ensure that any failed or corrupted repository is properly cleared before attempting another ingestion.
 
-NOTE: The UniversalVariant repository stores normalized variants for supported formats when the *normalize* parameter is set to *true* during ingestion. For example, if an error occurs while ingesting ClinVar data, dropping the ClinVar repository using the provided API will automatically remove ClinVar-related data from the UniversalVariant repository. [.underline]#However, dropping the entire UniversalVariant repository will remove all normalized data across every format.#
+NOTE: The UniversalVariant repository stores normalized variants for supported formats when the *normalize* parameter is set to *true* during ingestion. For example, if an error occurs while ingesting ClinVar data, dropping the ClinVar repository using the provided API will automatically remove ClinVar-related data from the UniversalVariant repository. _However, dropping the entire UniversalVariant repository will remove all normalized data across every format._
 
 === Fasta:
 Download the reference genome: link:https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.fna.gz[GRCh38.p14_genomic] and its assembly report: link:https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_assembly_report.txt[GRCh38.p14_assembly_report] and run ingestion:

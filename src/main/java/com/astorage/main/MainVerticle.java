@@ -69,12 +69,7 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 			return;
 		}
 
-		WorkerExecutor initExecutor = vertx.createSharedWorkerExecutor(
-				"init-executor",
-				1,
-				1,
-				TimeUnit.DAYS
-		);
+		WorkerExecutor initExecutor = vertx.createSharedWorkerExecutor("init-executor", 1, 1, TimeUnit.DAYS);
 		Callable<Boolean> callableInit = init(router, startPromise, dataDirectoryPath);
 
 		Integer finalServerPort = serverPort;
