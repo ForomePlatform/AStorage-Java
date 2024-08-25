@@ -11,15 +11,14 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-		<maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
-		<maven-shade-plugin.version>3.5.0</maven-shade-plugin.version>
-		<maven-surefire-plugin.version>3.1.2</maven-surefire-plugin.version>
-		<exec-maven-plugin.version>3.1.0</exec-maven-plugin.version>
+		<maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
+		<maven-shade-plugin.version>3.6.0</maven-shade-plugin.version>
+		<maven-surefire-plugin.version>3.3.1</maven-surefire-plugin.version>
+		<exec-maven-plugin.version>3.3.0</exec-maven-plugin.version>
 
-		<vertx.version>4.4.6</vertx.version>
-		<junit-jupiter.version>5.10.0</junit-jupiter.version>
+		<vertx.version>4.5.9</vertx.version>
 
-		<rocksdb.version>8.3.2</rocksdb.version>
+		<rocksdb.version>9.4.0</rocksdb.version>
 
 		<main.verticle>com.astorage.main.MainVerticle</main.verticle>
 		<launcher.class>io.vertx.core.Launcher</launcher.class>
@@ -42,7 +41,6 @@
 			<groupId>io.vertx</groupId>
 			<artifactId>vertx-core</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>io.vertx</groupId>
 			<artifactId>vertx-web</artifactId>
