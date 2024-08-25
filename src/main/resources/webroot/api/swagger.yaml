@@ -4,7 +4,7 @@ info:
   description: API for ingesting, querying and normalizing genetic variants.
   version: 1.0.0
 servers:
-  - url: http://localhost:8080/
+  - url: /
     description: Local server
 paths:
   /ingestion/fasta:
@@ -831,6 +831,7 @@ paths:
               - 'GTF'
               - 'GERP'
               - 'DbSNP'
+              - 'UniversalVariant'
         - name: confirm
           in: query
           description: Confirmation parameter to proceed with the drop operation. Should be 'yes' to confirm. First request should be sent without this parameter
