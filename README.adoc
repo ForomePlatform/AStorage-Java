@@ -15,7 +15,7 @@ image:https://img.shields.io/badge/RocksDB-9.4.0-orange.svg[link="https://rocksd
 * GERP
 * dbSNP
 
-.Formats mapped in the universal variant query:
+=== Formats mapped in the universal variant query:
 * dbNSFP v4.3a
 * gnomAD v4
 * SpliceAI v1.3
@@ -56,7 +56,7 @@ cd target
 java -jar astorage-java-1.0.0.jar [config_json_path]
 ----
 
-NOTE: AStorage logs(e.g. ingestion progress) are being written in <dataDirectoryPath>/output_<currentTimeMillis>.log file.
+NOTE: AStorage logs(e.g. ingestion progress) are being written in <dataDirectoryPath>/output_<currentTimeMillis>.log file. Some of the output is printed in terminal where the program is being run.
 
 For detailed API specification access the Swagger UI via: http://localhost:8080/api.
 

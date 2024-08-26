@@ -12,12 +12,11 @@ import com.astorage.utils.gtf.GTFConstants;
 import com.astorage.utils.pharmgkb.PharmGKBConstants;
 import com.astorage.utils.spliceai.SpliceAIConstants;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.Date;
@@ -114,9 +113,9 @@ public interface Constants {
 	String HTTP_SERVER_FAIL = "Server failed to start...";
 	String INITIALIZING_DIRECTORY_ERROR = "Couldn't initialize directories...";
 	String FILE_NOT_FOUND_ERROR = "File does not exist on given path...";
-	String CONFIG_JSON_DOESNT_EXIST_ERROR = "Given config file doesn't exist.";
-	String CONFIG_JSON_NOT_READABLE_ERROR = "Couldn't read the given config file...";
-	String CONFIG_JSON_DECODE_ERROR = "Given config file isn't a valid JSON...";
+	String JSON_FILE_DOESNT_EXIST_ERROR = "Given file: %s, doesn't exist.";
+	String JSON_FILE_NOT_READABLE_ERROR = "Couldn't read the given file...";
+	String JSON_FILE_DECODE_ERROR = "Given file isn't a valid JSON...";
 	String JSON_DECODE_ERROR = "Given file isn't a valid JSON...";
 	String COMPRESSION_ERROR = "Error while compressing JSON string...";
 	String DECOMPRESSION_ERROR = "Error while decompressing JSON string...";
@@ -168,6 +167,30 @@ public interface Constants {
 		} catch (IOException e) {
 			throw new IOException(DECOMPRESSION_ERROR, e);
 		}
+	}
+
+	static JsonObject parseJsonFile(String filePath) throws Exception {
+		File file = new File(filePath);
+		if (!file.exists()) {
+			throw new FileNotFoundException(String.format(JSON_FILE_DOESNT_EXIST_ERROR, filePath));
+		}
+
+		String fileAsString;
+		try (FileInputStream fileInputStream = new FileInputStream(file)) {
+			byte[] fileAsBytes = fileInputStream.readAllBytes();
+			fileAsString = new String(fileAsBytes, StandardCharsets.UTF_8);
+		} catch (IOException e) {
+			throw new Exception(JSON_FILE_NOT_READABLE_ERROR);
+		}
+
+		JsonObject fileAsJson;
+		try {
+			fileAsJson = new JsonObject(fileAsString);
+		} catch (DecodeException e) {
+			throw new Exception(JSON_FILE_DECODE_ERROR);
+		}
+
+		return fileAsJson;
 	}
 
 	static void response(HttpServerRequest req, JsonObject response, int statusCode) {
