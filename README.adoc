@@ -120,6 +120,8 @@ API reference: link:http://localhost:8080/api/#/Ingestion/post_ingestion_splicea
 === PharmGKB:
 Download the appropriate data files from: link:https://www.pharmgkb.org/downloads[PharmGKB Downloads] and ingest the downloaded files:
 
+NOTE: Types of supported data: CA, CAmeta, CAmeta2CA, SPA, VDA, VDA2SPA, VFA, VFA2SPA, VPA, VPA2SPA
+
 [source,bash]
 ----
 curl -X POST "http://localhost:8080/ingestion/pharmgkb?dataType={dataType}&dataPath={dataPath}"
