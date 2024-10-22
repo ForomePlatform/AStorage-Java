@@ -120,6 +120,7 @@ public interface Constants {
 	String COMPRESSION_ERROR = "Error while compressing JSON string...";
 	String DECOMPRESSION_ERROR = "Error while decompressing JSON string...";
 	String COLUMN_DOESNT_EXIST = "Column does not exist: ";
+	String DROP_REPO_CONFIRM_ON_FIRST_CALL = "Initial call should not contain confirmation param.";
 	String DROP_REPO_TOO_MANY_PARAMS = "Too many parameters...";
 	String DROP_REPO_NOT_FOUND = "Repository not found...";
 	String DROP_REPO_FORMAT_PARAM_MISSING = "The formatName parameter is missing.";

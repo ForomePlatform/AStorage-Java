@@ -45,7 +45,7 @@ NOTE: These properties can be adjusted using a *config.json* file.
 ----
 {
     "dataDirectoryPath": "/home/user/ExampleStorage",
-    "serverPort": 3000
+    "serverPort": 8080
 }
 ----
 

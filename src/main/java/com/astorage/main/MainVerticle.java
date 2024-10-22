@@ -441,11 +441,16 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 	}
 
 	private void setDropRepositoryHandler(Router router) {
-		router.get(DROP_REPOSITORY_URL_PATH).handler((RoutingContext context) -> {
+		router.delete(DROP_REPOSITORY_URL_PATH).handler((RoutingContext context) -> {
 			HttpServerRequest req = context.request();
 
 			if ("".equals(pendingDropRepoRequest) && req.params().size() > 1) {
-				Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, DROP_REPO_TOO_MANY_PARAMS);
+				if (req.params().contains(DROP_REPO_CONFIRM_PARAM)) {
+					Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, DROP_REPO_CONFIRM_ON_FIRST_CALL);
+				} else {
+					Constants.errorResponse(req, HttpURLConnection.HTTP_BAD_REQUEST, DROP_REPO_TOO_MANY_PARAMS);
+				}
+
 				return;
 			}
 

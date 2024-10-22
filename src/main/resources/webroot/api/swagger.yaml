@@ -807,7 +807,7 @@ paths:
                 $ref: '#/components/schemas/BatchQueryResult'
 
   /drop-repository:
-    get:
+    delete:
       tags: [
         Utils
       ]
@@ -834,7 +834,7 @@ paths:
               - 'UniversalVariant'
         - name: confirm
           in: query
-          description: Confirmation parameter to proceed with the drop operation. Should be 'yes' to confirm. First request should be sent without this parameter
+          description: First request should be sent without this parameter. Confirmation parameter to proceed with the drop operation. Should be 'yes' to confirm.
           required: false
           schema:
             type: string
