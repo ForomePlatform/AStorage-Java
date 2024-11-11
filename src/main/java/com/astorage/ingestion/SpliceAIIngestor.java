@@ -9,6 +9,7 @@ import com.astorage.utils.spliceai.Variant;
 import com.astorage.utils.universal_variant.UniversalVariantConstants;
 import com.astorage.utils.universal_variant.UniversalVariantHelper;
 import com.astorage.utils.variant_normalizer.VariantNormalizerConstants;
+import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -38,9 +39,10 @@ public class SpliceAIIngestor extends Ingestor implements Constants, SpliceAICon
 		RoutingContext context,
 		RocksDBRepository dbRep,
 		RocksDBRepository universalVariantDbRep,
-		RocksDBRepository fastaDbRep
+		RocksDBRepository fastaDbRep,
+		Vertx vertx
 	) {
-		super(context, dbRep, universalVariantDbRep, fastaDbRep);
+		super(context, dbRep, universalVariantDbRep, fastaDbRep, vertx);
 	}
 
 	public void ingestionHandler() {

@@ -11,6 +11,7 @@ import com.astorage.utils.gtex.GTExConstants;
 import com.astorage.utils.gtf.GTFConstants;
 import com.astorage.utils.pharmgkb.PharmGKBConstants;
 import com.astorage.utils.spliceai.SpliceAIConstants;
+import com.astorage.utils.vep.VEPConstants;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonArray;
@@ -75,7 +76,8 @@ public interface Constants {
 		GTExConstants.GTEX_FORMAT_NAME,
 		GTFConstants.GTF_FORMAT_NAME,
 		GERPConstants.GERP_FORMAT_NAME,
-		DbSNPConstants.DBSNP_FORMAT_NAME
+		DbSNPConstants.DBSNP_FORMAT_NAME,
+		VEPConstants.VEP_FORMAT_NAME
 	};
 	String[] UNIVERSAL_QUERY_FORMAT_NAMES = {
 		DbNSFPConstants.DBNSFP_FORMAT_NAME,

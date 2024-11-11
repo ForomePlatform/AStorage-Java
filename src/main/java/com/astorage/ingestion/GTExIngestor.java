@@ -7,6 +7,7 @@ import com.astorage.utils.gtex.GTExConstants;
 import com.astorage.utils.gtex.Gene;
 import com.astorage.utils.gtex.GeneToTissue;
 import com.astorage.utils.gtex.Tissue;
+import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.ext.web.RoutingContext;
 import org.rocksdb.ColumnFamilyHandle;
@@ -29,9 +30,10 @@ public class GTExIngestor extends Ingestor implements Constants, GTExConstants {
 		RoutingContext context,
 		RocksDBRepository dbRep,
 		RocksDBRepository universalVariantDbRep,
-		RocksDBRepository fastaDbRep
+		RocksDBRepository fastaDbRep,
+		Vertx vertx
 	) {
-		super(context, dbRep, universalVariantDbRep, fastaDbRep);
+		super(context, dbRep, universalVariantDbRep, fastaDbRep, vertx);
 
 		geneColumnFamilyHandle = dbRep.getOrCreateColumnFamily(GENE_COLUMN_FAMILY_NAME);
 		tissueColumnFamilyHandle = dbRep.getOrCreateColumnFamily(TISSUE_COLUMN_FAMILY_NAME);

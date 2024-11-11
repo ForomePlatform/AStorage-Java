@@ -5,6 +5,7 @@ import com.astorage.utils.Constants;
 import com.astorage.utils.dbsnp.DbSNPConstants;
 import com.astorage.utils.dbsnp.DbSNPHelper;
 import com.astorage.utils.dbsnp.Variant;
+import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.web.RoutingContext;
@@ -24,9 +25,10 @@ public class DbSNPIngestor extends Ingestor implements Constants, DbSNPConstants
 		RoutingContext context,
 		RocksDBRepository dbRep,
 		RocksDBRepository universalVariantDbRep,
-		RocksDBRepository fastaDbRep
+		RocksDBRepository fastaDbRep,
+		Vertx vertx
 	) {
-		super(context, dbRep, universalVariantDbRep, fastaDbRep);
+		super(context, dbRep, universalVariantDbRep, fastaDbRep, vertx);
 	}
 
 	public void ingestionHandler() {

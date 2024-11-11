@@ -9,6 +9,7 @@ import com.astorage.utils.gnomad.Variant;
 import com.astorage.utils.universal_variant.UniversalVariantConstants;
 import com.astorage.utils.universal_variant.UniversalVariantHelper;
 import com.astorage.utils.variant_normalizer.VariantNormalizerConstants;
+import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
@@ -36,9 +37,10 @@ public class GnomADIngestor extends Ingestor implements Constants, GnomADConstan
 		RoutingContext context,
 		RocksDBRepository dbRep,
 		RocksDBRepository universalVariantDbRep,
-		RocksDBRepository fastaDbRep
+		RocksDBRepository fastaDbRep,
+		Vertx vertx
 	) {
-		super(context, dbRep, universalVariantDbRep, fastaDbRep);
+		super(context, dbRep, universalVariantDbRep, fastaDbRep, vertx);
 	}
 
 	public void ingestionHandler() {

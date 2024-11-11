@@ -12,10 +12,7 @@ import com.astorage.utils.dbnsfp.DbNSFPConstants;
 import com.astorage.utils.fasta.FastaConstants;
 import com.astorage.utils.universal_variant.UniversalVariantConstants;
 import com.astorage.utils.variant_normalizer.VariantNormalizerConstants;
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
-import io.vertx.core.WorkerExecutor;
+import io.vertx.core.*;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
@@ -243,14 +240,16 @@ public class MainVerticle extends AbstractVerticle implements Constants, FastaCo
 						RoutingContext.class,
 						RocksDBRepository.class,
 						RocksDBRepository.class,
-						RocksDBRepository.class
+						RocksDBRepository.class,
+						Vertx.class
 					);
 
 					Ingestor ingestor = (Ingestor) constructor.newInstance(
 						context,
 						dbRepositories.get(formatName),
 						dbRepositories.get(UniversalVariantConstants.UNIVERSAL_VARIANT_FORMAT_NAME),
-						dbRepositories.get(FastaConstants.FASTA_FORMAT_NAME)
+						dbRepositories.get(FastaConstants.FASTA_FORMAT_NAME),
+						vertx
 					);
 					ingestor.ingestionHandler();
 

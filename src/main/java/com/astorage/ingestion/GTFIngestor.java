@@ -4,6 +4,7 @@ import com.astorage.db.RocksDBRepository;
 import com.astorage.utils.Constants;
 import com.astorage.utils.gtf.GTFConstants;
 import com.astorage.utils.gtf.Variant;
+import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.ext.web.RoutingContext;
 
@@ -20,9 +21,10 @@ public class GTFIngestor extends Ingestor implements Constants, GTFConstants {
 		RoutingContext context,
 		RocksDBRepository dbRep,
 		RocksDBRepository universalVariantDbRep,
-		RocksDBRepository fastaDbRep
+		RocksDBRepository fastaDbRep,
+		Vertx vertx
 	) {
-		super(context, dbRep, universalVariantDbRep, fastaDbRep);
+		super(context, dbRep, universalVariantDbRep, fastaDbRep, vertx);
 	}
 
 	public void ingestionHandler() {
