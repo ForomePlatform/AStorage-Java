@@ -3,7 +3,37 @@
 image:https://img.shields.io/badge/Vert.x-4.5.9-purple.svg[link="https://vertx.io/"]
 image:https://img.shields.io/badge/RocksDB-9.4.0-orange.svg[link="https://rocksdb.org/"]
 
+== Overview
+
+AStorage is a standalone, Java-based data server engineered for large-scale genomics data ingestion, normalization, and querying.
+Leveraging an embedded RocksDB store for ultra-fast key‑value operations and an event‑driven Vert.x HTTP engine, AStorage delivers sub‑millisecond access to variant records and annotations, making it ideally suited for interactive analyses and high‑throughput pipelines.
+
+Built to handle the full spectrum of common genomics formats, AStorage provides configurable ingestion endpoints for:
+
+* **FASTA** reference genomes
+* **dbNSFP v4.3a**, **gnomAD v4**, **SpliceAI v1.3**, **ClinVar**, **dbSNP** and **GERP** variant annotations
+* **PharmGKB** drug‐gene interaction data
+* **GTEx v8** expression matrices
+* **GTF** gene models
+
+A universal variant repository can be populated during ingestion when the `normalize=true` flag is set, enabling a single, consistent schema for downstream queries.
+
+Its RESTful API (documented via OpenAPI UI on `http://localhost:8080/api`) supports both single‑file and batch operations, with “drop repository” endpoints to safely clear incomplete or corrupted datasets prior to re‑ingestion.
+All behavior is governed by a simple `config.json`, allowing customization of storage paths, server port (default: 8080), and ingestion parameters without recompilation.
+
+### Key Features
+
+* **High‑performance storage**: RocksDB back‑end optimized for genomics data access
+* **Reactive API server**: Non‑blocking, event‑driven Vert.x framework
+* **Batch queries**: submit large lists of genomic variants or annotation requests in a single HTTP call, with sub‑millisecond per‑variant latencies
+* **Broad format support**: Ingestion pipelines for all major annotation and reference datasets
+* **Universal normalization**: Consistent variant schema across heterogeneous sources
+* **Safe re‑ingestion**: Drop‑repository APIs to maintain data integrity
+* **Self‑contained deployment**: Packaged as a single JAR; auto‑creates storage directory on first run
+* **Interactive docs**: OpenAPI UI for live API exploration and testing
+
 == Supported Formats:
+
 * Fasta
 * dbNSFP v4.3a
 * gnomAD v4
@@ -16,6 +46,7 @@ image:https://img.shields.io/badge/RocksDB-9.4.0-orange.svg[link="https://rocksd
 * dbSNP
 
 === Formats mapped in the universal variant query:
+
 * dbNSFP v4.3a
 * gnomAD v4
 * SpliceAI v1.3
@@ -26,6 +57,7 @@ image:https://img.shields.io/badge/RocksDB-9.4.0-orange.svg[link="https://rocksd
 == Setup: Building and Running [Linux/MacOS]
 
 Clone the master branch and package the application as a JAR file:
+
 [source,bash]
 ----
 git clone git@github.com:ForomePlatform/AStorage-Java.git
@@ -41,6 +73,7 @@ The JAR file will be generated inside the *target* directory as *astorage-java-1
 NOTE: These properties can be adjusted using a *config.json* file.
 
 *config.json* example:
+
 [source,json]
 ----
 {
@@ -50,26 +83,31 @@ NOTE: These properties can be adjusted using a *config.json* file.
 ----
 
 To start the application run:
+
 [source,bash]
 ----
 cd target
 java -jar astorage-java-1.0.0.jar [config_json_path]
 ----
 
-NOTE: AStorage logs(e.g. ingestion progress) are being written in <dataDirectoryPath>/output_<currentTimeMillis>.log file. Some of the output is printed in terminal where the program is being run.
+NOTE: AStorage logs(e.g. ingestion progress) are being written in <dataDirectoryPath>/output_<currentTimeMillis>.log file.
+Some of the output is printed in terminal where the program is being run.
 
-For detailed API specification access the Swagger UI via: http://localhost:8080/api.
+For detailed API specification access the OpenAPI UI via: http://localhost:8080/api.
 
 == Setup: Ingestion
 
 === Important Note on Data Ingestion!
+
 To avoid issues such as overlaps, duplicates, or data inconsistencies, it is crucial to drop the specific repository corresponding to the format being ingested using the provided link:http://localhost:8080/api/#/Utils/get_drop_repository[Drop Repository API] if the previous ingestion was unsuccessful or encountered errors.
 
 Always ensure that any failed or corrupted repository is properly cleared before attempting another ingestion.
 
-NOTE: The UniversalVariant repository stores normalized variants for supported formats when the *normalize* parameter is set to *true* during ingestion. For example, if an error occurs while ingesting ClinVar data, dropping the ClinVar repository using the provided API will automatically remove ClinVar-related data from the UniversalVariant repository. _However, dropping the entire UniversalVariant repository will remove all normalized data across every format._
+NOTE: The UniversalVariant repository stores normalized variants for supported formats when the *normalize* parameter is set to *true* during ingestion.
+For example, if an error occurs while ingesting ClinVar data, dropping the ClinVar repository using the provided API will automatically remove ClinVar-related data from the UniversalVariant repository. _However, dropping the entire UniversalVariant repository will remove all normalized data across every format._
 
 === Fasta:
+
 Download the reference genome: link:https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.fna.gz[GRCh38.p14_genomic] and its assembly report: link:https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_assembly_report.txt[GRCh38.p14_assembly_report] and run ingestion:
 
 [source,bash]
@@ -80,6 +118,7 @@ curl -X POST "http://localhost:8080/ingestion/fasta?refBuild=GRCh38&dataPath={da
 API reference: link:http://localhost:8080/api/#/Ingestion/post_ingestion_fasta[Fasta Ingestion].
 
 === dbNSFP:
+
 Download the entire dbNSFP database: link:https://dbnsfp.s3.amazonaws.com/dbNSFP4.3a.zip[dbNSFP4.3a], extract the downloaded content and run ingestion for each chromosome variant one by one:
 
 [source,bash]
@@ -90,6 +129,7 @@ curl -X POST "http://localhost:8080/ingestion/dbnsfp?dataPath={chrDataPath}"
 API reference: link:http://localhost:8080/api/#/Ingestion/post_ingestion_dbnsfp[dbNSFP Ingestion].
 
 === gnomAD:
+
 Download available exomes and genomes from: link:https://gnomad.broadinstitute.org/downloads#v4[gnomAD v4] and ingest the downloaded files:
 
 NOTE: If you set the *normalize* parameter to *true* for ingestion Fasta GRCh38 should already be ingested into the AStorage.
@@ -102,6 +142,7 @@ curl -X POST "http://localhost:8080/ingestion/gnomad?dataPath={dataPath}&sourceT
 API reference: link:http://localhost:8080/api/#/Ingestion/post_ingestion_gnomad[gnomAD Ingestion].
 
 === SpliceAI:
+
 Access the SpliceAI annotations here: link:https://basespace.illumina.com/s/otSPW8hnhaZR[SpliceAI v1.3] for which you'll need an account of Illumina.
 
 From the Illumina Sequence Hub Projects tab open the added project: *Predicting splicing from primary sequence*, then open *genome_scores_v1.3*, click on *FILES* and download *spliceai_scores.raw.indel.hg38.vcf.gz* and *spliceai_scores.raw.snv.hg38.vcf.gz*.
@@ -118,6 +159,7 @@ curl -X POST "http://localhost:8080/ingestion/spliceai?dataPath={dataPath}&norma
 API reference: link:http://localhost:8080/api/#/Ingestion/post_ingestion_spliceai[SpliceAI Ingestion].
 
 === PharmGKB:
+
 Download the appropriate data files from: link:https://www.pharmgkb.org/downloads[PharmGKB Downloads] and ingest the downloaded files:
 
 NOTE: Types of supported data: CA, CAmeta, CAmeta2CA, SPA, VDA, VDA2SPA, VFA, VFA2SPA, VPA, VPA2SPA
@@ -130,6 +172,7 @@ curl -X POST "http://localhost:8080/ingestion/pharmgkb?dataType={dataType}&dataP
 API reference: link:http://localhost:8080/api/#/Ingestion/post_ingestion_pharmgkb[PhramGKB Ingestion].
 
 === ClinVar:
+
 Download the latest ClinVar release: link:https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/RCV_xml_old_format/ClinVarFullRelease_00-latest.xml.gz[ClinVarFullRelease_00-latest] and its variant summary: link:https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/variant_summary.txt.gz[variant_summary] and ingest the downloaded files:
 
 NOTE: If you set the *normalize* parameter to *true* for ingestion required Fasta reference genomes should already be ingested into the AStorage.
@@ -142,6 +185,7 @@ curl -X POST "http://localhost:8080/ingestion/clinvar?dataPath={dataPath}&dataSu
 API reference: link:http://localhost:8080/api/#/Ingestion/post_ingestion_clinvar[ClinVar Ingestion].
 
 === GTEx:
+
 Download the GTEx v8 bulk tissue expression data: link:https://storage.googleapis.com/adult-gtex/bulk-gex/v8/rna-seq/GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_tpm.gct.gz[GTEx_Analysis_2017-06-05_v8] and ingest the downloaded file:
 
 [source,bash]
@@ -152,6 +196,7 @@ curl -X POST "http://localhost:8080/ingestion/gtex?dataPath={dataPath}"
 API reference: link:http://localhost:8080/api/#/Ingestion/post_ingestion_gtex[GTEx Ingestion].
 
 === GTF:
+
 Download the GRCh38 GTF data file: link:https://ftp.ensembl.org/pub/release-111/gtf/homo_sapiens/Homo_sapiens.GRCh38.111.chr.gtf.gz[Homo_sapiens.GRCh38.111.chr] and ingest the downloaded file:
 
 [source,bash]
@@ -162,6 +207,7 @@ curl -X POST "http://localhost:8080/ingestion/gtf?dataPath={dataPath}"
 API reference: link:http://localhost:8080/api/#/Ingestion/post_ingestion_gtf[GTF Ingestion].
 
 === GERP:
+
 Retrieve the necessary GERP rates files for each chromosome and ingest the downloaded files one by one:
 
 [source,bash]
@@ -172,6 +218,7 @@ curl -X POST "http://localhost:8080/ingestion/gerp?dataPath={dataPath}"
 API reference: link:http://localhost:8080/api/#/Ingestion/post_ingestion_gerp[GERP Ingestion].
 
 === dbSNP:
+
 Download the complete dbSNP data: link:https://ftp.ncbi.nih.gov/snp/organisms/human_9606/VCF/00-All.vcf.gz[00-All] and ingest the downloaded file:
 
 [source,bash]
